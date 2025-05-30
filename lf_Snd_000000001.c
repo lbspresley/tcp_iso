@@ -7,7 +7,7 @@ int	lf_Snd_000000001(char* PeerIP, char* PeerPort, char* LocalPort)
   BOK_SKEY_STR	SKeyMsg;
 
   char*	pMsg = NULL;
-  //	char	tmpstr[32];
+  char	tmpstr[32];
   long	Info1 = 0;
   long	Info2 = 0;
 
@@ -118,7 +118,9 @@ int	lf_Snd_000000001(char* PeerIP, char* PeerPort, char* LocalPort)
 
   /* 개별부 */
   /* 개별부 길이 */
-  sprintf(SKeyMsg.indv_pt_len, "%04d", out_len + 4);
+  // sprintf(SKeyMsg.indv_pt_len, "%04d", (unsigned short)(out_len + 4));
+  sprintf(tmpstr, "%04d", (unsigned short)(out_len + 4));
+  memcpy(SKeyMsg.indv_pt_len, tmpstr, 4);
 
   /* 송신 메시지 */
   msg_len = out_len + SIZE_BOK_SKEY_STR;
@@ -133,11 +135,11 @@ int	lf_Snd_000000001(char* PeerIP, char* PeerPort, char* LocalPort)
   memcpy( pMsg , (char*)&SKeyMsg, SIZE_BOK_SKEY_STR );
   memcpy( &pMsg[SIZE_BOK_SKEY_STR], pSKeyOut, out_len);
 
-  rc = rmp_MessageProc("SESS_KEY", 0, (unsigned char*)pMsg, msg_len,
-      &Info1, &Info2);
+  strcpy(g_rmpSvcName, "SESS_KEY");
+  rc = rmp_MessageProc(g_rmpSvcName, 0, (unsigned char*)pMsg, msg_len, &Info1, &Info2);
   if(rc < 0)
   {
-    ulog(_ERROR_, "[장애정보] rmp_MessageProc 오류 [%d]", rc);
+    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
   }
 
   if(pMsg != NULL)

@@ -83,10 +83,11 @@ int	lf_Rcv_000000004(char* msg, int len)
   memcpy( pMsg, pSKeyMsg, SIZE_BOK_SKEY_STR ); 
   memcpy( &pMsg[SIZE_BOK_SKEY_STR], pSKeyOut, out_len);
 
-  rc = rmp_MessageProc("SESS_KEY", 0, (unsigned char*)pMsg, msg_len, &Info1, &Info2); 
+  strcpy(g_rmpSvcName, "SESS_KEY");
+  rc = rmp_MessageProc(g_rmpSvcName, 0, (unsigned char*)pMsg, msg_len, &Info1, &Info2); 
   if(rc < 0) 
   { 
-    ulog(_ERROR_, "[장애정보] rmp_MessageProc 오류 [%d]", rc); 
+    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
   }
 
 

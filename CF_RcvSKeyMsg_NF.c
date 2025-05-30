@@ -44,6 +44,9 @@ int CF_RcvSKeyMsg_NF(int bufkind, unsigned char** ppFrame,
     rc = lf_Rcv_000000005_NF(in, *pFrameLen);
   }
 
+  if (rc < 0) {
+    ulog(_ERROR_, "RCV_SKEY_NF 전문 처리 실패 (code:%.9s) (rc:%d)", l_pRcv->Common.bz_no, rc);
+  }
 
   return RC_NEXT_ACTION;
 }

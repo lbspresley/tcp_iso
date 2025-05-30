@@ -134,10 +134,11 @@ int	lf_Snd_000000001_NF(char* PeerIP, char* PeerPort, char* LocalPort)
 
 
   /* call rmp action */
-  rc = rmp_MessageProc( "SESS_KEY", 0, pMsg, msg_len, 0, 0 );
+  strcpy(g_rmpSvcName, "SESS_KEY");
+  rc = rmp_MessageProc(g_rmpSvcName, 0, pMsg, msg_len, 0, 0 );
   if( rc < 0 )
   {
-    ulog( _ERROR_, "Send Fail. CLIENT HandShake Init Msg. RMP 호출 실패 (rc:%d/len:%d)", rc, out_len );
+    ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
   }
 
   if(pMsg != NULL) free(pMsg);

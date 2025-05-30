@@ -14,7 +14,6 @@ int CF_ACloseSession(int Type, long* pInfo)
   char    strIP[16];
   char    LocalPort[32];
   char    PeerPort[32];
-
   int		idx;
 
 
@@ -107,7 +106,7 @@ int  func_NacfGetMaxSessC(char *strAdtName)
   char     strTmp[256];
   char     strBaseDir[256];
   char     strTGLName[256];
-  char     strConfigName[256];
+  char     strConfigName[300];
 
   char     strSectionName[80];
   char     strActionType [80];
@@ -133,14 +132,11 @@ int  func_NacfGetMaxSessC(char *strAdtName)
 
   /* Configuration File¸í */
   memset(strConfigName, 0x00, sizeof(strConfigName));
-  sprintf(strConfigName, "%s/config/upconfig/%s.ini"
-      , strBaseDir, strAdtName);
+  sprintf(strConfigName, "%s/config/upconfig/%s.ini", strBaseDir, strAdtName);
 
 
   memset(strTGLName, 0x00, sizeof(strTGLName));
-  roReadConfigString(strConfigName, "Local"
-      , "TGLRuleFile"
-      , strTGLName);
+  roReadConfigString(strConfigName, "Local", "TGLRuleFile" , strTGLName);
 
 
 

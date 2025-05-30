@@ -14,10 +14,11 @@ int CF_RcvPoll_NF(int bufkind, unsigned char** ppFrame,
   // 20200408 : send to host when NOT use POLL in FEP
   if(g_UsePoll != 1) {
     // Send to Host
-    rc = rmp_MessageProc( "SEND_TO_HOST", 0, *ppFrame, *pFrameLen, 0, 0 );
+    strcpy(g_rmpSvcName, "SEND_TO_HOST");
+    rc = rmp_MessageProc( g_rmpSvcName, 0, *ppFrame, *pFrameLen, 0, 0 );
     if( rc < 0 )
     {
-      ulog( _ERROR_, "Fail to Send POLLING message for SEND_TO_HOST. (rc:%d/len:%d)", rc, *pFrameLen );
+      ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, *pFrameLen );
       return RC_DROP_PROC_NOREPLACE;
     }
 
@@ -40,10 +41,11 @@ int CF_RcvPoll_NF(int bufkind, unsigned char** ppFrame,
   }
 
   // 자체 송신 외 회선전문 ==> 호스트로 송신
-  rc = rmp_MessageProc( "SEND_TO_HOST", 0, *ppFrame, *pFrameLen, 0, 0 );
+  strcpy(g_rmpSvcName, "SEND_TO_HOST");
+  rc = rmp_MessageProc( g_rmpSvcName, 0, *ppFrame, *pFrameLen, 0, 0 );
   if( rc < 0 )
   {
-    ulog( _ERROR_, "Fail to Send POLLING message for SEND_TO_HOST. (rc:%d/len:%d)", rc, *pFrameLen );
+    ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, *pFrameLen );
     return RC_DROP_PROC_NOREPLACE;
   }
 

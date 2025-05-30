@@ -12,16 +12,11 @@ void CF_DisCntSession(int TimerID, int lParam, int rParam)
   //    char* Msg = "DisCntTimeout";
   char Msg[32]; 
   int Len;
-  long Info1;
-  long Info2;
+  long Info1 = 0;
+  long Info2 = 0;
 
   int idx = lParam;
   TGL_RESULT* pResult;
-
-  Len = strlen(Msg);
-
-  Info1 = 0;
-  Info2 = 0;
 
 
   ulog(_ERROR_, "[로그정보] %d sec동안 거래 없음\n"
@@ -72,8 +67,12 @@ void CF_DisCntSession(int TimerID, int lParam, int rParam)
   sprintf(Msg, "PeerPort:%05d", g_TermTable[idx].PeerPort); 
   Len = strlen(Msg);
 
-  nRc = rmp_MessageProc("DISCONNT", 0, (unsigned char*)Msg, Len,
-      &Info1, &Info2);
+  strcpy(g_rmpSvcName, "DISCONNT");
+  nRc = rmp_MessageProc(g_rmpSvcName, 0, (unsigned char*)Msg, Len, &Info1, &Info2);
+  if(nRc < 0)
+  {
+    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, nRc, Len);
+  }
 
   if(pResult != NULL)
   {

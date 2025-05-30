@@ -160,7 +160,7 @@ int UC_SgetSysDateTime (int aiMode, char *apDateStr, int *aiStatCode, char *apSt
         gettimeofday(&currtime, NULL);
         strftime(sDateTime, 15, "%Y%m%d%H%M%S", calptr);
 
-        sprintf(apDateStr, "%s%02d", sDateTime, currtime.tv_usec / 10000);
+        sprintf(apDateStr, "%s%02d", sDateTime, (int)(currtime.tv_usec / 10000));
         break;
       }
     case YYYYMMDDHHMISSMIS:
@@ -171,7 +171,7 @@ int UC_SgetSysDateTime (int aiMode, char *apDateStr, int *aiStatCode, char *apSt
         gettimeofday(&currtime, NULL);
         strftime(sDateTime, 16, "%Y%m%d%H%M%S", calptr);
 
-        sprintf(apDateStr, "%s%03d", sDateTime, currtime.tv_usec / 1000);
+        sprintf(apDateStr, "%s%03d", sDateTime, (int)(currtime.tv_usec / 1000));
         break;
       }
     case MMDDHHMISS:

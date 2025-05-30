@@ -8,18 +8,11 @@ int CF_ProcLogErr(int bufkind, unsigned char** ppFrame,
     long* info1, long* info2)
 {
   int rc;
-
-  //unsigned char* in = (char*) *ppFrame;
-  //unsigned char* tmpbuf;
-
   S_CL_ERR_MSG	sErrMsg;
   S_CL_HEADER*	pHdr;
-
   char*	pApData;
   int		ApDataLen;
-
   int	inlen = *pFrameLen;
-  //int	outlen = 0;
 
   /* APData용 버퍼를 따로 할당하지 않고.. 암복호에서 사용하는 버퍼를 이용*/
   pApData = g_EncryptBuf;
@@ -68,6 +61,9 @@ int CF_ProcLogErr(int bufkind, unsigned char** ppFrame,
 
   /* 에러 전문 생성 */
   rc = lf_SetErrStr(pHdr, &sErrMsg);
+  if (rc < 0) {
+    ulog(_ERROR_, "lf_SetErrStr() Fail. 에러 전문 생성 실패 (rc:%d)", rc);
+  }
 
   /* 에러발생 서비스 */
   memcpy(sErrMsg.c_ErrSvcName, g_ServiceName, strlen(g_ServiceName));
@@ -86,11 +82,10 @@ int CF_ProcLogErr(int bufkind, unsigned char** ppFrame,
    */
 int	lf_SetErrStr(S_CL_HEADER* pHdr, S_CL_ERR_MSG* pErrMsg)
 {
-  int rc = 0;
-
   if((pHdr == NULL) || (pErrMsg == NULL))
   {
-    rc = -1;
+    ulog(_ERROR_, "lf_SetErrStr() Fail. 대외헤더 또는 에러 전문 메시지 널 체크 실패");
+    return -1;
   }
 
   /* 메시지 구분 */

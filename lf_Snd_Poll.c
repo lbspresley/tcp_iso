@@ -72,10 +72,11 @@ int	lf_Snd_Poll()
   memcpy( PollMsg.enc_org_pwd	, gc_plain_pw, len );	
 
   /* call rmp action */
-  rc = rmp_MessageProc( "SNDMSG_PLAIN", 0, pMsg, msg_len, 0, 0 );
+  strcpy(g_rmpSvcName, "SNDMSG_PLAIN");
+  rc = rmp_MessageProc( g_rmpSvcName, 0, pMsg, msg_len, 0, 0 );
   if( rc < 0 )
   {
-    ulog( _ERROR_, "Fail to Send POLLING message for SNDMSG_PLAIN. (rc:%d/len:%d)", rc, msg_len );
+    ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
     return -1;
   }
 

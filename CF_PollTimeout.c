@@ -70,7 +70,12 @@ void CF_PollTimeout(int TimerID, int lParam, int rParam)
   sprintf(Msg, "PeerPort:%05d", g_TermTable[idx].PeerPort);
   Len = strlen(Msg);
 
-  nRc = rmp_MessageProc("DISCONNT", 0, (unsigned char*)Msg, Len, &Info1, &Info2);
+  strcpy(g_rmpSvcName, "DISCONNT");
+  nRc = rmp_MessageProc(g_rmpSvcName, 0, (unsigned char*)Msg, Len, &Info1, &Info2);
+  if(nRc < 0)
+  {
+    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, nRc, Len);
+  }
 
   if(pResult != NULL)
   {

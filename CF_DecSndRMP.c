@@ -20,10 +20,11 @@ int CF_DecSndRMP(int bufkind, unsigned char** ppFrame,
     ulog( _WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen );
 
     /* call rmp action */
-    rc = rmp_MessageProc( "RCVMSG_PLAIN", 0, (unsigned char*)in, inlen, 0, 0 );
+    strcpy(g_rmpSvcName, "RCVMSG_PLAIN");
+    rc = rmp_MessageProc( g_rmpSvcName, 0, (unsigned char*)in, inlen, 0, 0 );
     if( rc < 0 )
     {
-      ulog( _ERROR_, "Send Fail. RMP 호출 실패 (rc:%d/len:%d)", rc, inlen );
+      ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, inlen );
       return RC_DROP_PROC_NOREPLACE;
     }
 
@@ -76,10 +77,11 @@ int CF_DecSndRMP(int bufkind, unsigned char** ppFrame,
   msg_len = outlen+offset; 
 
   /* call rmp action */
-  rc = rmp_MessageProc( "RCVMSG_PLAIN", 0, (unsigned char*)g_DecryptBuf, msg_len, 0, 0 );
+  strcpy(g_rmpSvcName, "RCVMSG_PLAIN");
+  rc = rmp_MessageProc( g_rmpSvcName, 0, (unsigned char*)g_DecryptBuf, msg_len, 0, 0 );
   if( rc < 0 )
   {
-    ulog( _ERROR_, "Send Fail. CLIENT HandShake Init Msg. RMP 호출 실패 (rc:%d/len:%d)", rc, msg_len );
+    ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, inlen );
     return RC_DROP_PROC_NOREPLACE;
   }
 

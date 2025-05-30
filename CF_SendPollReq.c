@@ -73,8 +73,12 @@ void CF_SendPollReq(int TimerID, int lParam, int rParam)
 
 #if 1
   // PollMsg 전달
-  nRc = rmp_MessageProc("POLLMSG", 0, (unsigned char*)Msg, Len,
-      &Info1, &Info2);
+  strcpy(g_rmpSvcName, "POLLMSG");
+  nRc = rmp_MessageProc(g_rmpSvcName, 0, (unsigned char*)Msg, Len, &Info1, &Info2);
+  if(nRc < 0)
+  {
+    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, nRc, Len);
+  }
 
   // Poll응답 Timer 기동
   WaitRspTimerID = TIMERID_RSP_POLL + lParam;

@@ -2,6 +2,7 @@
 #define __TCP_BOK_VAR_H__
 
 
+char			g_rmpSvcName[16];
 char			g_ServiceName[64];
 /*char			g_SvcName[64]; */
 char			g_VANCode[16];
@@ -107,5 +108,10 @@ void TF_SendPollReq(int TimerID, int lParam, int rParam);
 int dbInsertIDPW(char* pID, char* pPass);
 int dbGetIDPW( );
 int dbUpdateIDPW(char* pID, char* pPass);
+
+// db_tmp.c
+int cf_dbcnx();
+void cf_Disconnect();
+int cf_GoImgLog(char *svc, char *dir, char *title, char* msg, int len);
 
 #endif
