@@ -4,81 +4,81 @@ extern int  func_NacfGetMaxSessC(char *strAdtName);
 
 void UserInit()
 {
-	/*	var	*----------------------------------------------------------------*/
-	char	ServerName[64];
-	int		rc;
-	int		i = 0;
-	//char	TmpStr[64];
+  /*	var	*----------------------------------------------------------------*/
+  char	ServerName[64];
+  int		rc;
+  int		i = 0;
+  //char	TmpStr[64];
 
-	/*	init	*------------------------------------------------------------*/
-	memset(ServerName, 0x00, sizeof(ServerName));
-	roGetSvcName(ServerName);
+  /*	init	*------------------------------------------------------------*/
+  memset(ServerName, 0x00, sizeof(ServerName));
+  roGetSvcName(ServerName);
 
 #ifdef _CCL_
-	// CruzChannel Log 초기화
-	ccl_InitLog(ServerName, "TCPC", NULL);
+  // CruzChannel Log 초기화
+  ccl_InitLog(ServerName, "TCPC", NULL);
 #endif
 
-	/* DB 연결 */
-	rc = cf_dbcnx();
-	if( rc != 0 )
-	{
-        ulog(_ABEND_, "[%s] db connect error [%d]", FF, rc);
-        //return -1;
-        exit(-1);
-	}
+  /* DB 연결 */
+  rc = cf_dbcnx();
+  if( rc != 0 )
+  {
+    ulog(_ABEND_, "[%s] db connect error [%d]", FF, rc);
+    //return -1;
+    exit(-1);
+  }
 
 
-	/*	proc	*------------------------------------------------------------*/
-	rc = roReadConfigInt(  NULL, "SessionInfo", "DownSessCnt", &g_DnSessLimit);
+  /*	proc	*------------------------------------------------------------*/
+  rc = roReadConfigInt(  NULL, "SessionInfo", "DownSessCnt", &g_DnSessLimit);
   if ( rc < 0 )
   {
-      ulog(_ERROR_,  "[%s] Read Down Session Cnt failed rc = %d", __FUNCTION__, rc);
+    ulog(_ERROR_,  "[%s] Read Down Session Cnt failed rc = %d", __FUNCTION__, rc);
 
-      // default 0
-      g_DnSessLimit= 0;
+    // default 0
+    g_DnSessLimit= 0;
   }
   ulog(_FLOW_, "[%s] Down Session Count : %d", __FUNCTION__, g_DnSessLimit);
 
 
-	rc = roReadConfigInt(  NULL, "SessionInfo", "UpSessCnt", &g_UpSessLimit);
+  rc = roReadConfigInt(  NULL, "SessionInfo", "UpSessCnt", &g_UpSessLimit);
   if ( rc < 0 )
   {
-      ulog(_ERROR_,  "[%s] Read Up Session Cnt failed rc = %d", __FUNCTION__, rc);
+    ulog(_ERROR_,  "[%s] Read Up Session Cnt failed rc = %d", __FUNCTION__, rc);
 
-      // default 1
-      g_UpSessLimit= 1;
+    // default 1
+    g_UpSessLimit= 1;
   }
   ulog(_FLOW_, "[%s] Up Session Count : %d", __FUNCTION__, g_UpSessLimit);
 
 
-	g_maxterm_cnt = func_NacfGetMaxSessC(ServerName);
-	if(g_maxterm_cnt <= 0 )
-	{
-        ulog(_ERROR_,  "[%s] Get Max Session failed g_maxterm_cnt = %d", __FUNCTION__, g_maxterm_cnt);
+  g_maxterm_cnt = func_NacfGetMaxSessC(ServerName);
+  if(g_maxterm_cnt <= 0 )
+  {
+    ulog(_ERROR_,  "[%s] Get Max Session failed g_maxterm_cnt = %d", __FUNCTION__, g_maxterm_cnt);
 
-		g_maxterm_cnt = 0;
-	}
+    g_maxterm_cnt = 0;
+  }
 
-	ulog(_FLOW_, "[%s] Max Session Count : %d", __FUNCTION__, g_maxterm_cnt);
+  ulog(_FLOW_, "[%s] Max Session Count : %d", __FUNCTION__, g_maxterm_cnt);
 
 
-    // Init TermTbl
-	g_TermTable = NULL;
+  // Init TermTbl
+  g_TermTable = NULL;
   g_TermTable = (TERM_TABLE*)malloc(sizeof(TERM_TABLE)*(g_maxterm_cnt+1));
   if( g_TermTable == NULL)
   {
-      ulog(_ERROR_,  "[%s] malloc() failed : Agent Local Table : errno = %d", __FUNCTION__, errno);
-      exit(-1);
+    ulog(_ERROR_,  "[%s] malloc() failed : Agent Local Table : errno = %d", __FUNCTION__, errno);
+    exit(-1);
   }
   memset(g_TermTable, 0x00, sizeof(TERM_TABLE)*(g_maxterm_cnt));
   for(i=0; i<g_maxterm_cnt; i++)
   {
-      func_AClearTable(i);
+    func_AClearTable(i);
   }
 
 
-	// Get SessionInfo - AutoDisCnt
+  // Get SessionInfo - AutoDisCnt
   rc = roReadConfigInt(  NULL, "SessionInfo", "AutoDisCnt", &g_AutoDisCnt);
   if ( rc < 0 )
   {

@@ -1,87 +1,87 @@
 #include "tcp_bok.h"
 
 int CF_DecSndRMP(int bufkind, unsigned char** ppFrame,
-                    int* pBufLen, int* pFrameLen,
-                    char SrcSvc[64],int Srcpidx,
-                    char* callback_name,
-                    long* info1, long* info2)
+    int* pBufLen, int* pFrameLen,
+    char SrcSvc[64],int Srcpidx,
+    char* callback_name,
+    long* info1, long* info2)
 {
-	int rc;
-    unsigned char* in = *ppFrame;
-    unsigned char* outbuf = NULL;
+  int rc;
+  unsigned char* in = *ppFrame;
+  unsigned char* outbuf = NULL;
 
-    int inlen = *pFrameLen;
-    int outlen = 0;
-    int msg_len = 0;
-    int offset=0;
+  int inlen = *pFrameLen;
+  int outlen = 0;
+  int msg_len = 0;
+  int offset=0;
 
-	// 20200408 : Encrypt 안 할 경우
-	if( g_Encrypt_Flag == 0 ) {
-		ulog( _WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen );
+  // 20200408 : Encrypt 안 할 경우
+  if( g_Encrypt_Flag == 0 ) {
+    ulog( _WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen );
 
-		/* call rmp action */
-		rc = rmp_MessageProc( "RCVMSG_PLAIN", 0, (unsigned char*)in, inlen, 0, 0 );
-		if( rc < 0 )
-		{
-			ulog( _ERROR_, "Send Fail. RMP 호출 실패 (rc:%d/len:%d)", rc, inlen );
-			return RC_DROP_PROC_NOREPLACE;
-		}
-
-		return RC_NEXT_ACTION;
-	}
-
-    ulog( _FLOW_, "[로그정보] ONLY Decrypt call data (%.10s...) len=%d", in, inlen );
-
-	if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
-		// 0 : BOK     (국고)
-		offset = 4;
-	} else {
-		// 1 : NEW BOK (신한은망)
-
-		BOK_COMMON_STR* pComm = (BOK_COMMON_STR*)in;
-		if( pComm->enc_yn == 'Y' ) {
-			// 공통부의 ID부터 암호화되어 있음
-			offset = 168;
-		} else {
-			// 개별부 길이(4)제외한 부분 암호화되어 있음
-			offset = SIZE_BOK_COMMON_STR + 4;
-		}
-	}
-
-	if( inlen <= offset ){
-    	ulog( _FLOW_, "No need to Decrypt : inlen(%d), offset(%d)", inlen, offset );
-
-    	return RC_DROP_PROC_NOREPLACE;
-	}
-
-	memset(g_DecryptBuf, 0x00, gi_ApDataBufAllocSize);
-	rc = INL_Decrypt(g_server_ctx, in+offset, inlen-offset, &outbuf, &outlen);
-    if( rc != 0 )
+    /* call rmp action */
+    rc = rmp_MessageProc( "RCVMSG_PLAIN", 0, (unsigned char*)in, inlen, 0, 0 );
+    if( rc < 0 )
     {
-        ulog( _ERROR_, "[장애로그] Decrypt error (%d)", rc );
-		if( outbuf != NULL ) INL_Free_Buf( outbuf);
-
-        return RC_DROP_PROC_NOREPLACE;
+      ulog( _ERROR_, "Send Fail. RMP 호출 실패 (rc:%d/len:%d)", rc, inlen );
+      return RC_DROP_PROC_NOREPLACE;
     }
 
-    ulog( _FLOW_, "[로그정보] CHECK SIZE : buffer size(%d) outlen(%d) ", *pBufLen, outlen );
-
-	if( offset > 0 ) {
-		memcpy(g_DecryptBuf, in, offset);
-	}
-	memcpy(g_DecryptBuf+offset, outbuf, outlen);
-
-	if( outbuf != NULL ) INL_Free_Buf( outbuf);
-
-	msg_len = outlen+offset; 
-
-	/* call rmp action */
-	rc = rmp_MessageProc( "RCVMSG_PLAIN", 0, (unsigned char*)g_DecryptBuf, msg_len, 0, 0 );
-	if( rc < 0 )
-	{
-		ulog( _ERROR_, "Send Fail. CLIENT HandShake Init Msg. RMP 호출 실패 (rc:%d/len:%d)", rc, msg_len );
-    	return RC_DROP_PROC_NOREPLACE;
-	}
-
     return RC_NEXT_ACTION;
+  }
+
+  ulog( _FLOW_, "[로그정보] ONLY Decrypt call data (%.10s...) len=%d", in, inlen );
+
+  if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
+    // 0 : BOK     (국고)
+    offset = 4;
+  } else {
+    // 1 : NEW BOK (신한은망)
+
+    BOK_COMMON_STR* pComm = (BOK_COMMON_STR*)in;
+    if( pComm->enc_yn == 'Y' ) {
+      // 공통부의 ID부터 암호화되어 있음
+      offset = 168;
+    } else {
+      // 개별부 길이(4)제외한 부분 암호화되어 있음
+      offset = SIZE_BOK_COMMON_STR + 4;
+    }
+  }
+
+  if( inlen <= offset ){
+    ulog( _FLOW_, "No need to Decrypt : inlen(%d), offset(%d)", inlen, offset );
+
+    return RC_DROP_PROC_NOREPLACE;
+  }
+
+  memset(g_DecryptBuf, 0x00, gi_ApDataBufAllocSize);
+  rc = INL_Decrypt(g_server_ctx, in+offset, inlen-offset, &outbuf, &outlen);
+  if( rc != 0 )
+  {
+    ulog( _ERROR_, "[장애로그] Decrypt error (%d)", rc );
+    if( outbuf != NULL ) INL_Free_Buf( outbuf);
+
+    return RC_DROP_PROC_NOREPLACE;
+  }
+
+  ulog( _FLOW_, "[로그정보] CHECK SIZE : buffer size(%d) outlen(%d) ", *pBufLen, outlen );
+
+  if( offset > 0 ) {
+    memcpy(g_DecryptBuf, in, offset);
+  }
+  memcpy(g_DecryptBuf+offset, outbuf, outlen);
+
+  if( outbuf != NULL ) INL_Free_Buf( outbuf);
+
+  msg_len = outlen+offset; 
+
+  /* call rmp action */
+  rc = rmp_MessageProc( "RCVMSG_PLAIN", 0, (unsigned char*)g_DecryptBuf, msg_len, 0, 0 );
+  if( rc < 0 )
+  {
+    ulog( _ERROR_, "Send Fail. CLIENT HandShake Init Msg. RMP 호출 실패 (rc:%d/len:%d)", rc, msg_len );
+    return RC_DROP_PROC_NOREPLACE;
+  }
+
+  return RC_NEXT_ACTION;
 }
