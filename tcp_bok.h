@@ -1,8 +1,7 @@
 #ifndef __TCP_BOK_H__
 #define __TCP_BOK_H__
 
-// TODO: remove this line in other than linux environment
-#define _LINUX 
+#include "iso_xml.h"
 
 #include "tplib/atmi.h"
 #include "tplib/ulog.h"
@@ -19,7 +18,6 @@
 #include "tcp_bok_var.h"
 
 #include "usr_ccl/ccl_usr.h"
-
 
 
 #endif

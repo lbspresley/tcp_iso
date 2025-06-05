@@ -10,7 +10,9 @@
                 "/home/bhlee/work/src/cruz/CruzLink/inc",
                 "/home/bhlee/work/src/cruz/CruzLink/work/inc/adaptor/tcp_type/tcp_com"
             ],
-            "defines": [],
+            "defines": [
+                "_LINUX"
+            ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
             "intelliSenseMode": "linux-gcc-x64"
