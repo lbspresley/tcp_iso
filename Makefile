@@ -38,9 +38,13 @@ SRCS1	+= db_tmp.c
 
 SRCS1	+= INL_tmp.c
 
+
 # Module Name 
 DEST1	= tcp_iso
 SVC1	= TCP_ISO
+
+SRCS2	= test_iso.c iso_xml.c
+DEST2	= test_iso
 
 include $(ROME_HOME)/work/rome.mkrule
 
@@ -49,7 +53,8 @@ include $(ROME_HOME)/work/rome.mkrule
 #INISAFENET_HOME=$(HOME)/INITEC/INISAFE_HP
 INCS	+= -I$(CL_HOME)/inc
 INCS	+= -I$(CL_HOME)/work/inc/adaptor/tcp_type/tcp_com
-INCS    += -I$(INISAFENET_HOME)/include 
+INCS  += -I$(INISAFENET_HOME)/include 
+INCS  += -I$(INISAFENET_HOME)/include 
 
 #PROC_INC+= include=$(ROME_HOME)/work/inc/usrinc/rsof
 #PROC_INC+= include=$(CL_HOME)/src/inc
@@ -64,6 +69,7 @@ COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
 COMMON_LIB += -ltgl_s_nh
 COMMON_LIB += -lsmt
 COMMON_LIB += -ltpucs -ltxnon
+COMMON_LIB += -lxml2
 #COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI
 #COMMON_LIB += -lccl
 #COMMON_LIB += -L$(CL_HOME)/lib -lclcmn -ldbcmn -lucmn -lclcfg
