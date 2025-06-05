@@ -47,7 +47,7 @@ include $(ROME_HOME)/work/rome.mkrule
 
 # Include Path
 #INISAFENET_HOME=$(HOME)/INITEC/INISAFE_HP
-INCS	+= -I$(CL_HOME)/src/inc
+INCS	+= -I$(CL_HOME)/inc
 INCS	+= -I$(CL_HOME)/work/inc/adaptor/tcp_type/tcp_com
 INCS    += -I$(INISAFENET_HOME)/include 
 
