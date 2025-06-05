@@ -8,7 +8,8 @@
                 "/home/bhlee/work/src/cruz/CruzTP/tome/work/inc",
                 "/home/bhlee/work/src/cruz/initech/inisafenet/include",
                 "/home/bhlee/work/src/cruz/CruzLink/inc",
-                "/home/bhlee/work/src/cruz/CruzLink/work/inc/adaptor/tcp_type/tcp_com"
+                "/home/bhlee/work/src/cruz/CruzLink/work/inc/adaptor/tcp_type/tcp_com",
+                "/usr/include/libxml2"
             ],
             "defines": [
                 "_LINUX"
