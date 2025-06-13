@@ -60,12 +60,25 @@ Security Handshake
 char* build_xml(xmlDocPtr doc)
 {
     unsigned char* xml = NULL;
-    (void) xmlDocDumpMemory(doc, &xml, 0);
+    int size = 0;
+    xmlDocDumpFormatMemory(doc, &xml, &size, 1);
+
+     // XML 선언 제거
+    if (xml != NULL) {
+        char* xml_decl = strstr((char*)xml, "<?xml");
+        if (xml_decl != NULL) {
+            char* content_start = strstr(xml_decl, "?>");
+            if (content_start != NULL) {
+                content_start += 2; // "?>" 다음으로 이동
+                memmove(xml, content_start, strlen(content_start) + 1);
+            }
+        }
+    }
     return (char*)xml;
 }
 
 // add root node to xml
-xmlDocPtr add_root_node(xmlDocPtr doc, const char* root_name, const char* namespace) {
+xmlDocPtr add_root_node(xmlDocPtr doc, const char* root_name, const char* namespace, const char* namespace_prefix) {
     if (!doc || !root_name) {
         printf("Invalid parameters\n");
         return NULL;
@@ -81,7 +94,7 @@ xmlDocPtr add_root_node(xmlDocPtr doc, const char* root_name, const char* namesp
 
     // 네임스페이스 설정
     if (namespace) {
-        xmlNsPtr ns = xmlNewNs(root, (const xmlChar*)namespace, NULL);
+        xmlNsPtr ns = xmlNewNs(root, (const xmlChar*)namespace, (const xmlChar*)namespace_prefix);
         if (!ns) {
             printf("Failed to create namespace\n");
             xmlFreeNode(root);
@@ -96,7 +109,7 @@ xmlDocPtr add_root_node(xmlDocPtr doc, const char* root_name, const char* namesp
     return doc;
 }
 
-xmlDocPtr add_namespace(xmlDocPtr doc, char* namespace)
+xmlDocPtr add_namespace(xmlDocPtr doc, char* namespace, char* namespace_prefix)
 {
     if (!doc || !namespace) {
         printf("Invalid parameters\n");
@@ -109,7 +122,7 @@ xmlDocPtr add_namespace(xmlDocPtr doc, char* namespace)
         return NULL;
     }
 
-    xmlNsPtr ns = xmlNewNs(root, (const xmlChar*)namespace, NULL);
+    xmlNsPtr ns = xmlNewNs(root, (const xmlChar*)namespace, (const xmlChar*)namespace_prefix);
     if (!ns) {
         printf("Failed to create namespace\n");
         return NULL;
@@ -119,7 +132,7 @@ xmlDocPtr add_namespace(xmlDocPtr doc, char* namespace)
     return doc;
 }
 
-xmlDocPtr add_node(xmlDocPtr doc, char* node, char* value, char* namespace)
+xmlDocPtr add_node(xmlDocPtr doc, char* node, char* value, char* namespace, char* namespace_prefix)
 {
     if (!doc || !node) {
         printf("Invalid parameters\n");
@@ -139,7 +152,7 @@ xmlDocPtr add_node(xmlDocPtr doc, char* node, char* value, char* namespace)
     }
 
     if (namespace) {
-        xmlNsPtr ns = xmlNewNs(new_node, (const xmlChar*)namespace, NULL);
+        xmlNsPtr ns = xmlNewNs(new_node, (const xmlChar*)namespace, (const xmlChar*)namespace_prefix);
         if (!ns) {
             printf("Failed to create namespace\n");
             xmlFreeNode(new_node);
@@ -325,11 +338,46 @@ xmlDocPtr add_node_xpath(xmlDocPtr doc, const char* xpath, const char* node_name
     return doc;
 }
 
-xmlDocPtr add_node_with_value(xmlDocPtr doc, const char* parent_xpath, const char* node_name, const char* node_value) {
-    if (!doc || !parent_xpath || !node_name) {
+void change_local_name(char* node_name, char* parent_node) {
+    // node_name: /A/B
+    // parent_node: /*[local-name()='A']/*[local-name()='B']
+
+    //strcpy(parent_node, node_name);
+    //return;
+
+    if (!node_name || !parent_node) {
+        printf("Invalid parameters\n");
+        return;
+    }
+
+    // remove / from node_name
+    char node_name_local[512] = "";
+    char *temp1,*temp2=node_name;
+    parent_node[0]=0;
+
+    do {
+        temp1 = strstr(temp2, "/");
+        if (!temp1) { break; }
+        temp1++;
+        temp2 = strstr(temp1, "/");
+        if (!temp2) { temp2 = node_name + strlen(node_name); }
+
+        sprintf(node_name_local, "/*[local-name()='%.*s']", (int)(temp2 - temp1), temp1);
+        strcat(parent_node, node_name_local);
+        temp1 = temp2+1;
+    } while (temp1 && temp2) ;
+
+    return;
+}
+
+xmlDocPtr add_node_with_value(xmlDocPtr doc, const char* parent_xpath_param, const char* node_name, const char* node_value, const char* namespace, const char* namespace_prefix, int exclude_namespace) {
+    if (!doc || !parent_xpath_param || !node_name) {
         printf("Invalid parameters\n");
         return NULL;
     }
+
+    static char __parent_xpath[512] = "";
+    change_local_name(parent_xpath_param, __parent_xpath);
 
     xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
     if (!xpathCtx) {
@@ -337,15 +385,15 @@ xmlDocPtr add_node_with_value(xmlDocPtr doc, const char* parent_xpath, const cha
         return NULL;
     }
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)parent_xpath, xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)__parent_xpath, xpathCtx);
     if (!xpathObj) {
-        printf("Failed to evaluate XPath expression: %s\n", parent_xpath);
+        printf("Failed to evaluate XPath expression: %s\n", __parent_xpath);
         xmlXPathFreeContext(xpathCtx);
         return NULL;
     }
 
     if (xpathObj->type != XPATH_NODESET || xpathObj->nodesetval->nodeNr == 0) {
-        printf("No matching nodes found for XPath: %s\n", parent_xpath);
+        printf("No matching nodes found for XPath: %s\n", __parent_xpath);
         xmlXPathFreeObject(xpathObj);
         xmlXPathFreeContext(xpathCtx);
         return NULL;
@@ -354,7 +402,7 @@ xmlDocPtr add_node_with_value(xmlDocPtr doc, const char* parent_xpath, const cha
     xmlNodePtr parent = xpathObj->nodesetval->nodeTab[0];
     
     // 자식 노드 생성
-    xmlNodePtr new_node = xmlNewChild(parent, NULL, (const xmlChar*)node_name, NULL);
+    xmlNodePtr new_node = xmlNewNode(NULL, (const xmlChar*)node_name);
     if (!new_node) {
         printf("Failed to create new node: %s\n", node_name);
         xmlXPathFreeObject(xpathObj);
@@ -362,10 +410,40 @@ xmlDocPtr add_node_with_value(xmlDocPtr doc, const char* parent_xpath, const cha
         return NULL;
     }
 
+    // 네임스페이스 설정
+    if (namespace) {
+        if (exclude_namespace) {
+            // 네임스페이스를 제외하기 위해 NULL 네임스페이스 설정
+            xmlNsPtr ns = xmlNewNs(new_node, NULL, NULL);
+            if (!ns) {
+                printf("Failed to create namespace\n");
+                xmlFreeNode(new_node);
+                xmlXPathFreeObject(xpathObj);
+                xmlXPathFreeContext(xpathCtx);
+                return NULL;
+            }
+            xmlSetNs(new_node, ns);
+        } else {
+            // 일반적인 네임스페이스 설정
+            xmlNsPtr ns = xmlNewNs(new_node, (const xmlChar*)namespace, (const xmlChar*)namespace_prefix);
+            if (!ns) {
+                printf("Failed to create namespace\n");
+                xmlFreeNode(new_node);
+                xmlXPathFreeObject(xpathObj);
+                xmlXPathFreeContext(xpathCtx);
+                return NULL;
+            }
+            xmlSetNs(new_node, ns);
+        }
+    }
+
     // value 설정
     if (node_value) {
         xmlNodeSetContent(new_node, (const xmlChar*)node_value);
     }
+
+    // 부모 노드에 추가
+    xmlAddChild(parent, new_node);
 
     xmlXPathFreeObject(xpathObj);
     xmlXPathFreeContext(xpathCtx);
