@@ -1,4 +1,5 @@
 #include "tcp_bok.h"
+#include "iso_xml.h"
 
 int parse_xml(char* xml, char* tag, char* value)
 {
