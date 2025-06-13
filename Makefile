@@ -37,6 +37,7 @@ SRCS1+= Polling_NF.c lf_Snd_Poll_NF.c CF_RcvPoll_NF.c CF_DecSndRMP.c
 SRCS1	+= db_tmp.c
 
 SRCS1	+= INL_tmp.c
+SRCS1	+= trs_req.c
 
 
 # Module Name 
@@ -70,6 +71,7 @@ COMMON_LIB += -ltgl_s_nh
 COMMON_LIB += -lsmt
 COMMON_LIB += -ltpucs -ltxnon
 COMMON_LIB += -lxml2
+COMMON_LIB += -lcurl
 #COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI
 #COMMON_LIB += -lccl
 #COMMON_LIB += -L$(CL_HOME)/lib -lclcmn -ldbcmn -lucmn -lclcfg
