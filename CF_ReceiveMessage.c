@@ -6,9 +6,10 @@ int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
     char* callback_name,
     long* info1, long* info2)
 {
+  /*
+    1. SrcSvc : "CLI" or "SVR"
+  */
   int		rc;
-
-  BOK_NF_SKEY_STR*			l_pRcv;
   char*	in				= (char*) *ppFrame;
 
 
