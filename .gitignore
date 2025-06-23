@@ -3,3 +3,5 @@ tags
 svctab_tcp_iso.c
 tcp_iso
 test_iso
+test_regex
+validate_xml
