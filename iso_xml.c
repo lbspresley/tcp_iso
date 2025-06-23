@@ -339,7 +339,7 @@ xmlDocPtr add_node_xpath(xmlDocPtr doc, const char* xpath, const char* node_name
     return doc;
 }
 
-void change_local_name(char* node_name, char* parent_node) {
+void change_local_name(const char* node_name, char* parent_node) {
     // node_name: /A/B
     // parent_node: /*[local-name()='A']/*[local-name()='B']
 
@@ -353,7 +353,7 @@ void change_local_name(char* node_name, char* parent_node) {
 
     // remove / from node_name
     char node_name_local[512] = "";
-    char *temp1,*temp2=node_name;
+    const char *temp1, *temp2=node_name;
     parent_node[0]=0;
 
     do {

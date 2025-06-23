@@ -10,22 +10,8 @@ int CF_APortConnect(int Type, long* pInfo);
 int	CF_ACloseSession(int Type, long* pInfo);
 
 int CF_StopPoll(int Type, long* pInfo);
-//int	CF_SendPollReq(int Type, long* pInfo);
-//int	CF_PollTimeout(int Type, long* pInfo);
-
 int	CF_DisCntSession(int Type, long* pInfo);
-#if 0
-int CF_RecvPollRsp(int bufkind, unsigned char** ppFrame,
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
-int CF_DelInnerFrame(int bufkind, unsigned char** ppFrame,
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
-#endif
+
 int CF_Encrypt(int bufkind, unsigned char** ppFrame,
     int* pBufLen, int* pFrameLen,
     char SrcSvc[64],int Srcpidx,
@@ -62,40 +48,7 @@ int CF_ImgLogRecv(int bufkind, unsigned char** ppFrame,
     char SrcSvc[64],int Srcpidx,
     char* callback_name,
     long* info1, long* info2);
-
-
 #endif
-
-int	CF_RcvSKeyMsg_NF(int bufkind, unsigned char** ppFrame,
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
-
-int CF_GetPassWd_NF(int bufkind, unsigned char** ppFrame,
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
-
-// for 국고업무  
-int CF_DecSndRMP(int bufkind, unsigned char** ppFrame, 
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
-
-int CF_RcvPoll(int bufkind, unsigned char** ppFrame, 
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
-
-int CF_RcvPoll_NF(int bufkind, unsigned char** ppFrame, 
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
 
 int usermain(int argc, char* argv[])
 {
@@ -150,32 +103,16 @@ void tgmCallbackResiter()
   tgl_SetupCallback("CF_APortConnect", CF_APortConnect);
   tgl_SetupCallback("CF_ACloseSession", CF_ACloseSession);
   tgl_SetupCallback("CF_DisCntSession", CF_DisCntSession);
-  //tgl_SetupCallback("CF_PollTimeout", CF_PollTimeout);
-  //tgl_SetupCallback("CF_SendPollReq", CF_SendPollReq);
-  tgl_SetupCallback("CF_StopPoll", CF_StopPoll);
 
 
   /* RMP Callback Function Register */
-  //rmp_SetupCallback("CF_RecvPollRsp", CF_RecvPollRsp);
-  rmp_SetupCallback("CF_RcvSKeyMsg", CF_RcvSKeyMsg);
-
-  //	rmp_SetupCallback("CF_DelInnerFrame", CF_DelInnerFrame);
   rmp_SetupCallback("CF_Encrypt", CF_Encrypt);
   rmp_SetupCallback("CF_Decrypt", CF_Decrypt);
-  rmp_SetupCallback("CF_GetPassWd", CF_GetPassWd);
   rmp_SetupCallback("CF_ProcLogErr", CF_ProcLogErr);
   rmp_SetupCallback("CF_ImgLogSend", CF_ImgLogSend);
   rmp_SetupCallback("CF_ImgLogRecv", CF_ImgLogRecv);
-  //rmp_SetupCallback("CF_NULL2Space", CF_NULL2Space);
-
-  rmp_SetupCallback("CF_RcvSKeyMsg_NF", CF_RcvSKeyMsg_NF);
-  rmp_SetupCallback("CF_GetPassWd_NF", CF_GetPassWd_NF);
+  
 #endif
-
-  // for 국고업무                                     
-  rmp_SetupCallback("CF_DecSndRMP", CF_DecSndRMP);    
-  rmp_SetupCallback("CF_RcvPoll", CF_RcvPoll);        
-  rmp_SetupCallback("CF_RcvPoll_NF", CF_RcvPoll_NF);  
 
   return;
 }

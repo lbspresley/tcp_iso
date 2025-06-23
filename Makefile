@@ -14,10 +14,10 @@ SRCS1	= tcp_bok.c \
 		CF_Encrypt.c \
 		CF_Decrypt.c	\
 		CF_ProcLogErr.c \
-		CF_GetPassWd.c \
 		CF_ImgLogRecv.c \
 		CF_ImgLogSend.c \
 		$(SVCTAB1)
+SRCS1+= CF_StopPoll.c
 
 #SRCS1+= lf_Rcv_000000001_NF.c lf_Rcv_000000002_NF.c lf_Rcv_000000003_NF.c \
 		#lf_Rcv_000000004_NF.c lf_Rcv_000000005_NF.c lf_Snd_000000001_NF.c 
@@ -31,7 +31,7 @@ SRCS1	+= db_tmp.c
 
 SRCS1	+= INL_tmp.c
 SRCS1	+= trs_req.c
-
+SRCS1	+= cli_session_key.c iso_utils.c
 
 # Module Name 
 DEST1	= tcp_iso
@@ -63,7 +63,7 @@ COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
 COMMON_LIB += -ltgl_s_nh
 COMMON_LIB += -lsmt
 COMMON_LIB += -ltpucs -ltxnon
-COMMON_LIB += -lxml2 -liconv
+COMMON_LIB += -lxml2
 COMMON_LIB += -lcurl
 #COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI
 #COMMON_LIB += -lccl

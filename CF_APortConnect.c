@@ -205,11 +205,7 @@ int CF_APortConnect(int Type, long* pInfo)
   }
 
   /* CHANGE SESSION KEY : START  */
-  if( strcmp( gc_BizCode, "BOK" ) == 0 ) {  
-    lf_Snd_000000001_NF(strIP, PeerPort, LocalPort);
-  } else {
-    lf_Snd_000000001(strIP, PeerPort, LocalPort);
-  }
+  cli_send_1(strIP, PeerPort, LocalPort);
 
   return RC_NEXT_ACTION;
 }

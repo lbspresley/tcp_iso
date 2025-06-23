@@ -53,7 +53,7 @@ int cli_send_1(char* PeerIP, char* PeerPort, char* LocalPort)
 
   /* 송신 메시지 : 세션키 교환 요구(1) */
   pMsg = make_sess_key_msg(1, (char*)pSKeyOut);
-  msg_len = strlen(pMsg);
+  msg_len = strlen((char*)pMsg);
 
   if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
 
@@ -74,7 +74,6 @@ int cli_recv_2(char* msg, int len)
 {
   int rc;
 
-  int		in_len; 
   int		out_len; 
   int		msg_len;    /* tpacall 송신 메시지 길이 */
 
@@ -83,19 +82,20 @@ int cli_recv_2(char* msg, int len)
 
   unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut;
-  char			tmpstr[32];
 
+  /* 사용하지 않는 매개변수 경고 제거 */
+  (void)len;
 
   ulog(_FLOW_, "[로그정보] Client 세션키 교환 통보(2) 수신\n%s", msg);
 
-  char* pKey = get_sess_key(msg);
+  unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
     ulog(_ERROR_, "[장애정보] 세션키를 찾을 수 없습니다.");
     return -2;
   }
 
   /* 암호화 정보 취득 */
-  rc = INL_Handshake_Update(g_client_ctx, pKey, strlen(pKey), &pSKeyOut, &out_len);
+  rc = INL_Handshake_Update(g_client_ctx, pKey, strlen((char*)pKey), &pSKeyOut, &out_len);
   if( rc != 0 ) { 
     ulog(_ERROR_, "[장애정보] INL_Handshake_Update Failed\n" 
         "[상세정보] errcode[%d], msg[%s]" 
@@ -110,7 +110,7 @@ int cli_recv_2(char* msg, int len)
 
   /* 송신 메시지 : 세션키 교환 요구(3)*/
   pMsg = make_sess_key_msg(3, (char*)pSKeyOut);
-  msg_len = strlen(pMsg);
+  msg_len = strlen((char*)pMsg);
 
   if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
 
@@ -133,7 +133,6 @@ int cli_recv_4(char* msg, int len)
 {
   int rc;
 
-  int		in_len; 
   int		out_len; 
   int		msg_len;    /* tpacall 송신 메시지 길이 */
 
@@ -142,19 +141,20 @@ int cli_recv_4(char* msg, int len)
 
   unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut;
-  char			tmpstr[32];
 
+  /* 사용하지 않는 매개변수 경고 제거 */
+  (void)len;
 
   ulog(_FLOW_, "[로그정보] Client 세션키 교환 통보(4) 수신\n%s", msg);
 
-  char* pKey = get_sess_key(msg);
+  unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
     ulog(_ERROR_, "[장애정보] 세션키를 찾을 수 없습니다.");
     return -2;
   }
 
   /* 암호화 정보 취득 */
-  rc = INL_Handshake_Final(g_client_ctx, pKey, strlen(pKey), &pSKeyOut, &out_len);
+  rc = INL_Handshake_Final(g_client_ctx, pKey, strlen((char*)pKey), &pSKeyOut, &out_len);
   if( rc != 0 ) { 
     ulog(_ERROR_, "[장애정보] INL_Handshake_Final Failed\n" 
         "[상세정보] errcode[%d], msg[%s]" 
@@ -169,7 +169,7 @@ int cli_recv_4(char* msg, int len)
 
   /* 송신 메시지 : 세션키 교환 요구(5)*/
   pMsg = make_sess_key_msg(5, (char*)pSKeyOut);
-  msg_len = strlen(pMsg);
+  msg_len = strlen((char*)pMsg);
 
   if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
 

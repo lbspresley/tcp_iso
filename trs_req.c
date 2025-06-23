@@ -15,7 +15,8 @@ struct http_response {
 };
 
 // HTTP 응답 데이터를 저장하는 콜백 함수
-static size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
+static size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp) 
+{
     size_t realsize = size * nmemb;
     struct http_response *resp = (struct http_response *)userp;
 
@@ -33,7 +34,8 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
     return realsize;
 }
 
-int init_trs_req(char *trs_ip, int trs_port) {
+int init_trs_req(char *trs_ip, int trs_port) 
+{
     g_trs_ip = trs_ip;
     g_trs_port = trs_port;
     g_tcp_fd = tcp_connect(g_trs_ip, g_trs_port);
@@ -55,7 +57,8 @@ int init_trs_req(char *trs_ip, int trs_port) {
     return 0;
 }
 
-int close_trs_req() {
+int close_trs_req() 
+{
     if (g_tcp_fd != -1) {
         close(g_tcp_fd);
         g_tcp_fd = -1;
@@ -63,8 +66,9 @@ int close_trs_req() {
     return 0;
 }
 
-int req_trs(char *trs_id, char *req, int len, char *resp, int resp_len) {
-    char len_str[REQ_LEN_LEN+1];
+int req_trs(char *trs_id, char *req, int len, char *resp, int resp_len) 
+{
+    char len_str[REQ_LEN_LEN*2];
     int req_len = 0;
 
     if (g_tcp_fd == -1) {
@@ -74,7 +78,7 @@ int req_trs(char *trs_id, char *req, int len, char *resp, int resp_len) {
 
     // send request
     req_len = len + PRE_LEN;
-    snprintf(len_str, REQ_LEN_LEN+1, "%08d", req_len);
+    snprintf(len_str, sizeof(len_str), "%08d", req_len);
     
     memset(g_trs_req, 0x20, PRE_LEN);
     memcpy(g_trs_req->req_len, len_str, REQ_LEN_LEN);
@@ -178,7 +182,8 @@ int tcp_connect(const char* ip, int port)
 }
 
 int http_request(const char *url, const char *method, const char *headers[], 
-                const char *body, char *response, int response_size) {
+                const char *body, char *response, int response_size) 
+{
     CURL *curl;
     CURLcode res;
     struct http_response resp = {0};
@@ -277,7 +282,8 @@ int http_request(const char *url, const char *method, const char *headers[],
 }
 
 // HTTP 요청 초기화 함수
-int init_http_request() {
+int init_http_request() 
+{
     CURLcode res = curl_global_init(CURL_GLOBAL_ALL);
     if (res != CURLE_OK) {
         ulog(_ERROR_, "Failed to initialize CURL global: %s", curl_easy_strerror(res));
@@ -287,6 +293,7 @@ int init_http_request() {
 }
 
 // HTTP 요청 정리 함수
-void cleanup_http_request() {
+void cleanup_http_request() 
+{
     curl_global_cleanup();
 }

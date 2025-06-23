@@ -1,29 +1,29 @@
 
 #include "tcp_bok.h"
 
-char* make_network_msg()
+unsigned char* make_network_msg()
 {
-  static char _network_msg[1024];
+  static unsigned char _network_msg[1024];
 
   // date time
   char timestr[32];
   get_iso_datetime(timestr);
 
-  sprintf(_network_msg, NETWORK_TEMPLATE, gc_org_cd, timestr);
+  sprintf((char*)_network_msg, NETWORK_TEMPLATE, gc_org_cd, timestr);
   return _network_msg;
 }
 
-char* make_sess_key_msg(int step, char* key)
+unsigned char* make_sess_key_msg(int step, char* key)
 {
-  static char _sess_key_msg[1024];
+  static unsigned char _sess_key_msg[1024];
 
-  sprintf(_sess_key_msg, SKEY_TEMPLATE, step, key);
+  sprintf((char*)_sess_key_msg, SKEY_TEMPLATE, step, key);
   return _sess_key_msg;
 }
 
-char* get_tag_value(char* msg, char* tag)
+unsigned char* get_tag_value(char* msg, char* tag)
 {
-  static char _tag_value[1024];
+  static unsigned char _tag_value[1024];
 
   char startTag[256];
   char endTag[256];
@@ -48,17 +48,17 @@ char* get_tag_value(char* msg, char* tag)
 /* 
  * 세션키를 추출
  */
-char* get_sess_key(char* msg)
+unsigned char* get_sess_key(char* msg)
 {
-  return get_tag_value(msg, "Key");
+  return (unsigned char*)get_tag_value(msg, "Key");
 }
 
 /* 
  * 트랜잭션코드를 추출
  */
-char* get_tr_cd(char* msg)
+unsigned char* get_tr_cd(char* msg)
 {
-  return get_tag_value(msg, "TrCd");
+  return (unsigned char*)get_tag_value(msg, "TrCd");
 }
 
 /*
@@ -67,6 +67,7 @@ char* get_tr_cd(char* msg)
 void get_iso_datetime(char timestr[32])
 {
   char outstr[200];
+  char local_timestr[40];
   struct tm *pTm;
   struct timeval tv;
   int milliseconds ; 
@@ -74,12 +75,13 @@ void get_iso_datetime(char timestr[32])
   gettimeofday(&tv, NULL);
   pTm = localtime(&tv.tv_sec);
 
-  strftime(outstr, sizeof(outstr), "%Y-%m-%dT%H:%M:%S", pTm);
+  strftime(local_timestr, sizeof(local_timestr), "%Y-%m-%dT%H:%M:%S", pTm);
 
   milliseconds = tv.tv_usec / 1000;
-  sprintf(outstr, "%s.%03d", outstr, milliseconds);
+  sprintf(outstr, "%s.%03d", local_timestr, milliseconds);
+  strcat(outstr, "+09:00");
   strcpy(timestr, outstr);
-  strcat(timestr, "+09:00");
+
   return;
 }
 
@@ -102,9 +104,8 @@ void get_iso_datetime_old(char timestr[32])
 }
 
 // 문자셋 변환
-size_t charset_convert(int encode_type, char* msg, size_t msg_len, char* out_msg, size_t *out_msg_len )
+size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
 {
-  static char _converted_msg[MAX_MSG_LEN];
   char from_charset[32];
   char to_charset[32];
 
@@ -121,16 +122,17 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, char* out_msg
   // UTF-8 to EUC-KR
   iconv_t cd = iconv_open(from_charset, to_charset);
   if (cd == (iconv_t)-1) {
-    return msg;
+    perror("iconv");
+    return -1;
   }
 
   char* pIn = msg;
-  char* pOut = out_msg;
+  char* pOut = (char*)out_msg;
   size_t inLen = msg_len;
   size_t outLen = iconv(cd, &pIn, &inLen, &pOut, out_msg_len);
   if (outLen == (size_t)-1) {
     perror("iconv");
-    return -1;
+    return -2;
   }
 
   *out_msg_len = outLen;
@@ -140,20 +142,20 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, char* out_msg
   return 0;
 }
 
-char* convert_to_utf8(char* msg, size_t msg_len, size_t *out_msg_len )
+unsigned char* convert_to_utf8(char* msg, size_t msg_len, size_t *out_msg_len )
 {
-  static char _converted_msg[MAX_MSG_LEN];
+  static unsigned char _utf8_converted_msg[MAX_MSG_LEN];
 
-  size_t out_len = charset_convert(0, msg, msg_len, _converted_msg, out_msg_len);
+  size_t out_len = charset_convert(0, msg, msg_len, _utf8_converted_msg, out_msg_len);
   *out_msg_len = out_len;
-  return _converted_msg;
+  return _utf8_converted_msg;
 }
 
-char* convert_to_euc_kr(char* msg, size_t msg_len, size_t *out_msg_len )
+unsigned char* convert_to_euc_kr(char* msg, size_t msg_len, size_t *out_msg_len )
 {
-  static char _converted_msg[MAX_MSG_LEN];
+  static unsigned char _euckr_converted_msg[MAX_MSG_LEN];
 
-  size_t out_len = charset_convert(1, msg, msg_len, _converted_msg, out_msg_len);
+  size_t out_len = charset_convert(1, msg, msg_len, _euckr_converted_msg, out_msg_len);
   *out_msg_len = out_len;
-  return _converted_msg;
+  return _euckr_converted_msg;
 }

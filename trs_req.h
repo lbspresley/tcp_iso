@@ -1,6 +1,10 @@
 #ifndef __TRS_REQ_H__
 #define __TRS_REQ_H__
 
+
+int init_trs_req(char *trs_ip, int trs_port);
+int close_trs_req();
+int tcp_connect(const char* ip, int port);
 int req_trs(char *trs_id, char *req, int req_len, char *resp, int resp_len);
 
 #define TRS_ID_LEN 32
