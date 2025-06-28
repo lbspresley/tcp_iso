@@ -21,17 +21,17 @@ void test_parse_bokwire_envelope()
 
     // XPath를 사용한 테스트
     ret = parse_xml_xpath((char*)test_xml, "//TrCd", ret_value);
-    printf("XPath test result: %d\n", ret);
+    printf("\nXPath test result: %d\n", ret);
     printf("TrCd: %s\n", ret_value);
 
     //ret = parse_xml_xpath((char*)test_xml, "//bwh:BokwireHeader/SecurityHandshake/TrCd", ret_value);
     ret = parse_xml_xpath((char*)test_xml, "//SecurityHandshake/TrCd", ret_value);
-    printf("XPath full path result: %d\n", ret);
+    printf("\nXPath full path result: %d\n", ret);
     printf("TrCd: %s\n", ret_value);
 
     // 다른 XPath 테스트
     ret = parse_xml_xpath((char*)test_xml, "//Key", ret_value);
-    printf("XPath test result: %d\n", ret);
+    printf("\nXPath test result: %d\n", ret);
     printf("Key: %s\n", ret_value);
 
     // 잘못된 XML 테스트

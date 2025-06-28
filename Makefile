@@ -46,7 +46,6 @@ include $(ROME_HOME)/work/rome.mkrule
 INCS	+= -I$(CL_HOME)/inc
 INCS	+= -I$(CL_HOME)/work/inc/adaptor/tcp_type/tcp_com
 INCS  += -I$(INISAFENET_HOME)/include 
-INCS  += -I$(INISAFENET_HOME)/include 
 
 PROC_INC += $(INCS:-I%=include=%)
 
