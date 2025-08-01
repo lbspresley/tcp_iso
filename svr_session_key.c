@@ -36,13 +36,20 @@ int svr_recv_1(char* msg, int len)
     return -2;
   }
 
-  rc = INL_Handshake_Init( g_server_ctx, NULL, 0, &pSKeyOut, &out_len);
+  char* pKey = get_sess_key(msg);
+  if(pKey == NULL) {
+    ulog(_ERROR_, "[장애정보] 세션키를 찾을 수 없습니다.");
+    return -3;
+  }
+
+
+  rc = INL_Handshake_Init( g_server_ctx, pKey, strlen(pKey), &pSKeyOut, &out_len);
   if( rc != 0 )
   {
     ulog(_ERROR_, "INL_Handshake_Init SERVER Failed. errcode=%d msg[%s]"
         , rc, INL_ErrorString(rc));
     if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
-    return -3;
+    return -4;
   }	
 
   ulog(_FLOW_, "[로그정보] MSG 000000002 DATA부\n" 
@@ -90,7 +97,7 @@ int svr_recv_3(char* msg, int len)
   char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
     ulog(_ERROR_, "[장애정보] 세션키를 찾을 수 없습니다.");
-    return -2;
+    return -1;
   }
 
   /* 암호화 정보 취득 */
@@ -100,7 +107,7 @@ int svr_recv_3(char* msg, int len)
         "[상세정보] errcode[%d], msg[%s]" 
         , rc, INL_ErrorString(rc) ); 
     if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
-    return -1; 
+    return -2; 
   }
 
   ulog(_FLOW_, "[로그정보] MSG 000000004 DATA부\n" 
@@ -118,7 +125,7 @@ int svr_recv_3(char* msg, int len)
   rc = rmp_MessageProc(g_rmpSvcName, 0, pMsg, msg_len, &Info1, &Info2); 
   if(rc < 0) { 
     ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len ); 
-    return -1;
+    return -3;
   }
 
   return RC_NEXT_ACTION;
@@ -149,7 +156,7 @@ int svr_recv_5(char* msg, int len)
   char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
     ulog(_ERROR_, "[장애정보] 세션키를 찾을 수 없습니다.");
-    return -2;
+    return -1;
   }
 
   /* 암호화 정보 취득 */
@@ -159,7 +166,7 @@ int svr_recv_5(char* msg, int len)
         "[상세정보] errcode[%d], msg[%s]" 
         , rc, INL_ErrorString(rc) ); 
     if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
-    return -1; 
+    return -2; 
   }
 
   if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);

@@ -16,15 +16,14 @@ SRCS1	= tcp_bok.c \
 		CF_ProcLogErr.c \
 		CF_ImgLogRecv.c \
 		CF_ImgLogSend.c \
+		CF_StopPoll.c \
+		trs_req.c \
+		cli_session_key.c \
+		iso_utils.c \
 		$(SVCTAB1)
-SRCS1+= CF_StopPoll.c
 
 #PRCS1	= db_Get_BOK_Inf.pc
-SRCS1	+= db_tmp.c
-
-SRCS1	+= INL_tmp.c
-SRCS1	+= trs_req.c
-SRCS1	+= cli_session_key.c iso_utils.c
+SRCS1	+= db_tmp.c INL_tmp.c
 
 # Module Name 
 DEST1	= tcp_iso
