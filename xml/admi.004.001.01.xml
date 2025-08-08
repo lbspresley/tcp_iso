@@ -1,12 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:admi.004.001.01" 
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:admi.004.001.01">
-    <admi.004.001.01>
-        <EvtInf>
-            <EvtCd>PING</EvtCd>
-            <EvtParam>1011</EvtParam>
-            <EvtTm>2025-06-20T10:00:00.000+09:00</EvtTm>
-        </EvtInf>
-    </admi.004.001.01>
-</Document>
+<bwh:BokwireEnvelope xmlns:bwh="urn:bok:std:iso:20022:xsd:001">
+	<bwh:BokwireHeader>
+		<Request> 
+			<MsgTpCd>pacs.002.GTR</MsgTpCd> 
+			<Id>TEST1033</Id> 
+			<Password>****************</Password> 
+		</Request>
+	</bwh:BokwireHeader>
+	<AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.03">
+		<Fr>
+			<FIId>
+				<FinInstnId>
+					<ClrSysMmbId>
+						<ClrSysId>
+							<Cd>KRBOK</Cd>
+						</ClrSysId>
+						<MmbId>1016</MmbId>
+					</ClrSysMmbId>
+				</FinInstnId>
+			</FIId>
+		</Fr>
+		<To>
+			<FIId>
+				<FinInstnId>
+					<ClrSysMmbId>
+						<ClrSysId>
+							<Cd>KRBOK</Cd>
+						</ClrSysId>
+						<MmbId>1030</MmbId>
+					</ClrSysMmbId>
+				</FinInstnId>
+			</FIId>
+		</To>
+		<BizMsgIdr>202401051016S00000000000001</BizMsgIdr>
+		<MsgDefIdr>admi.004.001.01</MsgDefIdr>
+		<BizSvc>bok.rtgs.01</BizSvc>
+		<CreDt>2024-01-05T08:50:00.000+09:00</CreDt>
+		<BizPrcgDt>2024-01-05T09:00:00+09:00</BizPrcgDt>
+	</AppHdr>
+	<Document xmlns="urn:iso:std:iso:20022:tech:xsd:admi.004.001.01">
+		<admi.004.001.01>
+			<EvtInf>
+				<EvtCd>PING</EvtCd>
+				<EvtParam>1016</EvtParam>
+				<EvtTm>2024-01-05T08:50:00.000+09:00</EvtTm>
+			</EvtInf>
+		</admi.004.001.01>
+	</Document>
+</bwh:BokwireEnvelope>

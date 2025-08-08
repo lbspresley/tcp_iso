@@ -4,6 +4,7 @@ void test_parse_bokwire_envelope()
 {
     // 테스트용 XML 문자열
     const char* test_xml = 
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">"
         "    <bwh:BokwireHeader>"
         "            <TrCd>falseValue</TrCd>"
@@ -21,11 +22,11 @@ void test_parse_bokwire_envelope()
 
     // XPath를 사용한 테스트
     ret = parse_xml_xpath((char*)test_xml, "//TrCd", ret_value);
-    printf("\nXPath test result: %d\n", ret);
+    printf("\nFALSE Value Test : XPath test result: %d\n", ret);
     printf("TrCd: %s\n", ret_value);
 
-    //ret = parse_xml_xpath((char*)test_xml, "//bwh:BokwireHeader/SecurityHandshake/TrCd", ret_value);
-    ret = parse_xml_xpath((char*)test_xml, "//SecurityHandshake/TrCd", ret_value);
+    ret = parse_xml_xpath((char*)test_xml, "//bwh:BokwireHeader/SecurityHandshake/TrCd", ret_value);
+    // ret = parse_xml_xpath((char*)test_xml, "//SecurityHandshake/TrCd", ret_value);
     printf("\nXPath full path result: %d\n", ret);
     printf("TrCd: %s\n", ret_value);
 
@@ -115,13 +116,13 @@ void test_build_SecurityHandshake()
     xmlFreeDoc(doc);
 }
 
-void test_build_ACK() 
+void test_build_ACK(char* respcd, char* msgtpcd, char* bizsvc, char* bizmsgidr) 
 {
     // parameters
-    char *respcd="SUCCESS";
-    char *msgtpcd="pacs.009_CORE";
-    char *bizsvc="bok.rtgs.gtr.01";
-    char * bizmsgidr="202506131518S000000001";
+    // char *respcd="SUCCESS";
+    // char *msgtpcd="pacs.009_CORE";
+    // char *bizsvc="bok.rtgs.gtr.01";
+    // char * bizmsgidr="202506131518S000000001";
 
     // 새로운 XML 문서 생성
     xmlDocPtr doc = xmlNewDoc((const xmlChar*)"1.0");
@@ -201,13 +202,100 @@ void test_build_ACK()
     xmlFreeDoc(doc);
 }
 
+char* read_file(const char* filename)
+{
+    FILE* file = fopen(filename, "r");
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* buffer = (char*)malloc(file_size + 1);
+    fread(buffer, 1, file_size, file);
+    buffer[file_size] = '\0';
+    fclose(file);
+    return buffer;
+}   
+
+void test_response_ACK() 
+{
+    const char* xmlfile = "xml/pacs.009_GTR.xml";
+    char* request_xml = read_file(xmlfile);
+    // printf("request_xml: %s\n", request_xml);
+
+    // parse request xml
+    char respcd[36] = "SUCCESS";
+    char msgtpcd[36] = {0};
+    char bizsvc[36] = {0};
+    char bizmsgidr[36] = {0};
+
+    parse_xml_xpath(request_xml, "//Request/MsgTpCd", msgtpcd);
+    parse_xml_xpath(request_xml, "//h:BizSvc", bizsvc);
+    parse_xml_xpath(request_xml, "//h:BizMsgIdr", bizmsgidr);
+
+    printf("msgtpcd: %s\n", msgtpcd);
+    printf("bizsvc: %s\n", bizsvc);
+    printf("bizmsgidr: %s\n", bizmsgidr);
+
+    test_build_ACK(respcd, msgtpcd, bizsvc, bizmsgidr);
+
+    return;
+}
+
+void test_dynamic_namespace() 
+{
+    printf("\n=== Testing Dynamic Namespace Extraction ===\n");
+    
+    // 테스트 1: pacs.009_GTR.xml (기본 namespace 사용)
+    printf("\n1. Testing pacs.009_GTR.xml (default namespace):\n");
+    const char* xmlfile1 = "xml/pacs.009_GTR.xml";
+    char* request_xml1 = read_file(xmlfile1);
+    
+    char msgtpcd[36] = {0};
+    char bizsvc[36] = {0};
+    char bizmsgidr[36] = {0};
+    
+    parse_xml_xpath(request_xml1, "//Request/MsgTpCd", msgtpcd);
+    parse_xml_xpath(request_xml1, "//h:BizSvc", bizsvc);
+    parse_xml_xpath(request_xml1, "//h:BizMsgIdr", bizmsgidr);
+    
+    printf("msgtpcd: %s\n", msgtpcd);
+    printf("bizsvc: %s\n", bizsvc);
+    printf("bizmsgidr: %s\n", bizmsgidr);
+    
+    free(request_xml1);
+    
+    // 테스트 2: admi.004.001.01.xml (다른 namespace)
+    printf("\n2. Testing admi.004.001.01.xml (different namespace):\n");
+    const char* xmlfile2 = "xml/admi.004.001.01.xml";
+    char* request_xml2 = read_file(xmlfile2);
+
+    memset(msgtpcd, 0, sizeof(msgtpcd));
+    memset(bizsvc, 0, sizeof(bizsvc));
+    memset(bizmsgidr, 0, sizeof(bizmsgidr));
+    
+    
+    // admi.004.001.01.xml은 기본 namespace를 사용하므로 prefix 없이 접근
+    parse_xml_xpath(request_xml2, "//Request/MsgTpCd", msgtpcd);
+    parse_xml_xpath(request_xml2, "//h:BizSvc", bizsvc);
+    parse_xml_xpath(request_xml2, "//h:BizMsgIdr", bizmsgidr);
+    
+    printf("msgtpcd: %s\n", msgtpcd);
+    printf("bizsvc: %s\n", bizsvc);
+    printf("bizmsgidr: %s\n", bizmsgidr);
+    
+    free(request_xml2);
+}
+
+
 int main() {
     // libxml2 초기화
     xmlInitParser();
     
     test_parse_bokwire_envelope();
     test_build_SecurityHandshake();
-    test_build_ACK();
+    test_build_ACK("SUCCESS", "pacs.009_CORE", "bok.rtgs.gtr.01", "202506131518S000000001");
+    test_response_ACK();
+    test_dynamic_namespace();
     
     // libxml2 정리
     xmlCleanupParser();

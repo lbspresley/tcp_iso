@@ -20,6 +20,7 @@ SRCS1	= tcp_bok.c \
 		trs_req.c \
 		cli_session_key.c \
 		iso_utils.c \
+		iso_xml.c \
 		$(SVCTAB1)
 
 #PRCS1	= db_Get_BOK_Inf.pc

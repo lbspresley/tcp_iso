@@ -22,6 +22,17 @@
 	</bwh:BokwireHeader>\
 </bwh:BokwireEnvelope>"
 
+#define ACK_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
+	 <bwh:BokwireHeader>\
+		<Response>\
+			<RespCd>%s</RespCd>\
+			<MsgTpCd>%s</MsgTpCd>\
+			<BizSvc>%s</BizSvc>\
+			<BizMsgIdr>%s</MsgIdr>\
+		</Response>\
+	</bwh:BokwireHeader>\
+</bwh:BokwireEnvelope>"
+
 #define MAX_MSG_LEN 200*1024
 
 unsigned char* make_sess_key_msg(int step, char* key); // 技记虐 皋矫瘤 积己

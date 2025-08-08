@@ -15,5 +15,6 @@ xmlDocPtr add_node(xmlDocPtr doc, char* node, char* value, char* namespace, char
 xmlDocPtr add_node_xpath(xmlDocPtr doc, const char* xpath, const char* node_name, const char* node_value);
 xmlDocPtr add_node_with_value(xmlDocPtr doc, const char* parent_xpath_param, const char* node_name, const char* node_value, const char* namespace, const char* namespace_prefix, int exclude_namespace) ;
 void change_local_name(const char* node_name, char* parent_node);
+int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx);
 
 #endif

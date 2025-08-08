@@ -209,9 +209,16 @@ int parse_xml_xpath(char* xml, const char* xpath, char* value)
         return -3;
     }
 
-    // 네임스페이스 등록
+    // 기본 네임스페이스 등록 (bwh)
     xmlXPathRegisterNs(xpathCtx, (const xmlChar*)"bwh", 
                       (const xmlChar*)"urn:bok:std:iso:20022:xsd:001");
+    
+    // xmlXPathRegisterNs(xpathCtx, (const xmlChar*)"h", 
+    //                   (const xmlChar*)"urn:iso:std:iso:20022:tech:xsd:head.001.001.03");
+
+    // XML에서 동적으로 namespace 추출 및 등록
+    int ns_count = extract_namespaces_from_xml(xml, xpathCtx);
+    // printf("Extracted and registered %d namespaces from XML\n", ns_count);
 
     // XPath 평가
     xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath, xpathCtx);
@@ -226,8 +233,9 @@ int parse_xml_xpath(char* xml, const char* xpath, char* value)
         xmlNodePtr node = xpathObj->nodesetval->nodeTab[0];
         xmlChar* content = xmlNodeGetContent(node);
         if (content != NULL) {
-            strncpy(value, (char*)content, 4095);
-            value[4095] = '\0';
+            // strncpy(value, (char*)content, 4095);
+            // value[4095] = '\0';
+            strcpy(value, (char*)content);
             xmlFree(content);
             ret = 0;
         } else {
@@ -449,4 +457,85 @@ xmlDocPtr add_node_with_value(xmlDocPtr doc, const char* parent_xpath_param, con
     xmlXPathFreeObject(xpathObj);
     xmlXPathFreeContext(xpathCtx);
     return doc;
+}
+
+// XML에서 namespace를 동적으로 추출하는 함수
+int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx) {
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    int count = 0;
+    
+    if (xml == NULL || xpathCtx == NULL) {
+        return -1;
+    }
+    
+    // XML 문자열 파싱
+    doc = xmlParseMemory(xml, strlen(xml));
+    if (doc == NULL) {
+        return -2;
+    }
+    
+    // 루트 노드 가져오기
+    cur = xmlDocGetRootElement(doc);
+    if (cur == NULL) {
+        xmlFreeDoc(doc);
+        return -3;
+    }
+    
+    // 루트 노드의 namespace 등록
+    xmlNsPtr ns = cur->nsDef;
+    while (ns != NULL) {
+        if (ns->prefix != NULL && ns->href != NULL) {
+            xmlXPathRegisterNs(xpathCtx, ns->prefix, ns->href);
+            // printf("Registered namespace: %s -> %s\n", ns->prefix, ns->href);
+            count++;
+        }
+        ns = ns->next;
+    }
+    
+    // 자식 노드들의 namespace도 확인 (특히 AppHdr)
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL) {
+        if (cur->type == XML_ELEMENT_NODE) {
+            // AppHdr 노드인지 확인
+            if (xmlStrcmp(cur->name, (const xmlChar*)"AppHdr") == 0) {
+                // printf("Found AppHdr element\n");
+                
+                // AppHdr의 namespace 확인
+                ns = cur->nsDef;
+                while (ns != NULL) {
+                    if (ns->prefix != NULL && ns->href != NULL) {
+                        xmlXPathRegisterNs(xpathCtx, ns->prefix, ns->href);
+                        // printf("Registered AppHdr namespace: %s -> %s\n", ns->prefix, ns->href);
+                        count++;
+                    } else if (ns->href != NULL) {
+                        // 기본 namespace인 경우
+                        xmlXPathRegisterNs(xpathCtx, (const xmlChar*)"h", ns->href);
+                        // printf("Registered AppHdr default namespace: h -> %s\n", ns->href);
+                        count++;
+                    }
+                    ns = ns->next;
+                }
+                
+                // AppHdr의 xmlns 속성도 확인
+                xmlAttrPtr attr = cur->properties;
+                while (attr != NULL) {
+                    if (xmlStrcmp(attr->name, (const xmlChar*)"xmlns") == 0) {
+                        xmlChar* value = xmlNodeListGetString(doc, attr->children, 1);
+                        if (value != NULL) {
+                            xmlXPathRegisterNs(xpathCtx, (const xmlChar*)"h", value);
+                            // printf("Registered AppHdr xmlns: h -> %s\n", value);
+                            count++;
+                            xmlFree(value);
+                        }
+                    }
+                    attr = attr->next;
+                }
+            }
+        }
+        cur = cur->next;
+    }
+    
+    xmlFreeDoc(doc);
+    return count;
 }

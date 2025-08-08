@@ -159,3 +159,21 @@ unsigned char* convert_to_euc_kr(char* msg, size_t msg_len, size_t *out_msg_len 
   *out_msg_len = out_len;
   return _euckr_converted_msg;
 }
+
+unsigned char* make_ack_msg(char* reqxml)
+{
+  static unsigned char _ack_msg[1024];
+
+    // parse request xml
+    char respcd[36] = "SUCCESS";
+    char msgtpcd[36] = {0};
+    char bizsvc[36] = {0};
+    char bizmsgidr[36] = {0};
+
+    parse_xml_xpath(reqxml, "//Request/MsgTpCd", msgtpcd);
+    parse_xml_xpath(reqxml, "//h:BizSvc", bizsvc);
+    parse_xml_xpath(reqxml, "//h:BizMsgIdr", bizmsgidr);
+
+  sprintf((char*)_ack_msg, ACK_TEMPLATE, respcd, msgtpcd, bizsvc, bizmsgidr);
+  return _ack_msg;
+}
