@@ -213,8 +213,8 @@ void UserInit()
   rc = roReadConfigInt( gc_CmnCfg, "Common", GI_ALLOCSZ, &gi_ApDataBufAllocSize );
   if( rc != 0 )
   {
-    ulog(_ABEND_, " roReadConfigInt Common error [%d] default 15000", rc );
-    gi_ApDataBufAllocSize = 15000;
+    ulog(_ABEND_, "Common Max Message Length rc(%d): set default [%d]", rc, MAX_MSG_LEN );
+    gi_ApDataBufAllocSize = MAX_MSG_LEN;
   }
 
   memset(gc_LogYn, 0x00, sizeof(gc_LogYn));
