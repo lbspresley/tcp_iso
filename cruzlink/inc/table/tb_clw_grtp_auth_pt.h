@@ -1,0 +1,31 @@
+/******************************************************************************
+ 화일명     : tb_clw_grtp_auth_pt.h
+ 내용설명   : TB_CLW_GRTP_AUTH pc용 Structure
+ 참고 사항  :
+ 변경이력   :
+     일자             작성자                        내용
+  ----------         --------     ---------------------------------------
+  2012.04.12                  초기 작성
+******************************************************************************/
+#ifndef	__TB_CLW_GRTP_AUTH_PT_H__
+#define	__TB_CLW_GRTP_AUTH_PT_H__
+
+int  db_Insert_tb_clw_grtp_auth(char *p_tstr);
+int  db_Select_tb_clw_grtp_auth(char *p_tstr);
+int  db_Update_tb_clw_grtp_auth(char *p_tstr);
+void db_Disp_tb_clw_grtp_auth(char *p_tstr);
+void db_Init_tb_clw_grtp_auth(char *p_tstr);
+
+typedef	struct
+{
+	varchar grp_id                     [ 10+1];	/* NOT_DEF */
+	varchar grp_nm                     [ 50+1];	/* NOT_DEF */
+	varchar auth_type                  [  2+1];	/* NOT_DEF */
+	varchar use_yn                     [  1+1];	/* NOT_DEF */
+	varchar drumn_eno                  [  9+1];	/* NOT_DEF */
+	varchar drup_dtm                     [ 24];	/* NOT_DEF */
+	varchar modmn_eno                  [  9+1];	/* NOT_DEF */
+	varchar mod_dtm                      [ 24];	/* NOT_DEF */
+} TB_CLW_GRTP_AUTH_PT;
+
+#endif
