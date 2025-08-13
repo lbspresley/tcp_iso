@@ -1,4 +1,4 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 int CF_DecSndRMP(int bufkind, unsigned char** ppFrame,
     int* pBufLen, int* pFrameLen,

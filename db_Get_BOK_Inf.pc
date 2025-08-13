@@ -1,4 +1,4 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 EXEC SQL INCLUDE    "table/tb_clc_code_dtl_pt.h";
 EXEC SQL INCLUDE sqlca;

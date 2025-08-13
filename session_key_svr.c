@@ -1,4 +1,4 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 /*
  * Server 세션키 교환 요구(1) 수신
@@ -36,14 +36,14 @@ int svr_recv_1(char* msg, int len)
     return -2;
   }
 
-  char* pKey = get_sess_key(msg);
+  unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
     ulog(_ERROR_, "[장애정보] 세션키를 찾을 수 없습니다.");
     return -3;
   }
 
 
-  rc = INL_Handshake_Init( g_server_ctx, pKey, strlen(pKey), &pSKeyOut, &out_len);
+  rc = INL_Handshake_Init( g_server_ctx, pKey, strlen((char*)pKey), &pSKeyOut, &out_len);
   if( rc != 0 )
   {
     ulog(_ERROR_, "INL_Handshake_Init SERVER Failed. errcode=%d msg[%s]"
@@ -59,7 +59,7 @@ int svr_recv_1(char* msg, int len)
 
   /* 송신 메시지 : 세션키 교환 요구(2) */
   pMsg = make_sess_key_msg(2, (char*)pSKeyOut);
-  msg_len = strlen(pMsg);
+  msg_len = strlen((char*)pMsg);
 
   if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
 
@@ -80,7 +80,6 @@ int svr_recv_3(char* msg, int len)
 {
   int rc;
 
-  int		in_len; 
   int		out_len; 
   int		msg_len;    /* tpacall 송신 메시지 길이 */
 
@@ -89,19 +88,18 @@ int svr_recv_3(char* msg, int len)
 
   unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut;
-  char			tmpstr[32];
 
 
   ulog(_FLOW_, "[로그정보] Server 세션키 교환 통보(3) 수신\n%s", msg);
 
-  char* pKey = get_sess_key(msg);
+  unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
     ulog(_ERROR_, "[장애정보] 세션키를 찾을 수 없습니다.");
     return -1;
   }
 
   /* 암호화 정보 취득 */
-  rc = INL_Handshake_Update(g_server_ctx, pKey, strlen(pKey), &pSKeyOut, &out_len);
+  rc = INL_Handshake_Update(g_server_ctx, pKey, strlen((char*)pKey), &pSKeyOut, &out_len);
   if( rc != 0 ) { 
     ulog(_ERROR_, "[장애정보] INL_Handshake_Update Failed\n" 
         "[상세정보] errcode[%d], msg[%s]" 
@@ -116,7 +114,7 @@ int svr_recv_3(char* msg, int len)
 
   /* 송신 메시지 : 세션키 교환 요구(4)*/
   pMsg = make_sess_key_msg(4, (char*)pSKeyOut);
-  msg_len = strlen(pMsg);
+  msg_len = strlen((char*)pMsg);
 
   if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
 
@@ -138,29 +136,21 @@ int svr_recv_3(char* msg, int len)
 int svr_recv_5(char* msg, int len)
 {
   int rc;
-
-  int		in_len; 
   int		out_len; 
-  int		msg_len;    /* tpacall 송신 메시지 길이 */
-
-  long	Info1 = 0;
-  long	Info2 = 0;
-
-  unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut;
-  char			tmpstr[32];
+
 
 
   ulog(_FLOW_, "[로그정보] Server 세션키 교환 통보(5) 수신\n%s", msg);
 
-  char* pKey = get_sess_key(msg);
+  unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
     ulog(_ERROR_, "[장애정보] 세션키를 찾을 수 없습니다.");
     return -1;
   }
 
   /* 암호화 정보 취득 */
-  rc = INL_Handshake_Final(g_server_ctx, pKey, strlen(pKey), &pSKeyOut, &out_len);
+  rc = INL_Handshake_Final(g_server_ctx, pKey, strlen((char*)pKey), &pSKeyOut, &out_len);
   if( rc != 0 ) { 
     ulog(_ERROR_, "[장애정보] INL_Handshake_Final SERVER Failed\n" 
         "[상세정보] errcode[%d], msg[%s]" 

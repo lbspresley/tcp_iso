@@ -34,7 +34,7 @@
 		</To>
 		<BizMsgIdr>202401051016S00000000000001</BizMsgIdr>
 		<MsgDefIdr>admi.004.001.01</MsgDefIdr>
-		<BizSvc>bok.rtgs.01</BizSvc>
+		<BizSvc>bok.rtgs.ping.01</BizSvc>
 		<CreDt>2024-01-05T08:50:00.000+09:00</CreDt>
 		<BizPrcgDt>2024-01-05T09:00:00+09:00</BizPrcgDt>
 	</AppHdr>

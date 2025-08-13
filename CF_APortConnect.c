@@ -1,4 +1,4 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 int func_ASearchSessTbl(int LocalPort, int PeerPort);
 int func_ASearchEmptyTbl();

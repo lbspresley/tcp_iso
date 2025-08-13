@@ -1,4 +1,4 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 extern int  func_NacfGetMaxSessC(char *strAdtName);
 

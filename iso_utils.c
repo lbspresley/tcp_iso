@@ -1,5 +1,4 @@
-
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 unsigned char* make_network_msg()
 {
@@ -177,3 +176,22 @@ unsigned char* make_ack_msg(char* reqxml)
   sprintf((char*)_ack_msg, ACK_TEMPLATE, respcd, msgtpcd, bizsvc, bizmsgidr);
   return _ack_msg;
 }
+
+#if 0
+unsigned char* make_poll_req(char* reqxml)
+{
+  static unsigned char _poll_req[1024];
+
+  sprintf((char*)_poll_req, POLL_REQ_TEMPLATE, msgtpcd, bizsvc, bizmsgidr);
+  return _poll_req;
+}
+
+unsigned char* make_poll_rsp(char* reqxml)
+{
+  static unsigned char _poll_rsp[1024];
+
+  parse_xml_xpath(reqxml, "//Request/MsgTpCd", msgtpcd);
+  sprintf((char*)_poll_rsp, POLL_RSP_TEMPLATE, respcd, msgtpcd, bizsvc, bizmsgidr);
+  return _poll_rsp;
+}
+#endif

@@ -1,4 +1,4 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 /*
  * Client 세션키 교환 요구(1) 송신

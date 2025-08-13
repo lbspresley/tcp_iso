@@ -1,4 +1,4 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
     int* pBufLen, int* pFrameLen,
@@ -6,47 +6,34 @@ int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
     char* callback_name,
     long* info1, long* info2)
 {
-  /*
-    1. SrcSvc : "CLI" or "SVR"
-  */
   int		rc;
   char*	in				= (char*) *ppFrame;
 
+  /*
+    1. 암호화 여부 확인
+      1. plain text(x) or encrypted(o)
+    2. SrcSvc : "CLI" or "SVR"
+      1. CLI : session key(CLI)
+      2. SVR : session key(SVR)
+    3. Plain Text : 세션키 교환 전문 처리
+      1. SrcSvc로 세션 종류 확인
+      2. 세션키 교환 여부 및 진행 상태 확인
+      3. 진행 상태에 따른 세션키 교환 전문 처리 
+    4. Encrypted : 데이터 전문 처리
+      1. SVR session key로 복호화
+      2. ACK 응답 전문 여부 확인
+      3. (POLL전문 처리시) POLL 전문 여부 확인
+      4. 전문변환 호출
+      5. 전문변환 결과 확인
+      6. FEP 헤더 조립
+      7. 코어 송신(E2B)
+  */
 
-  l_pRcv = (BOK_NF_SKEY_STR*)in;
-
-  ulog(_FLOW_, "[로그정보] 전문ID : [%.9s]", l_pRcv->Common.bz_no);
-
-  // 20200408 : Encrypt 안 할 경우
-  if( g_Encrypt_Flag == 0 ) {
-    ulog(_ERROR_, "[로그정보] 암복호화 Flag : OFF ==> Handshake 안함 !!");
-    return RC_NEXT_ACTION;
-  }
-
-  if( memcmp(l_pRcv->Common.bz_no, SKEY_BZ_DST_CD_001, 9) == 0 ) 
-  {
-    rc = lf_Rcv_000000001_NF(in, *pFrameLen);
-  }
-  else if( memcmp(l_pRcv->Common.bz_no, SKEY_BZ_DST_CD_002, 9) == 0 ) 
-  {
-    rc = lf_Rcv_000000002_NF(in, *pFrameLen);
-  }
-  else if( memcmp(l_pRcv->Common.bz_no, SKEY_BZ_DST_CD_003, 9) == 0 ) 
-  {
-    rc = lf_Rcv_000000003_NF(in, *pFrameLen);
-  }
-  else if( memcmp(l_pRcv->Common.bz_no, SKEY_BZ_DST_CD_004, 9) == 0 ) 
-  {
-    rc = lf_Rcv_000000004_NF(in, *pFrameLen);
-  }
-  else if( memcmp(l_pRcv->Common.bz_no, SKEY_BZ_DST_CD_005, 9) == 0 ) 
-  {
-    rc = lf_Rcv_000000005_NF(in, *pFrameLen);
+  if( strstr(in, "BokwireEnvelope") != NULL ) {
+    ulog(_ERROR_, "[로그정보] Handshake 전문 수신 !!");
+    return CF_ProcessSessionKey(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, Srcpidx, callback_name, info1, info2);
   }
 
-  if (rc < 0) {
-    ulog(_ERROR_, "RCV_SKEY_NF 전문 처리 실패 (code:%.9s) (rc:%d)", l_pRcv->Common.bz_no, rc);
-  }
-
-  return RC_NEXT_ACTION;
+  ulog(_ERROR_, "[로그정보] 업무 전문 수신 !!");
+  return CF_ProcessMessage(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, Srcpidx, callback_name, info1, info2);
 }

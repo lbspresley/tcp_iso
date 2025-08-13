@@ -2,7 +2,7 @@
 include $(ROME_HOME)/work/cruztp.mkconf
 include $(CL_HOME)/work/cl.mkconf
 
-SRCS1	= tcp_bok.c \
+SRCS1	= tcp_iso.c \
 		tpsvrinit.c \
 		UserInit.c \
 		usermain.c \
@@ -17,8 +17,11 @@ SRCS1	= tcp_bok.c \
 		CF_ImgLogRecv.c \
 		CF_ImgLogSend.c \
 		CF_StopPoll.c \
+		CF_ReceiveMessage.c \
+		CF_ProcessSessionKey.c \
 		trs_req.c \
-		cli_session_key.c \
+		session_key_cli.c \
+		session_key_svr.c \
 		iso_utils.c \
 		iso_xml.c \
 		$(SVCTAB1)

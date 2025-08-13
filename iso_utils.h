@@ -1,5 +1,4 @@
-
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 #define SKEY_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
 	 <bwh:BokwireHeader>\
@@ -31,6 +30,56 @@
 			<BizMsgIdr>%s</MsgIdr>\
 		</Response>\
 	</bwh:BokwireHeader>\
+</bwh:BokwireEnvelope>"
+
+#define POLL_REQ_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
+	 <bwh:BokwireHeader>\
+		<Request>\
+			<MsgTpCd>pacs.002.GTR</MsgTpCd>\
+			<Id>%s</Id>\
+			<Password>%s</Password>\
+		</Request>\
+	</bwh:BokwireHeader>\
+	<AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.03\">\
+		<Fr>\
+			<FIId>\
+				<FinInstnId>\
+					<ClrSysMmbId>\
+						<ClrSysId>\
+							<Cd>KRBOK</Cd>\
+						</ClrSysId>\
+						<MmbId>%s</MmbId>\
+					</ClrSysMmbId>\
+				</FinInstnId>\
+			</FIId>\
+		</Fr>\
+		<To>\
+			<FIId>\
+				<FinInstnId>\
+					<ClrSysMmbId>\
+						<ClrSysId>\
+							<Cd>KRBOK</Cd>\
+						</ClrSysId>\
+						<MmbId>1016</MmbId>\
+					</ClrSysMmbId>\
+				</FinInstnId>\
+			</FIId>\
+		</To>\
+		<BizMsgIdr>%s</BizMsgIdr>\
+		<MsgDefIdr>admi.004.001.01</MsgDefIdr>\
+		<BizSvc>bok.rtgs.ping.01</BizSvc>\
+		<CreDt>%s</CreDt>\
+		<BizPrcgDt>%s</BizPrcgDt>\
+	</AppHdr>\
+	<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:admi.004.001.01\">\
+		<admi.004.001.01>\
+			<EvtInf>\
+				<EvtCd>PING</EvtCd>\
+				<EvtParam>%s</EvtParam>\
+				<EvtTm>%s</EvtTm>\
+			</EvtInf>\
+		</admi.004.001.01>\
+	</Document>\
 </bwh:BokwireEnvelope>"
 
 #define MAX_MSG_LEN 200*1024
