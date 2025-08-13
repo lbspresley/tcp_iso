@@ -1,6 +1,6 @@
 # ROME+ Application Make Property include
 include $(ROME_HOME)/work/cruztp.mkconf
-include $(CL_HOME)/work/cl.mkconf
+#include $(CL_HOME)/work/cl.mkconf
 
 SRCS1	= tcp_bok.c \
 		tpsvrinit.c \
@@ -43,9 +43,11 @@ include $(ROME_HOME)/work/rome.mkrule
 
 # Include Path
 #INISAFENET_HOME=$(HOME)/INITEC/INISAFE_HP
+CL_HOME=./cruzlink
 INCS	+= -I$(CL_HOME)/inc
 INCS	+= -I$(CL_HOME)/work/inc/adaptor/tcp_type/tcp_com
-INCS  += -I$(INISAFENET_HOME)/include 
+#INCS  += -I$(INISAFENET_HOME)/include 
+INCS  += -IINISAFE
 
 PROC_INC += $(INCS:-I%=include=%)
 
@@ -57,6 +59,7 @@ COMMON_LIB += -lsmt
 COMMON_LIB += -ltpucs -ltxnon
 COMMON_LIB += -lxml2
 COMMON_LIB += -lcurl
+COMMON_LIB += -liconv
 #COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI
 #COMMON_LIB += -lccl
 #COMMON_LIB += -L$(CL_HOME)/lib -lclcmn -ldbcmn -lucmn -lclcfg

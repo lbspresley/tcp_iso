@@ -23,7 +23,7 @@ int dbGetIDPW( )
 
 int dbUpdateIDPW(char* pID, char* pPass)
 {
-  ulog(_FLOW_, "BIZ/ID/PW :%s/%s/%s", gc_BizCode, pID, pPass );
+  ulog(0, "BIZ/ID/PW :%s/%s/%s", gc_BizCode, pID, pPass );
 
   return 0;
 }
@@ -63,7 +63,7 @@ int getEncIdPw( )
   rc = INL_Encrypt(g_client_ctx, (unsigned char*)gc_PlainIdPswd, inlen, &pOut, &outlen);
   if( (rc < 0) || (inlen != outlen ) )
   {
-    ulog(_ERROR_, "[장애로그] : ID/PSWD Encrypt 오류 BIZ[%s] [%d]", gc_BizCode, rc);
+    ulog(_ERROR_, "[ERROR] : ID/PSWD Encrypt ERROR BIZ[%s] [%d]", gc_BizCode, rc);
     return -2;
   }
 
@@ -112,7 +112,7 @@ int getPlainIdPw( )
   rc = INL_Decrypt(g_server_ctx, (unsigned char*)gc_EncIdPswd, inlen, &pOut, &outlen);
   if( (rc < 0) || (inlen != outlen ) )
   {
-    ulog(_ERROR_, "[장애로그] : ID/PSWD Decrypt 오류 BIZ[%s] [%d]", gc_BizCode, rc);
+    ulog(_ERROR_, "[ERROR] : ID/PSWD Decrypt ERROR BIZ[%s] [%d]", gc_BizCode, rc);
     return -2;
   }
 
@@ -191,7 +191,7 @@ int UC_SgetSysDateTime (int aiMode, char *apDateStr, int *aiStatCode, char *apSt
       break;
     default:
       *aiStatCode = UC_ERR_INDATA_UNKNOWN_TYPE;
-      sprintf(apStatMsg, "구분코드[%d] 오류입니다", aiMode);
+      sprintf(apStatMsg, "Error in Mode : [%d]", aiMode);
       return -1;
 
   } /* end of switch */
