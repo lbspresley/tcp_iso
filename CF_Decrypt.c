@@ -23,7 +23,7 @@ int CF_Decrypt(int bufkind, unsigned char** ppFrame,
   ulog( _FLOW_, "[로그정보] Decrypt call data (%.10s...) len=%d", in, inlen );
 
   // ISO : Length 5bytes
-  offset = 5;
+  offset = 6;
 
   if( inlen <= offset ){
     ulog( _FLOW_, "No need to Decrypt : inlen(%d), offset(%d)", inlen, offset );

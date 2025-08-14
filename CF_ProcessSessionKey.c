@@ -19,14 +19,6 @@ int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
       1. SrcSvc로 세션 종류 확인
       2. 세션키 교환 여부 및 진행 상태 확인
       3. 진행 상태에 따른 세션키 교환 전문 처리 
-    4. Encrypted : 데이터 전문 처리
-      1. SVR session key로 복호화
-      2. ACK 응답 전문 여부 확인
-      3. (POLL전문 처리시) POLL 전문 여부 확인
-      4. 전문변환 호출
-      5. 전문변환 결과 확인
-      6. FEP 헤더 조립
-      7. 코어 송신(E2B)
   */
   int isClientSession = 0;
   if(strcasecmp(SrcSvc, "CLI") == 0) {
@@ -46,10 +38,10 @@ int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
   strncpy(tr_cd, (char*)get_tr_cd(in), sizeof(tr_cd));
 
   if( isClientSession == 1 ) {
-    rc = lf_Client_SesstionKey(in, *pFrameLen, tr_cd);
+    rc = lf_Client_SessionKey(in, *pFrameLen, tr_cd);
   }
   else {
-    rc = lf_Server_SesstionKey(in, *pFrameLen, tr_cd);
+    rc = lf_Server_SessionKey(in, *pFrameLen, tr_cd);
   }
 
   if( rc < 0 ) {
@@ -60,7 +52,7 @@ int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
   return RC_NEXT_ACTION;
 }
 
-int lf_Client_SesstionKey(char* msg, int len, char* tr_cd)
+int lf_Client_SessionKey(char* msg, int len, char* tr_cd)
 {
   if( strcmp(tr_cd, "000000002") == 0 ) {
     return cli_recv_2(msg, len);
@@ -73,7 +65,7 @@ int lf_Client_SesstionKey(char* msg, int len, char* tr_cd)
   return 0;
 }
 
-int lf_Server_SesstionKey(char* msg, int len, char* tr_cd)
+int lf_Server_SessionKey(char* msg, int len, char* tr_cd)
 {
   if( strcmp(tr_cd, "000000001") == 0 ) {
     return svr_recv_1(msg, len);

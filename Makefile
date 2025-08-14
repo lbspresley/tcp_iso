@@ -9,8 +9,6 @@ SRCS1	= tcp_iso.c \
 		CF_APortConnect.c \
 		CF_ACloseSession.c \
 		CF_DisCntSession.c \
-		CF_UpdateSendCnt.c \
-		CF_UpdateRecvCnt.c \
 		CF_Encrypt.c \
 		CF_Decrypt.c	\
 		CF_ProcLogErr.c \
@@ -19,6 +17,7 @@ SRCS1	= tcp_iso.c \
 		CF_StopPoll.c \
 		CF_ReceiveMessage.c \
 		CF_ProcessSessionKey.c \
+		CF_ProcessMessage.c \
 		trs_req.c \
 		session_key_cli.c \
 		session_key_svr.c \
