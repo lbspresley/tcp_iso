@@ -1,0 +1,2 @@
+COMMON_INC += -I$(CL_HOME)/inc
+COMMON_INC += -I$(CL_HOME)/work/inc

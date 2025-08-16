@@ -1,5 +1,6 @@
 #include "tcp_iso.h"
 
+int	lf_SetErrStr(S_CL_HEADER* pHdr, S_CL_ERR_MSG* pErrMsg);
 
 int CF_ProcLogErr(int bufkind, unsigned char** ppFrame,
     int* pBufLen, int* pFrameLen,

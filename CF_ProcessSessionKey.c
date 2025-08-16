@@ -46,10 +46,10 @@ int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
   strncpy(tr_cd, (char*)get_tr_cd(in), sizeof(tr_cd));
 
   if( isClientSession == 1 ) {
-    rc = lf_Client_SesstionKey(in, *pFrameLen, tr_cd);
+    rc = lf_Client_SessionKey(in, *pFrameLen, tr_cd);
   }
   else {
-    rc = lf_Server_SesstionKey(in, *pFrameLen, tr_cd);
+    rc = lf_Server_SessionKey(in, *pFrameLen, tr_cd);
   }
 
   if( rc < 0 ) {
@@ -60,7 +60,7 @@ int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
   return RC_NEXT_ACTION;
 }
 
-int lf_Client_SesstionKey(char* msg, int len, char* tr_cd)
+int lf_Client_SessionKey(char* msg, int len, char* tr_cd)
 {
   if( strcmp(tr_cd, "000000002") == 0 ) {
     return cli_recv_2(msg, len);
@@ -73,7 +73,7 @@ int lf_Client_SesstionKey(char* msg, int len, char* tr_cd)
   return 0;
 }
 
-int lf_Server_SesstionKey(char* msg, int len, char* tr_cd)
+int lf_Server_SessionKey(char* msg, int len, char* tr_cd)
 {
   if( strcmp(tr_cd, "000000001") == 0 ) {
     return svr_recv_1(msg, len);

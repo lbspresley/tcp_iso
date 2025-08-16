@@ -66,43 +66,12 @@ char    gc_bok_cd[32]; // 신-한은망용 한국은행 코드(1016)
 
 int 	g_poll_started; // polling start flag
 
-int	lf_Rcv_000000001(char* msg, int len);
-int	lf_Rcv_000000002(char* msg, int len);
-int	lf_Rcv_000000003(char* msg, int len);
-int	lf_Rcv_000000004(char* msg, int len);
-int	lf_Rcv_000000005(char* msg, int len);
-int lf_Snd_000000001(char* PeerIP, char* PeerPort, char* LocalPort);
-
 // 국고
 char gc_BizCode[32];	// 국고 : "BOK", 신한은망 : "FTP"
-
-int	lf_Rcv_000000001_NF(char* msg, int len);
-int	lf_Rcv_000000002_NF(char* msg, int len);
-int	lf_Rcv_000000003_NF(char* msg, int len);
-int	lf_Rcv_000000004_NF(char* msg, int len);
-int	lf_Rcv_000000005_NF(char* msg, int len);
-int lf_Snd_000000001_NF(char* PeerIP, char* PeerPort, char* LocalPort);
 
 
 int dbUpdateIDPW(char* pID, char* pPass);
 void func_AClearTable(int idx);
-
-int lf_SetErrStr(S_CL_HEADER* pHdr, S_CL_ERR_MSG* pErrMsg);
-
-int	lf_Snd_Poll();
-int	lf_Snd_Poll_NF();
-
-// Polling_NF.c
-int	lf_Rcv_PollReq_NF( char* msg, int len );
-int	lf_Rcv_PollRsp_NF( char* msg, int len );
-void TF_PollTimeout_NF(int TimerID, int lParam, int rParam);
-void TF_SendPollReq_NF(int TimerID, int lParam, int rParam);
-
-// Polling.c
-int	lf_Rcv_PollReq( char* msg, int len );
-int	lf_Rcv_PollRsp( char* msg, int len );
-void TF_PollTimeout(int TimerID, int lParam, int rParam);
-void TF_SendPollReq(int TimerID, int lParam, int rParam);
 
 // db_GetBokInf.pc
 int dbInsertIDPW(char* pID, char* pPass);

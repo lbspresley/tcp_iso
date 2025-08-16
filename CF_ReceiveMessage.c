@@ -1,8 +1,10 @@
 #include "tcp_iso.h"
+int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame, int* pBufLen, int* pFrameLen, char SrcSvc[64],int SrcPidx, char* callback_name, long* info1, long* info2);
+int CF_ProcessMessage(int bufkind, unsigned char** ppFrame, int* pBufLen, int* pFrameLen, char SrcSvc[64],int SrcPidx, char* callback_name, long* info1, long* info2);
 
 int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
     int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
+    char SrcSvc[64],int SrcPidx,
     char* callback_name,
     long* info1, long* info2)
 {
@@ -30,10 +32,10 @@ int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
   */
 
   if( strstr(in, "BokwireEnvelope") != NULL ) {
-    ulog(_ERROR_, "[로그정보] Handshake 전문 수신 !!");
-    return CF_ProcessSessionKey(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, Srcpidx, callback_name, info1, info2);
+    ulog(_ERROR_, "[%s] Receive Handshake Message", SrcSvc);
+    return CF_ProcessSessionKey(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, SrcPidx, callback_name, info1, info2);
   }
 
-  ulog(_ERROR_, "[로그정보] 업무 전문 수신 !!");
-  return CF_ProcessMessage(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, Srcpidx, callback_name, info1, info2);
+  ulog(_ERROR_, "[%s] Receive Encrypted Message", SrcSvc);
+  return CF_ProcessMessage(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, SrcPidx, callback_name, info1, info2);
 }

@@ -17,3 +17,5 @@ int cli_recv_2(char* msg, int len);
 int cli_recv_4(char* msg, int len);
 
 
+int lf_Client_SessionKey(char* msg, int len, char* tr_cd);
+int lf_Server_SessionKey(char* msg, int len, char* tr_cd);
