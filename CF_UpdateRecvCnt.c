@@ -59,7 +59,8 @@ int CF_UpdateRecvCnt(int Type, long* pInfo)
     {
       // On Timer
       lParam = g_TermTable[idx].stidx;
-      timerID = TIMERID_DISCNT + lParam;
+      // timerID = TIMERID_DISCNT + lParam;
+      timerID = 0;
       rdf_setTimer(   timerID, g_DisCntInterval*1000, -1,
           lParam, rParam,
           CF_DisCntSession    );

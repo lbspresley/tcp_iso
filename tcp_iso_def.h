@@ -13,10 +13,8 @@
 #define		TIMERID_RSP_POLL 	2000		/* Poll 응답대기 TIMERID */
 
 
-#define		TIMERID_DISCNT		4000		/* 마지막전문수신/송신 TIMERID */
-#define		TIMERID_COMMON 		5000		/*기타 TIMERID  */
-
-//#define		TIMERID_WAIT_RSP 	3000
+#define		TIMERID_REQ_ACK		3000		/* ACK 요청메시지 송신 TIMERID */
+#define		TIMERID_RSP_ACK		4000		/* ACK 응답메시지 수신 TIMERID */
 
 #define		SKEY_BZ_DST_CD_001		"000000001"
 #define		SKEY_BZ_DST_CD_002		"000000002"

@@ -253,8 +253,9 @@ void test_dynamic_namespace()
     char msgtpcd[36] = {0};
     char bizsvc[36] = {0};
     char bizmsgidr[36] = {0};
-    
-    parse_xml_xpath(request_xml1, "//Request/MsgTpCd", msgtpcd);
+    char evtcd[36] = {0};
+
+    parse_xml_xpath(request_xml1, "//bwh:MsgTpCd", msgtpcd);
     parse_xml_xpath(request_xml1, "//h:BizSvc", bizsvc);
     parse_xml_xpath(request_xml1, "//h:BizMsgIdr", bizmsgidr);
     
@@ -272,16 +273,19 @@ void test_dynamic_namespace()
     memset(msgtpcd, 0, sizeof(msgtpcd));
     memset(bizsvc, 0, sizeof(bizsvc));
     memset(bizmsgidr, 0, sizeof(bizmsgidr));
-    
+    memset(evtcd, 0, sizeof(evtcd));
     
     // admi.004.001.01.xml은 기본 namespace를 사용하므로 prefix 없이 접근
-    parse_xml_xpath(request_xml2, "//Request/MsgTpCd", msgtpcd);
-    parse_xml_xpath(request_xml2, "//h:BizSvc", bizsvc);
-    parse_xml_xpath(request_xml2, "//h:BizMsgIdr", bizmsgidr);
+    parse_xml_xpath(request_xml2, "//bwh:MsgTpCd", msgtpcd);
+    parse_xml_xpath(request_xml2, "//bwh:BokwireBody/h:AppHdr/h:BizSvc", bizsvc);
+    parse_xml_xpath(request_xml2, "//bwh:BokwireBody/h:AppHdr/h:BizMsgIdr", bizmsgidr);
+    parse_xml_xpath(request_xml2, "//bwh:BokwireBody/Document/admi.004.001.01/EvtInf/EvtCd", evtcd);
+    char* val = get_tag_value(request_xml2, "EvtCd");
     
     printf("msgtpcd: %s\n", msgtpcd);
     printf("bizsvc: %s\n", bizsvc);
     printf("bizmsgidr: %s\n", bizmsgidr);
+    printf("evtcd: %s\n", val);
     
     free(request_xml2);
 }
@@ -291,10 +295,10 @@ int main() {
     // libxml2 초기화
     xmlInitParser();
     
-    test_parse_bokwire_envelope();
-    test_build_SecurityHandshake();
-    test_build_ACK("SUCCESS", "pacs.009_CORE", "bok.rtgs.gtr.01", "202506131518S000000001");
-    test_response_ACK();
+    // test_parse_bokwire_envelope();
+    // test_build_SecurityHandshake();
+    // test_build_ACK("SUCCESS", "pacs.009_CORE", "bok.rtgs.gtr.01", "202506131518S000000001");
+    // test_response_ACK();
     test_dynamic_namespace();
     
     // libxml2 정리

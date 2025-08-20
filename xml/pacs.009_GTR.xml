@@ -1,44 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bwh:BokwireEnvelope xmlns:bwh="urn:bok:std:iso:20022:xsd:001">
 	<bwh:BokwireHeader>
-		<Request> 
-			<MsgTpCd>pacs.009.GTR</MsgTpCd> 
-			<Id>TEST1033</Id> 
-			<Password>****************</Password> 
-		</Request>
+		<bwh:Request> 
+			<bwh:MsgTpCd>pacs.009.GTR</bwh:MsgTpCd> 
+			<bwh:Id>TEST1033</bwh:Id> 
+			<bwh:Password>****************</bwh:Password> 
+		</bwh:Request>
 	</bwh:BokwireHeader>
-	<AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.03">
-		<CharSet>AC00..D7AF</CharSet>
-		<Fr>
-			<FIId>
-				<FinInstnId>
-					<ClrSysMmbId>
-						<ClrSysId>
-							<Cd>KRBOK</Cd>
-						</ClrSysId>
-						<MmbId>1030</MmbId>
-					</ClrSysMmbId>
-				</FinInstnId>
-			</FIId>
-		</Fr>
-		<To>
-			<FIId>
-				<FinInstnId>
-					<ClrSysMmbId>
-						<ClrSysId>
-							<Cd>KRBOK</Cd>
-						</ClrSysId>
-						<MmbId>1016</MmbId>
-					</ClrSysMmbId>
-				</FinInstnId>
-			</FIId>
-		</To>
-		<BizMsgIdr>202401051030S00000000000004</BizMsgIdr>
-		<MsgDefIdr>pacs.009.001.08</MsgDefIdr>
-		<BizSvc>bok.rtgs.gtr.01</BizSvc>
-		<CreDt>2024-01-05T09:22:03+09:00</CreDt>
-		<BizPrcgDt>2024-01-05T09:00:00+09:00</BizPrcgDt>
-	</AppHdr>
+	<bwh:BokwireBody>
+	<h:AppHdr xmlns:h="urn:iso:std:iso:20022:tech:xsd:head.001.001.03">
+		<h:CharSet>AC00..D7AF</h:CharSet>
+		<h:Fr>
+			<h:FIId>
+				<h:FinInstnId>
+					<h:ClrSysMmbId>
+						<h:ClrSysId>
+							<h:Cd>KRBOK</h:Cd>
+						</h:ClrSysId>
+						<h:MmbId>1030</h:MmbId>
+					</h:ClrSysMmbId>
+				</h:FinInstnId>
+			</h:FIId>
+		</h:Fr>
+		<h:To>
+			<h:FIId>
+				<h:FinInstnId>
+					<h:ClrSysMmbId>
+						<h:ClrSysId>
+							<h:Cd>KRBOK</h:Cd>
+						</h:ClrSysId>
+						<h:MmbId>1016</h:MmbId>
+					</h:ClrSysMmbId>
+				</h:FinInstnId>
+			</h:FIId>
+		</h:To>
+		<h:BizMsgIdr>202401051030S00000000000004</h:BizMsgIdr>
+		<h:MsgDefIdr>pacs.009.001.08</h:MsgDefIdr>
+		<h:BizSvc>bok.rtgs.gtr.01</h:BizSvc>
+		<h:CreDt>2024-01-05T09:22:03+09:00</h:CreDt>
+		<h:BizPrcgDt>2024-01-05T09:00:00+09:00</h:BizPrcgDt>
+	</h:AppHdr>
 	<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08">
 		<FICdtTrf>
 			<GrpHdr>
@@ -125,5 +126,6 @@
 				</RmtInf>
 			</CdtTrfTxInf>
 		</FICdtTrf>
-	</Document>								
+	</Document>
+	</bwh:BokwireBody>
 </bwh:BokwireEnvelope>

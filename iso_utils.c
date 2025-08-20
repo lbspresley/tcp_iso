@@ -143,18 +143,46 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char
 
 unsigned char* convert_to_utf8(char* msg, size_t msg_len, size_t *out_msg_len )
 {
-  static unsigned char _utf8_converted_msg[MAX_MSG_LEN];
+  static int _utf8_converted_msg_len = MAX_MSG_LEN;
+  static unsigned char *_utf8_converted_msg = (unsigned char*)NULL;
+
+  if( _utf8_converted_msg == NULL ) {
+    _utf8_converted_msg = (unsigned char*)malloc(_utf8_converted_msg_len);
+    if( _utf8_converted_msg == NULL ) {
+      ulog(_ERROR_, "Failed to allocate memory for utf8 converted message");
+      return (unsigned char*)NULL;
+    }
+  }
 
   size_t out_len = charset_convert(0, msg, msg_len, _utf8_converted_msg, out_msg_len);
+  if( out_len < 0 ) {
+    ulog(_ERROR_, "Failed to convert message to utf8");
+    return (unsigned char*)NULL;
+  }
+
   *out_msg_len = out_len;
   return _utf8_converted_msg;
 }
 
 unsigned char* convert_to_euc_kr(char* msg, size_t msg_len, size_t *out_msg_len )
 {
-  static unsigned char _euckr_converted_msg[MAX_MSG_LEN];
+  static int _euckr_converted_msg_len = MAX_MSG_LEN;
+  static unsigned char *_euckr_converted_msg = (unsigned char*)NULL;
+
+  if( _euckr_converted_msg == NULL ) {
+    _euckr_converted_msg = (unsigned char*)malloc(_euckr_converted_msg_len);
+    if( _euckr_converted_msg == NULL ) {
+      ulog(_ERROR_, "Failed to allocate memory for euckr converted message");
+      return (unsigned char*)NULL;
+    }
+  }
 
   size_t out_len = charset_convert(1, msg, msg_len, _euckr_converted_msg, out_msg_len);
+  if( out_len < 0 ) {
+    ulog(_ERROR_, "Failed to convert message to euckr");
+    return (unsigned char*)NULL;
+  }
+
   *out_msg_len = out_len;
   return _euckr_converted_msg;
 }
@@ -176,6 +204,84 @@ unsigned char* make_ack_msg(char* reqxml)
   sprintf((char*)_ack_msg, ACK_TEMPLATE, respcd, msgtpcd, bizsvc, bizmsgidr);
   return _ack_msg;
 }
+
+/* 
+ * ACK 응답메시지 여부 체크
+ */
+int is_ack_response_msg(char* msg)
+{
+  char respcd[36] = {0};
+  int ret = parse_xml_xpath(msg, "//Response/RespCd", respcd);
+  if( ret < 0 ) {
+    return 0;
+  }
+
+  if( strcmp(respcd, "SUCCESS") == 0 || strcmp(respcd, "FAILURE") == 0 ) {
+    return 1;
+  }
+
+  // get BizMsgIdr
+  char biz_msg_idr[36] = {0};
+  ret = parse_xml_xpath(msg, "//Response/BizMsgIdr", biz_msg_idr);
+  if( ret < 0 ) {
+    return 0;
+  }
+
+  // search timer id with bizMsgIdr
+  int timer_id ;
+
+  // stop timer
+
+  return 0;
+}
+
+/* 
+ * ACK 메시지 응답여부 체크
+ *
+ * admi : admi.002, admi.004.ConnectionCheck, admi.004.SystemNotification, admi.006, admi.007, admi.011 (6 종)
+ * camt : camt.005, camt.006, camt.007, camt.025, camt.029, camt.052, camt.053, camt.054, camt.056, camt.060, camt.110, camt.111 (12 종)
+ * pacs : pacs.002.CLS, pacs.002.CORE, pacs.004.CLS, pacs.004.CORE, pacs.008.CORE, pacs.009.CLS, pacs.009.CORE, pacs.028 (8 종)
+ */
+int is_need_ack_msg(char* msg)
+{
+  // char *tr_cd = (char*)get_tr_cd(msg);
+  char msg_tp_cd[36] = {0};
+  int ret = parse_xml_xpath(msg, "//Request/MsgTpCd", msg_tp_cd);
+  if( ret < 0 ) {
+    return 0;
+  }
+
+  const char* ack_tr_cds[] = {
+    "admi.002", "admi.004.ConnectionCheck", "admi.004.SystemNotification", "admi.006", "admi.007", "admi.011",
+    "camt.005", "camt.006", "camt.007", "camt.025", "camt.029", "camt.052", "camt.053", "camt.054", "camt.056", "camt.060", "camt.110", "camt.111",
+    "pacs.002.CLS", "pacs.002.CORE", "pacs.004.CLS", "pacs.004.CORE", "pacs.008.CORE", "pacs.009.CLS", "pacs.009.CORE", "pacs.028"
+  };
+
+  for( int i = 0; i < sizeof(ack_tr_cds) / sizeof(ack_tr_cds[0]); i++ ) {
+    if( strcmp(msg_tp_cd, ack_tr_cds[i]) == 0 ) {
+      return 1;
+    }
+  }
+
+
+  return 0;
+}
+
+/* 
+ * 표준 전문 송신
+ */
+int send_standard_msg(char* msg, int msg_len)
+{
+  char* bizMsgIdr = (char*)get_tag_value(msg, "BizMsgIdr");
+  if( bizMsgIdr == NULL ) {
+    return 0;
+  }
+
+  // timer id with bizMsgIdr
+
+  return 0;
+}
+
 
 #if 0
 unsigned char* make_poll_req(char* reqxml)

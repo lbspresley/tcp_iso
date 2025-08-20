@@ -18,6 +18,8 @@ SRCS1	= tcp_iso.c \
 		CF_ReceiveMessage.c \
 		CF_ProcessSessionKey.c \
 		CF_ProcessMessage.c \
+		CF_UpdateSendCnt.c \
+		CF_UpdateRecvCnt.c \
 		trs_req.c \
 		session_key_cli.c \
 		session_key_svr.c \
@@ -26,13 +28,13 @@ SRCS1	= tcp_iso.c \
 		$(SVCTAB1)
 
 #PRCS1	= db_Get_BOK_Inf.pc
-SRCS1	+= db_tmp.c INL_tmp.c
+SRCS1	+= db_tmp.c INL_tmp.c inl_utils.c
 
 # Module Name 
 DEST1	= tcp_iso
 SVC1	= TCP_ISO
 
-SRCS2	= test_iso.c iso_xml.c
+SRCS2	= test_iso.c iso_xml.c iso_utils.c
 DEST2	= test_iso
 
 SRCS3	= validate_xml.c parson.c
