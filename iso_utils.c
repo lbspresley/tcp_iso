@@ -23,142 +23,98 @@ unsigned char* make_sess_key_msg(int step, char* key)
 /*
  * 태그값 추출
  */
-unsigned char* _get_tag_value(char* msg, char* tag, char* value)
-{
-    char startTag[256];
-    char endTag[256];
-    char* pStart = NULL;
-    char* pEnd = NULL;
-    char* current_msg = msg;
-    
-    #if 0
-    // '/'가 없는 단일 태그인 경우
-    if (strchr(tag, '/') == NULL) {
-        sprintf(startTag, "<%s>", tag);
-        sprintf(endTag, "</%s>", tag);
-        
-        pStart = strstr(current_msg, startTag);
-        if (pStart == NULL) {
-            return NULL;
-        }
-        pStart += strlen(startTag);
-        pEnd = strstr(pStart, endTag);
-        if (pEnd == NULL) {
-            return NULL;
-        }
-        
-        memcpy(value, pStart, pEnd - pStart);
-        value[pEnd - pStart] = '\0';
-        return value;
-    }
-   #endif 
-
-    // Multi-level 태그 처리 - strtok 대신 수동으로 분할
-    char tag_copy[256];
-    strcpy(tag_copy, tag);
-    
-    char* tag_ptr = tag_copy;
-    char* slash_ptr;
-    
-    while ((slash_ptr = strchr(tag_ptr, '/')) != NULL) {
-        // 현재 태그 이름 추출 (null로 종료)
-        *slash_ptr = '\0';
-        
-        sprintf(startTag, "<%s", tag_ptr);
-        sprintf(endTag, "</%s>", tag_ptr);
-        
-        pStart = strstr(current_msg, startTag);
-        if (pStart == NULL) {
-            return NULL;
-        }
-        
-        // 현재 태그의 시작 위치
-        //pStart += strlen(startTag);
-        // '>' 문자를 찾아서 태그의 실제 끝 위치 확인
-        char *tagEnd = strchr(pStart, '>');
-        if (tagEnd == NULL)
-        {
-          return NULL;
-        }
-
-        // 태그 내용의 시작 위치 ('>' 다음)
-        pStart = tagEnd + 1;
-
-        // 현재 태그의 끝 위치
-        pEnd = strstr(pStart, endTag);
-        if (pEnd == NULL) {
-            return NULL;
-        }
-        
-        // 다음 태그를 찾기 위해 현재 태그의 시작 위치로 이동 (내부에서 검색)
-        current_msg = pStart;
-        
-        // 다음 태그로 이동
-        tag_ptr = slash_ptr + 1;
-    }
-    
-    // 마지막 태그 처리
-    if (strlen(tag_ptr) > 0) {
-        sprintf(startTag, "<%s", tag_ptr);
-        sprintf(endTag, "</%s>", tag_ptr);
-        
-        pStart = strstr(current_msg, startTag);
-        if (pStart == NULL) {
-            return NULL;
-        }
-        
-        //pStart += strlen(startTag);
-        // '>' 문자를 찾아서 태그의 실제 끝 위치 확인
-        char* tagEnd = strchr(pStart, '>');
-        if (tagEnd == NULL)
-        {
-          return NULL;
-        }
-
-        // 태그 내용의 시작 위치 ('>' 다음)
-        pStart = tagEnd + 1;
-        pEnd = strstr(pStart, endTag);
-        if (pEnd == NULL) {
-            return NULL;
-        }
-        
-        // 마지막 태그의 값을 추출
-        memcpy(value, pStart, pEnd - pStart);
-        value[pEnd - pStart] = '\0';
-        return value;
-    }
-    
-    return NULL;
-}
-
-
 unsigned char* get_tag_value(char* msg, char* tag)
 {
   static unsigned char _tag_value[1024];
 
-  #if 1
-  memset(_tag_value, 0x00, sizeof(_tag_value));
-  return _get_tag_value(msg, tag, (char*)_tag_value);
-  #else
   char startTag[256];
   char endTag[256];
-  char* pStart = NULL;
-  char* pEnd = NULL;
+  char *pStart = NULL;
+  char *pEnd = NULL;
+  char *current_msg = msg;
 
-  sprintf(startTag, "<%s>", tag);
-  sprintf(endTag, "</%s>", tag);
+  // Multi-level 태그 처리 - strtok 대신 수동으로 분할
+  char tag_copy[256];
+  strcpy(tag_copy, tag);
 
-  pStart = strstr(msg, startTag);
-  if(pStart == NULL) {
-    return NULL;
+  char *tag_ptr = tag_copy;
+  char *slash_ptr;
+
+  while ((slash_ptr = strchr(tag_ptr, '/')) != NULL)
+  {
+    // 현재 태그 이름 추출 (null로 종료)
+    *slash_ptr = '\0';
+
+    sprintf(startTag, "<%s", tag_ptr);
+    sprintf(endTag, "</%s>", tag_ptr);
+
+    pStart = strstr(current_msg, startTag);
+    if (pStart == NULL)
+    {
+      return NULL;
+    }
+
+    // 현재 태그의 시작 위치
+    // pStart += strlen(startTag);
+    // '>' 문자를 찾아서 태그의 실제 끝 위치 확인
+    char *tagEnd = strchr(pStart, '>');
+    if (tagEnd == NULL)
+    {
+      return NULL;
+    }
+
+    // 태그 내용의 시작 위치 ('>' 다음)
+    pStart = tagEnd + 1;
+
+    // 현재 태그의 끝 위치
+    pEnd = strstr(pStart, endTag);
+    if (pEnd == NULL)
+    {
+      return NULL;
+    }
+
+    // 다음 태그를 찾기 위해 현재 태그의 시작 위치로 이동 (내부에서 검색)
+    current_msg = pStart;
+
+    // 다음 태그로 이동
+    tag_ptr = slash_ptr + 1;
   }
-  pStart += strlen(startTag);
-  pEnd = strstr(pStart, endTag);
 
-  memset(_tag_value, 0x00, sizeof(_tag_value));
-  memcpy(_tag_value, pStart, pEnd - pStart);
-  return _tag_value;
-  #endif
+  // 마지막 태그 처리
+  if (strlen(tag_ptr) > 0)
+  {
+    sprintf(startTag, "<%s", tag_ptr);
+    sprintf(endTag, "</%s>", tag_ptr);
+
+    pStart = strstr(current_msg, startTag);
+    if (pStart == NULL)
+    {
+      return NULL;
+    }
+
+    // pStart += strlen(startTag);
+    //  '>' 문자를 찾아서 태그의 실제 끝 위치 확인
+    char *tagEnd = strchr(pStart, '>');
+    if (tagEnd == NULL)
+    {
+      return NULL;
+    }
+
+    // 태그 내용의 시작 위치 ('>' 다음)
+    pStart = tagEnd + 1;
+    pEnd = strstr(pStart, endTag);
+    if (pEnd == NULL)
+    {
+      return NULL;
+    }
+
+    // 마지막 태그의 값을 추출
+    memcpy(_tag_value, pStart, pEnd - pStart);
+    _tag_value[pEnd - pStart] = '\0';
+    return _tag_value;
+  }
+
+  return NULL;
 }
 
 /* 
