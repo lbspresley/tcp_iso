@@ -84,13 +84,19 @@
 
 #define MAX_MSG_LEN 200*1024
 
+void get_iso_datetime(char timestr[32]);
+
 unsigned char* make_sess_key_msg(int step, char* key); // 세션키 메시지 생성
 unsigned char* get_tag_value(char* msg, char* tag); // 태그값 추출
 unsigned char* get_sess_key(char* msg); // 세션키를 추출
 unsigned char* get_tr_cd(char* msg); // 트랜잭션코드를 추출
-unsigned char* make_network_msg(); // 네트워크 체크 메시지 생성
-size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len ); // 문자셋 변환
-unsigned char* convert_to_utf8(char* msg, size_t msg_len, size_t *out_msg_len ); // UTF-8로 변환
-unsigned char* convert_to_euc_kr(char* msg, size_t msg_len, size_t *out_msg_len ); // EUC-KR로 변환
 
-void get_iso_datetime(char timestr[32]);
+size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len ); // 문자셋 변환
+unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len ); // UTF-8로 변환
+unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len ); // EUC-KR로 변환
+
+unsigned char* make_network_msg(); // 네트워크 체크 메시지 생성
+unsigned char* make_ack_msg(char* reqxml); // ACK 메시지 생성
+int is_ack_response_msg(char* msg); // ACK 응답메시지 여부 체크
+int is_need_ack_msg(char* msg); // ACK 필요 여부 체크
+int send_standard_msg(char* msg, int msg_len); // 표준 메시지 전송

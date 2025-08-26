@@ -20,10 +20,126 @@ unsigned char* make_sess_key_msg(int step, char* key)
   return _sess_key_msg;
 }
 
+/*
+ * 태그값 추출
+ */
+unsigned char* _get_tag_value(char* msg, char* tag, char* value)
+{
+    char startTag[256];
+    char endTag[256];
+    char* pStart = NULL;
+    char* pEnd = NULL;
+    char* current_msg = msg;
+    
+    #if 0
+    // '/'가 없는 단일 태그인 경우
+    if (strchr(tag, '/') == NULL) {
+        sprintf(startTag, "<%s>", tag);
+        sprintf(endTag, "</%s>", tag);
+        
+        pStart = strstr(current_msg, startTag);
+        if (pStart == NULL) {
+            return NULL;
+        }
+        pStart += strlen(startTag);
+        pEnd = strstr(pStart, endTag);
+        if (pEnd == NULL) {
+            return NULL;
+        }
+        
+        memcpy(value, pStart, pEnd - pStart);
+        value[pEnd - pStart] = '\0';
+        return value;
+    }
+   #endif 
+
+    // Multi-level 태그 처리 - strtok 대신 수동으로 분할
+    char tag_copy[256];
+    strcpy(tag_copy, tag);
+    
+    char* tag_ptr = tag_copy;
+    char* slash_ptr;
+    
+    while ((slash_ptr = strchr(tag_ptr, '/')) != NULL) {
+        // 현재 태그 이름 추출 (null로 종료)
+        *slash_ptr = '\0';
+        
+        sprintf(startTag, "<%s", tag_ptr);
+        sprintf(endTag, "</%s>", tag_ptr);
+        
+        pStart = strstr(current_msg, startTag);
+        if (pStart == NULL) {
+            return NULL;
+        }
+        
+        // 현재 태그의 시작 위치
+        //pStart += strlen(startTag);
+        // '>' 문자를 찾아서 태그의 실제 끝 위치 확인
+        char *tagEnd = strchr(pStart, '>');
+        if (tagEnd == NULL)
+        {
+          return NULL;
+        }
+
+        // 태그 내용의 시작 위치 ('>' 다음)
+        pStart = tagEnd + 1;
+
+        // 현재 태그의 끝 위치
+        pEnd = strstr(pStart, endTag);
+        if (pEnd == NULL) {
+            return NULL;
+        }
+        
+        // 다음 태그를 찾기 위해 현재 태그의 시작 위치로 이동 (내부에서 검색)
+        current_msg = pStart;
+        
+        // 다음 태그로 이동
+        tag_ptr = slash_ptr + 1;
+    }
+    
+    // 마지막 태그 처리
+    if (strlen(tag_ptr) > 0) {
+        sprintf(startTag, "<%s", tag_ptr);
+        sprintf(endTag, "</%s>", tag_ptr);
+        
+        pStart = strstr(current_msg, startTag);
+        if (pStart == NULL) {
+            return NULL;
+        }
+        
+        //pStart += strlen(startTag);
+        // '>' 문자를 찾아서 태그의 실제 끝 위치 확인
+        char* tagEnd = strchr(pStart, '>');
+        if (tagEnd == NULL)
+        {
+          return NULL;
+        }
+
+        // 태그 내용의 시작 위치 ('>' 다음)
+        pStart = tagEnd + 1;
+        pEnd = strstr(pStart, endTag);
+        if (pEnd == NULL) {
+            return NULL;
+        }
+        
+        // 마지막 태그의 값을 추출
+        memcpy(value, pStart, pEnd - pStart);
+        value[pEnd - pStart] = '\0';
+        return value;
+    }
+    
+    return NULL;
+}
+
+
 unsigned char* get_tag_value(char* msg, char* tag)
 {
   static unsigned char _tag_value[1024];
 
+  #if 1
+  memset(_tag_value, 0x00, sizeof(_tag_value));
+  return _get_tag_value(msg, tag, (char*)_tag_value);
+  #else
   char startTag[256];
   char endTag[256];
   char* pStart = NULL;
@@ -42,6 +158,7 @@ unsigned char* get_tag_value(char* msg, char* tag)
   memset(_tag_value, 0x00, sizeof(_tag_value));
   memcpy(_tag_value, pStart, pEnd - pStart);
   return _tag_value;
+  #endif
 }
 
 /* 
@@ -109,17 +226,28 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char
   char to_charset[32];
 
   if (encode_type == 0) {
-    // ETC-KR -> UTF-8
+    // 0: ETC-KR -> UTF-8
     strcpy(from_charset, "EUC-KR");
     strcpy(to_charset, "UTF-8");
-  } else {
-    // UTF-8 -> ETC-KR
+  } else if (encode_type == 1) {
+    // 1: UTF-8 -> ETC-KR
     strcpy(from_charset, "UTF-8");
     strcpy(to_charset, "EUC-KR");
+  } else if (encode_type == 2) {
+    // 2: MS949 -> UTF-8
+    strcpy(from_charset, "MS949");
+    strcpy(to_charset, "UTF-8");
+  } else if (encode_type == 3) {
+    // 3: UTF-8 -> MS949
+    strcpy(from_charset, "UTF-8");
+    strcpy(to_charset, "MS949");
+  } else {
+    ulog(_ERROR_, "Invalid encode type");
+    return -1;
   }
 
-  // UTF-8 to EUC-KR
-  iconv_t cd = iconv_open(from_charset, to_charset);
+  // charset convert
+  iconv_t cd = iconv_open(to_charset, from_charset);
   if (cd == (iconv_t)-1) {
     perror("iconv");
     return -1;
@@ -141,7 +269,8 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char
   return 0;
 }
 
-unsigned char* convert_to_utf8(char* msg, size_t msg_len, size_t *out_msg_len )
+// 0: EUC-KR -> UTF-8, 2: MS949 -> UTF-8
+unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len )
 {
   static int _utf8_converted_msg_len = MAX_MSG_LEN;
   static unsigned char *_utf8_converted_msg = (unsigned char*)NULL;
@@ -154,37 +283,58 @@ unsigned char* convert_to_utf8(char* msg, size_t msg_len, size_t *out_msg_len )
     }
   }
 
-  size_t out_len = charset_convert(0, msg, msg_len, _utf8_converted_msg, out_msg_len);
-  if( out_len < 0 ) {
-    ulog(_ERROR_, "Failed to convert message to utf8");
+  int kr_encoding_type = 0;
+  if( strcmp(kr_encoding, "EUC-KR") == 0 ) {
+    kr_encoding_type = 0;
+  } else if( strcmp(kr_encoding, "MS949") == 0 ) {
+    kr_encoding_type = 2;
+  } else {
+    ulog(_ERROR_, "Invalid kr encoding");
     return (unsigned char*)NULL;
   }
 
-  *out_msg_len = out_len;
+  size_t out_len = charset_convert(kr_encoding_type, msg, msg_len, _utf8_converted_msg, out_msg_len);
+  if( out_len < 0 ) {
+    ulog(_ERROR_, "Failed to convert message to utf8");
+    return (unsigned char*)NULL;  
+  }
+
+  *out_msg_len = out_len;  
   return _utf8_converted_msg;
 }
 
-unsigned char* convert_to_euc_kr(char* msg, size_t msg_len, size_t *out_msg_len )
+// 1: UTF-8 -> EUC-KR, 3: UTF-8 -> MS949
+unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len )
 {
-  static int _euckr_converted_msg_len = MAX_MSG_LEN;
-  static unsigned char *_euckr_converted_msg = (unsigned char*)NULL;
+  static int _kr_converted_msg_len = MAX_MSG_LEN;
+  static unsigned char *_kr_converted_msg = (unsigned char*)NULL;
 
-  if( _euckr_converted_msg == NULL ) {
-    _euckr_converted_msg = (unsigned char*)malloc(_euckr_converted_msg_len);
-    if( _euckr_converted_msg == NULL ) {
-      ulog(_ERROR_, "Failed to allocate memory for euckr converted message");
+  if( _kr_converted_msg == NULL ) {
+    _kr_converted_msg = (unsigned char*)malloc(_kr_converted_msg_len);
+    if( _kr_converted_msg == NULL ) {
+      ulog(_ERROR_, "Failed to allocate memory for kr converted message");
       return (unsigned char*)NULL;
     }
   }
 
-  size_t out_len = charset_convert(1, msg, msg_len, _euckr_converted_msg, out_msg_len);
+  int kr_encoding_type = 1;
+  if( strcmp(kr_encoding, "EUC-KR") == 0 ) {
+    kr_encoding_type = 1;
+  } else if( strcmp(kr_encoding, "MS949") == 0 ) {
+    kr_encoding_type = 3;
+  } else {
+    ulog(_ERROR_, "Invalid kr encoding");
+    return (unsigned char*)NULL;
+  }
+
+  size_t out_len = charset_convert(kr_encoding_type, msg, msg_len, _kr_converted_msg, out_msg_len);
   if( out_len < 0 ) {
-    ulog(_ERROR_, "Failed to convert message to euckr");
+    ulog(_ERROR_, "Failed to convert message to kr");
     return (unsigned char*)NULL;
   }
 
   *out_msg_len = out_len;
-  return _euckr_converted_msg;
+  return _kr_converted_msg;
 }
 
 unsigned char* make_ack_msg(char* reqxml)
