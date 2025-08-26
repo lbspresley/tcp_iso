@@ -23,7 +23,7 @@ int parse_xml(char* xml, char* tag, char* value)
     // find tag
     cur = cur->xmlChildrenNode;
     while (cur != NULL) {
-        printf("cur->name: %s\n", cur->name);
+        // printf("cur->name: %s\n", cur->name);
         if (xmlStrcmp(cur->name, (const xmlChar *)tag) == 0) {
             break;
         }
@@ -220,7 +220,7 @@ int parse_xml_xpath(char* xml, const char* xpath, char* value)
 
     // XML에서 동적으로 namespace 추출 및 등록
     int ns_count = extract_namespaces_from_xml(xml, xpathCtx);
-    printf("Extracted and registered %d namespaces from XML\n", ns_count);
+    // printf("Extracted and registered %d namespaces from XML\n", ns_count);
 
     // XPath 평가
     printf("Evaluating XPath: %s\n", xpath);
@@ -239,8 +239,6 @@ int parse_xml_xpath(char* xml, const char* xpath, char* value)
         xmlChar* content = xmlNodeGetContent(node);
         if (content != NULL) {
             printf("Node content: %s\n", content);
-            // strncpy(value, (char*)content, 4095);
-            // value[4095] = '\0';
             strcpy(value, (char*)content);
             xmlFree(content);
             ret = 0;
@@ -298,7 +296,7 @@ int parse_bokwire_envelope(char* xml)
         if (cur->type == XML_ELEMENT_NODE) {
             xmlChar* value = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
             if (value != NULL) {
-                printf("Tag: %s, Value: %s\n", cur->name, value);
+                // printf("Tag: %s, Value: %s\n", cur->name, value);
                 xmlFree(value);
             }
         }
@@ -495,7 +493,7 @@ int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx) {
     while (ns != NULL) {
         if (ns->prefix != NULL && ns->href != NULL) {
             xmlXPathRegisterNs(xpathCtx, ns->prefix, ns->href);
-            printf("Registered Root namespace: %s -> %s\n", ns->prefix, ns->href);
+            // printf("Registered Root namespace: %s -> %s\n", ns->prefix, ns->href);
             count++;
         }
         ns = ns->next;
@@ -543,28 +541,28 @@ int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx) {
                              if (childNs->prefix != NULL) {
                                  // prefix가 있는 경우 해당 prefix로 등록
                                  xmlXPathRegisterNs(xpathCtx, childNs->prefix, childNs->href);
-                                 printf("Registered BokwireBody child namespace: %s -> %s\n", childNs->prefix, childNs->href);
+                                //  printf("Registered BokwireBody child namespace: %s -> %s\n", childNs->prefix, childNs->href);
                              } else {
                                  // prefix가 없는 경우 default namespace로 등록 (prefix 없음)
                                  xmlXPathRegisterNs(xpathCtx, NULL, childNs->href);
-                                 printf("Registered BokwireBody child default namespace: (no prefix) -> %s\n", childNs->href);
+                                //  printf("Registered BokwireBody child default namespace: (no prefix) -> %s\n", childNs->href);
                              }
                              count++;
                          }
                          
                          // Document 노드의 자식 노드들도 확인 (admi.004.001.01 등)
                          if (xmlStrcmp(bodyChild->name, (const xmlChar*)"Document") == 0) {
-                             printf("Found Document node\n");
+                            //  printf("Found Document node\n");
                              
                              // Document 노드 자체의 namespace 확인
                              xmlNsPtr docNs = bodyChild->ns;
                              if (docNs != NULL && docNs->href != NULL) {
                                  if (docNs->prefix != NULL) {
                                      xmlXPathRegisterNs(xpathCtx, docNs->prefix, docNs->href);
-                                     printf("Registered Document namespace: %s -> %s\n", docNs->prefix, docNs->href);
+                                    //  printf("Registered Document namespace: %s -> %s\n", docNs->prefix, docNs->href);
                                  } else {
                                      xmlXPathRegisterNs(xpathCtx, NULL, docNs->href);
-                                     printf("Registered Document default namespace: (no prefix) -> %s\n", docNs->href);
+                                    //  printf("Registered Document default namespace: (no prefix) -> %s\n", docNs->href);
                                  }
                                  count++;
                              }
@@ -576,7 +574,7 @@ int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx) {
                                      xmlChar* value = xmlNodeListGetString(doc, docAttr->children, 1);
                                      if (value != NULL) {
                                          xmlXPathRegisterNs(xpathCtx, NULL, value);
-                                         printf("Registered Document xmlns: (no prefix) -> %s\n", value);
+                                        //  printf("Registered Document xmlns: (no prefix) -> %s\n", value);
                                          count++;
                                          xmlFree(value);
                                      }
@@ -588,14 +586,14 @@ int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx) {
                              xmlNodePtr docChild = bodyChild->xmlChildrenNode;
                              while (docChild != NULL) {
                                  if (docChild->type == XML_ELEMENT_NODE) {
-                                     printf("Document child: %s\n", docChild->name);
+                                    //  printf("Document child: %s\n", docChild->name);
                                      
                                      // Document의 default namespace를 이 노드에 명시적으로 설정
                                      xmlNsPtr docNs = bodyChild->ns;
                                      if (docNs != NULL && docNs->href != NULL) {
                                          // 이 노드의 namespace를 Document의 default namespace로 설정
                                          xmlXPathRegisterNs(xpathCtx, NULL, docNs->href);
-                                         printf("Set Document child %s to default namespace: %s\n", docChild->name, docNs->href);
+                                        //  printf("Set Document child %s to default namespace: %s\n", docChild->name, docNs->href);
                                          count++;
                                      }
                                      
@@ -603,12 +601,12 @@ int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx) {
                                      xmlNodePtr grandChild = docChild->xmlChildrenNode;
                                      while (grandChild != NULL) {
                                          if (grandChild->type == XML_ELEMENT_NODE) {
-                                             printf("Document grandchild: %s\n", grandChild->name);
+                                            //  printf("Document grandchild: %s\n", grandChild->name);
                                              
                                              // Document의 default namespace를 이 노드에도 설정
                                              if (docNs != NULL && docNs->href != NULL) {
                                                  xmlXPathRegisterNs(xpathCtx, NULL, docNs->href);
-                                                 printf("Set Document grandchild %s to default namespace: %s\n", grandChild->name, docNs->href);
+                                                //  printf("Set Document grandchild %s to default namespace: %s\n", grandChild->name, docNs->href);
                                                  count++;
                                              }
                                          }

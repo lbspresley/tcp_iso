@@ -279,13 +279,29 @@ void test_dynamic_namespace()
     parse_xml_xpath(request_xml2, "//bwh:MsgTpCd", msgtpcd);
     parse_xml_xpath(request_xml2, "//bwh:BokwireBody/h:AppHdr/h:BizSvc", bizsvc);
     parse_xml_xpath(request_xml2, "//bwh:BokwireBody/h:AppHdr/h:BizMsgIdr", bizmsgidr);
-    parse_xml_xpath(request_xml2, "//bwh:BokwireBody/Document/admi.004.001.01/EvtInf/EvtCd", evtcd);
+    
+    // 방법 1: 네임스페이스를 명시적으로 지정
+    parse_xml_xpath(request_xml2, "//*[local-name()='EvtCd']", evtcd);
+    printf("1 evtcd: %s\n", evtcd);
+    
+    // 방법 2: 더 구체적인 경로 사용
+    parse_xml_xpath(request_xml2, "//bwh:BokwireBody/Document/*[local-name()='admi.004.001.01']/*[local-name()='EvtInf']/*[local-name()='EvtCd']", evtcd);
+    printf("2 evtcd: %s\n", evtcd);
+
+    // 방법 3: 다른 namespace 사용
+    parse_xml_xpath(request_xml2, "//*[local-name()='BizMsgIdr']", evtcd);
+    printf("3 evtcd: %s\n", evtcd);
+    
     char* val = get_tag_value(request_xml2, "EvtCd");
+    printf("evtcd: %s\n", val);
+    val = get_tag_value(request_xml2, "EvtInf/EvtCd");
+    printf("multi level evtcd: %s\n", val);
+    val = get_tag_value(request_xml2, "bwh:BokwireBody/Document/admi.004.001.01/EvtInf");
+    printf("multi level evtcd: %s\n", val);
     
     printf("msgtpcd: %s\n", msgtpcd);
     printf("bizsvc: %s\n", bizsvc);
     printf("bizmsgidr: %s\n", bizmsgidr);
-    printf("evtcd: %s\n", val);
     
     free(request_xml2);
 }
