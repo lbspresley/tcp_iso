@@ -157,11 +157,11 @@ void get_iso_datetime(char timestr[32])
   return;
 }
 
-void get_iso_datetime_old(char timestr[32])
+void get_today(char date[10])
 {
+  char tmpstr[20];
   struct tm *pTm;
   time_t t;
-  char outstr[200];
 
   t = time(NULL);
   pTm = localtime(&t);
@@ -169,10 +169,125 @@ void get_iso_datetime_old(char timestr[32])
     return;
   }
 
-  strftime(outstr, sizeof(outstr), "%Y-%m-%dT%H:%M:%S.000", pTm);
-  strcpy(timestr, outstr);
-  strcat(timestr, "+09:00");
+  strftime(tmpstr, sizeof(tmpstr), "%Y%m%d", pTm);
+  strcpy(date, tmpstr);
   return;
+}
+
+void get_seq(char seq[7], char date[10])
+{
+    char seq_file[512];
+    int current_seq = 900001;
+    FILE* fp = NULL;
+
+    if( strlen(date) == 0 ) {
+      get_today(date);
+    }
+
+    // 시퀀스 파일 경로 설정 
+    sprintf(seq_file, "%s/msg_seq_%s.dat", gc_seqFilePath, date);
+
+    // 시퀀스 파일을 읽기/쓰기 모드로 열기
+    fp = fopen(seq_file, "r+");
+    if (fp != NULL) {
+        // 현재 시퀀스 읽기
+        if (fscanf(fp, "%d", &current_seq) == 1) {
+            current_seq++;  // 다음 시퀀스로 증가
+        } else {
+            current_seq = 900001;  // 읽기 실패 시 1부터 시작
+        }
+        
+        // 파일 포인터를 처음으로 되돌리기
+        rewind(fp);
+        
+        // 새로운 시퀀스로 파일 업데이트
+        fprintf(fp, "%d", current_seq);
+        fflush(fp);  // 버퍼 즉시 쓰기
+        
+        fclose(fp);
+        fp = NULL;
+    } else {
+        // 파일이 존재하지 않는 경우 새로 생성
+        fp = fopen(seq_file, "w");
+        if (fp != NULL) {
+            fprintf(fp, "%d", current_seq);
+            fflush(fp);
+            fclose(fp);
+            fp = NULL;
+        } else {
+            // 파일 생성 실패 시 로그 출력 (선택사항)
+            // ulog(_WARNING_, "Failed to create sequence file: %s", seq_file);
+        }
+    }
+    
+    sprintf(seq, "%06d", current_seq);
+    return;
+}
+
+/*
+ * 날짜별로 메시지 고유번호 생성
+ * 프로세스 재기동시에도 이전 메시지 고유번호를 이어서 생성 가능하도록 함
+ */
+void get_msg_idr(char msgidr[35])
+{
+    char date[10];
+    char orgid[5] = {0};
+    // char type[2] = "S";
+    char serial[9] = "00000000";
+    char seq[7] = {0};
+    char seq_file[512];
+    int current_seq = 1;
+    FILE* fp = NULL;
+
+    get_today(date);
+    get_seq(seq, date);
+
+    // 조직 코드 설정
+    if( strlen(gc_org_cd) > 0 ) {
+      strcpy(orgid, gc_org_cd);
+    } else {
+      strcpy(orgid, "1016");
+    }
+    
+    // 메시지 ID 생성
+    sprintf(msgidr, "%8s%4sS%8s%6s", date, orgid, serial, seq);
+    
+    return;
+}
+
+int delete_send_msg(char* msgidr)
+{
+  char send_msg_file[512];
+  sprintf(send_msg_file, "%s/%s.dat", gc_seqFilePath, msgidr);
+  if( access(send_msg_file, F_OK) != -1 ) {
+    unlink(send_msg_file);
+    return 0;
+  }
+  return -1;
+}
+
+/*
+  msgidr 기준으로 전송 메시지 파일 저장
+*/
+int save_send_msg(char* msgidr, unsigned char* msg, int msg_len)
+{
+  char send_msg_file[512];
+  sprintf(send_msg_file, "%s/%s.dat", gc_seqFilePath, msgidr);
+
+  // 파일 존재 여부 확인
+  if( access(send_msg_file, F_OK) != -1 ) {
+    // 파일 존재 시 오류 리턴
+    return -1;
+  }
+
+  // 파일 생성
+  FILE* fp = fopen(send_msg_file, "w");
+  if( fp != NULL ) {
+    fwrite(msg, 1, msg_len, fp);
+    fclose(fp);
+    return 0;
+  }
+  return -2;
 }
 
 // 문자셋 변환
@@ -190,13 +305,13 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char
     strcpy(from_charset, "UTF-8");
     strcpy(to_charset, "EUC-KR");
   } else if (encode_type == 2) {
-    // 2: MS949 -> UTF-8
-    strcpy(from_charset, "MS949");
+    // 2: CP949 -> UTF-8
+    strcpy(from_charset, "CP949");
     strcpy(to_charset, "UTF-8");
   } else if (encode_type == 3) {
-    // 3: UTF-8 -> MS949
+    // 3: UTF-8 -> CP949
     strcpy(from_charset, "UTF-8");
-    strcpy(to_charset, "MS949");
+    strcpy(to_charset, "CP949");
   } else {
     ulog(_ERROR_, "Invalid encode type");
     return -1;
@@ -225,7 +340,7 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char
   return 0;
 }
 
-// 0: EUC-KR -> UTF-8, 2: MS949 -> UTF-8
+// 0: EUC-KR -> UTF-8, 2: CP949 -> UTF-8
 unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len )
 {
   static int _utf8_converted_msg_len = MAX_MSG_LEN;
@@ -242,7 +357,7 @@ unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, siz
   int kr_encoding_type = 0;
   if( strcmp(kr_encoding, "EUC-KR") == 0 ) {
     kr_encoding_type = 0;
-  } else if( strcmp(kr_encoding, "MS949") == 0 ) {
+  } else if( strcmp(kr_encoding, "CP949") == 0 ) {
     kr_encoding_type = 2;
   } else {
     ulog(_ERROR_, "Invalid kr encoding");
@@ -259,7 +374,7 @@ unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, siz
   return _utf8_converted_msg;
 }
 
-// 1: UTF-8 -> EUC-KR, 3: UTF-8 -> MS949
+// 1: UTF-8 -> EUC-KR, 3: UTF-8 -> CP949
 unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len )
 {
   static int _kr_converted_msg_len = MAX_MSG_LEN;
@@ -276,7 +391,7 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
   int kr_encoding_type = 1;
   if( strcmp(kr_encoding, "EUC-KR") == 0 ) {
     kr_encoding_type = 1;
-  } else if( strcmp(kr_encoding, "MS949") == 0 ) {
+  } else if( strcmp(kr_encoding, "CP949") == 0 ) {
     kr_encoding_type = 3;
   } else {
     ulog(_ERROR_, "Invalid kr encoding");

@@ -84,8 +84,9 @@ int CF_ACloseSession(int Type, long* pInfo)
   }
 
 #if 1
-  (void)CF_StopPoll(Type, pInfo);
-  rdf_killTimer( TIMERID_RSP_POLL );
+  kill_all_timers();
+  // (void)CF_StopPoll(Type, pInfo);
+  // rdf_killTimer( TIMERID_RSP_POLL );
 #else
   // 모든 TIMER를 종료한다.
   rdf_killTimer(TIMERID_DISCNT + pResult->stidx);

@@ -174,10 +174,10 @@ void UserInit()
   if ( rc < 0 )
   {
     ulog(_WARNING_, "[%s] Config 취득 실패(rc:%d)\n"
-        "[SessInfo] 세션관리 여부 -> default 1(사용함) 설정", __FUNCTION__, rc);
+        "[SessInfo] 세션관리 여부 -> default 0(미사용) 설정", __FUNCTION__, rc);
 
-    //  기본값 - 1
-    g_SessMonitor=1;
+    //  기본값 - 0
+    g_SessMonitor=0;
   }
   else
   {
@@ -196,6 +196,7 @@ void UserInit()
   }
 
 
+#if 0 // use VanCode to g_ServiceName
   // Get VanCode
   memset( g_VANCode, 0x00, sizeof(g_VANCode) );
   rc = roReadConfigString( NULL, "SessionInfo", "VanCode", g_VANCode );
@@ -206,6 +207,12 @@ void UserInit()
     exit(-1);
   }
   memcpy( g_ChanID, g_VANCode, strlen(g_VANCode) );
+#else
+  memset( g_VANCode, 0, sizeof(g_VANCode) );
+  memset( g_ChanID, 0, sizeof(g_ChanID) );
+  memcpy( g_VANCode, g_ServiceName, strlen(g_ServiceName) );
+  memcpy( g_ChanID, g_ServiceName, strlen(g_ServiceName) );
+#endif
 
 
   /*  Proc 4. gi_ApDataBufAllocSize   *-------------------------------------*/
@@ -213,7 +220,7 @@ void UserInit()
   rc = roReadConfigInt( gc_CmnCfg, "Common", GI_ALLOCSZ, &gi_ApDataBufAllocSize );
   if( rc != 0 )
   {
-    ulog(_ABEND_, "Common Max Message Length rc(%d): set default [%d]", rc, MAX_MSG_LEN );
+    ulog(_WARNING_, "Common Max Message Length rc(%d): set default [%d]", rc, MAX_MSG_LEN );
     gi_ApDataBufAllocSize = MAX_MSG_LEN;
   }
 
@@ -221,7 +228,7 @@ void UserInit()
   rc = roReadConfigString( gc_CmnCfg, "ImageLog", "DB_LOG", gc_LogYn );
   if( rc != 0 )
   {
-    ulog(_ABEND_, "[%s] Image Logging 여부 취득오류\n" 
+    ulog(_WARNING_, "[%s] Image Logging 여부 취득오류\n" 
         "[ImageLog/DB_LOG][%d]\n"
         "Default N Set"
         , FF, rc );
@@ -268,5 +275,6 @@ void UserInit()
 
   // DOWN:0  UP:1
   g_SessStat = 0;
+
 
 }

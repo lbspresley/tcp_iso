@@ -4,10 +4,11 @@
 
 char			g_rmpSvcName[16];
 char			g_ServiceName[64];
-/*char			g_SvcName[64]; */
+// use VanCode to g_ServiceName
 char			g_VANCode[16];
 char			g_APSvc[16];
 
+char	gc_seqFilePath[512];
 
 int             g_maxterm_cnt;				/* Max Sesstion Cnt */ 
 char            g_path_mycfg[128]; 

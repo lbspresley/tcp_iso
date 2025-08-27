@@ -14,9 +14,11 @@ typedef struct {
 
 
 typedef struct {
-	char            MsgTpCd    [16];   /* 메시지 유형코드 : admi.004.001.01  */
-	char            BizMsgIdr  [64];   /* 메시지 고유번호           */
-	char            prc_org_cd [ 3];   /* 처리기관코드     */
+	char            command    [ 5];   /* 명령어 : REQ/RSP/ACK */
+	char            rsp        [ 5];   /* 응답 : TRUE/SUCCESS(0000) */
+	char            msgtpcd    [30];   /* 메시지 유형코드 : admi.004.001.01  */
+	char            bizsvc     [30];   /* 업무서비스 : bok.rtgs.gtr.01 */
+	char            bizmsgidr  [30];   /* 메시지 고유번호 : YYYYMMDD + ORGID(4) + TYPE(S/T) + SERIAL(8:00000000) + SEQ(6) */
 } ISO_FEP_HEADER;
 #define SIZE_ISO_FEP_HEADER (sizeof(ISO_FEP_HEADER))
 

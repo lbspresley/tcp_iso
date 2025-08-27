@@ -85,6 +85,7 @@
 #define MAX_MSG_LEN 200*1024
 
 void get_iso_datetime(char timestr[32]);
+void get_msg_idr(char msgidr[35]); // 메시지 고유번호 생성
 
 unsigned char* make_sess_key_msg(int step, char* key); // 세션키 메시지 생성
 unsigned char* get_tag_value(char* msg, char* tag); // 태그값 추출

@@ -303,6 +303,7 @@ void test_dynamic_namespace()
     printf("bizsvc: %s\n", bizsvc);
     printf("bizmsgidr: %s\n", bizmsgidr);
     
+    
     free(request_xml2);
 }
 
@@ -310,6 +311,7 @@ void test_dynamic_namespace()
 int main() {
     // libxml2 초기화
     xmlInitParser();
+    
     
     // test_parse_bokwire_envelope();
     // test_build_SecurityHandshake();
@@ -319,5 +321,17 @@ int main() {
     
     // libxml2 정리
     xmlCleanupParser();
+
+    // get_msg_idr 함수 테스트
+    // gc_seqFilePath 설정 (test_iso용)
+    strcpy(gc_seqFilePath, ".");
+    strcpy(gc_org_cd, "1101");
+
+    printf("\n=== Testing get_msg_idr function ===\n");
+    char msg_idr[35];
+    for (int i = 0; i < 5; i++) {
+        get_msg_idr(msg_idr);
+        printf("Generated Message ID %d: %s\n", i+1, msg_idr);
+    }
     return 0;
 } 

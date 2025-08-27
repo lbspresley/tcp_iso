@@ -24,6 +24,17 @@ int tpsvrinit(int argc, char* argv[])
     return(-1);
   }
 
+	// sequence file path
+  memset(gc_seqFilePath, 0x00, sizeof(gc_seqFilePath));
+  rc = roReadConfigString( NULL, "Local", "SEQ_PATH", gc_seqFilePath );
+  if( rc != 0 )
+  {
+    ulog(_WARNING_, "[Local/SEQ_PATH] Sequence File Path 취득오류\n" 
+        "--> Default Set : $ROME_HOME/log");
+    sprintf(gc_seqFilePath, "%s/log", getenv("ROME_HOME"));
+  }
+  ulog(_FLOW_, "Sequence File Path[%s]", gc_seqFilePath);
+
   // Bizcode 취득
   strcpy( gc_BizCode, "BOK" );    // 국고:BOK, 신한은망:FTP
   memset(tmpstr, 0x00, sizeof(tmpstr));
@@ -44,6 +55,10 @@ int tpsvrinit(int argc, char* argv[])
     return(-2);
   }
 
+#if 1
+	// BOK-ISO 한국은행코드 고정 : 1016
+  strcpy( gc_bok_cd , "1016");
+#else
   memset( gc_bok_cd , 0x00, sizeof( gc_bok_cd ));
   rc = roReadConfigString(NULL, "Local", "BokCode", gc_bok_cd );
   if(rc != 0)
@@ -56,6 +71,7 @@ int tpsvrinit(int argc, char* argv[])
       sprintf( gc_bok_cd, "1016" ); // 신-한은망용 한국은행 코드(1016)
     }
   }
+#endif
   ulog( _WARNING_, "한국은행 코드 : 참가기관(%s) BOK(%s)", gc_org_cd, gc_bok_cd );
 
   // Encrypt 여부 (default : YES)
