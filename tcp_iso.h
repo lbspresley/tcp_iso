@@ -19,7 +19,6 @@
 
 #include "iso_xml.h"
 #include "iso_utils.h"
-#include "session_key.h"    
 
 #include "iso_ack.h"
 #endif

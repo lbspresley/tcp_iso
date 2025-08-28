@@ -6,7 +6,6 @@ int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
     char* callback_name,
     long* info1, long* info2)
 {
-  int		rc;
   char*	in				= (char*) *ppFrame;
 
   /*
