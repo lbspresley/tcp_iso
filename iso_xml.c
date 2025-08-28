@@ -219,7 +219,7 @@ int parse_xml_xpath(char* xml, const char* xpath, char* value)
     #endif
 
     // XML에서 동적으로 namespace 추출 및 등록
-    int ns_count = extract_namespaces_from_xml(xml, xpathCtx);
+    // int ns_count = extract_namespaces_from_xml(xml, xpathCtx);
     // printf("Extracted and registered %d namespaces from XML\n", ns_count);
 
     // XPath 평가

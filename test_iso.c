@@ -292,11 +292,11 @@ void test_dynamic_namespace()
     parse_xml_xpath(request_xml2, "//*[local-name()='BizMsgIdr']", evtcd);
     printf("3 evtcd: %s\n", evtcd);
     
-    char* val = get_tag_value(request_xml2, "EvtCd");
+    char* val = (char*)get_tag_value(request_xml2, "EvtCd");
     printf("evtcd: %s\n", val);
-    val = get_tag_value(request_xml2, "EvtInf/EvtCd");
+    val = (char*)get_tag_value(request_xml2, "EvtInf/EvtCd");
     printf("multi level evtcd: %s\n", val);
-    val = get_tag_value(request_xml2, "bwh:BokwireBody/Document/admi.004.001.01/EvtInf");
+    val = (char*)get_tag_value(request_xml2, "bwh:BokwireBody/Document/admi.004.001.01/EvtInf");
     printf("multi level evtcd: %s\n", val);
     
     printf("msgtpcd: %s\n", msgtpcd);

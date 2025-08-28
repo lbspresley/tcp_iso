@@ -54,6 +54,9 @@ int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
 
 int lf_Client_SessionKey(char* msg, int len, char* tr_cd)
 {
+  // kill timer
+  rdf_killTimer(TIMERID_KEY_CLI);
+
   if( strcmp(tr_cd, "000000002") == 0 ) {
     return cli_recv_2(msg, len);
   }
@@ -70,6 +73,9 @@ int lf_Server_SessionKey(char* msg, int len, char* tr_cd)
   if( strcmp(tr_cd, "000000001") == 0 ) {
     return svr_recv_1(msg, len);
   }
+
+  // kill timer
+  rdf_killTimer(TIMERID_KEY_SVR);
 
   if( strcmp(tr_cd, "000000003") == 0 ) {
     return svr_recv_3(msg, len);

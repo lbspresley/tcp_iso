@@ -138,10 +138,16 @@ void kill_all_timers()
 
   // Kill POLL timers
   rdf_killTimer(TIMERID_REQ_POLL);
+
+  // Kill KEY timers
+  rdf_killTimer(TIMERID_KEY_CLI);
+  rdf_killTimer(TIMERID_KEY_SVR);
 }
 
 void close_all_sessions()
 {
+  ulog(_ERROR_, "Close all sessions. !!!!! ");
+
   // Kill all ACK timers
   kill_all_timers();
 

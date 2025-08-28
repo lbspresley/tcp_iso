@@ -16,4 +16,11 @@ int cli_recv_2(char* msg, int len);
 //Client 세션키 교환 통보(4) 수신
 int cli_recv_4(char* msg, int len);
 
+// Timeout Callback
+void TF_Key_Timeout(int TimerID, int lParam, int rParam);
 
+// Client Session Key
+int lf_Client_SessionKey(char* msg, int len, char* tr_cd);
+
+// Server Session Key
+int lf_Server_SessionKey(char* msg, int len, char* tr_cd);

@@ -9,7 +9,9 @@
 #define		FRAME_TYPE_RSP		2	// 응답전문
 
 
-#define		TIMERID_REQ_POLL 	1000		/* Poll 전문 생성을 위한 TIMERID */
+#define		TIMERID_KEY_CLI 	1000		/* CLIENT 세션키 교환 응답 TIMERID */
+#define		TIMERID_KEY_SVR 	1001		/* SERVER 세션키 교환 응답 TIMERID */
+#define		TIMERID_REQ_POLL 	2000		/* Poll 전문 생성을 위한 TIMERID */
 #define		TIMERID_REQ_ACK		3000		/* ACK 요청메시지 송신 TIMERID */
 
 #define		SKEY_BZ_DST_CD_001		"000000001"

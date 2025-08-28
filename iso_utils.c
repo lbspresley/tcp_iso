@@ -27,8 +27,8 @@ unsigned char* get_tag_value(char* msg, char* tag)
 {
   static unsigned char _tag_value[1024];
 
-  char startTag[256];
-  char endTag[256];
+  char startTag[512];
+  char endTag[512];
   char *pStart = NULL;
   char *pEnd = NULL;
   char *current_msg = msg;
@@ -176,7 +176,7 @@ void get_today(char date[10])
 
 void get_seq(char seq[7], char date[10])
 {
-    char seq_file[512];
+    char seq_file[1024];
     int current_seq = 900001;
     FILE* fp = NULL;
 
@@ -232,12 +232,8 @@ void get_msg_idr(char msgidr[35])
 {
     char date[10];
     char orgid[5] = {0};
-    // char type[2] = "S";
     char serial[9] = "00000000";
     char seq[7] = {0};
-    char seq_file[512];
-    int current_seq = 1;
-    FILE* fp = NULL;
 
     get_today(date);
     get_seq(seq, date);
@@ -257,7 +253,7 @@ void get_msg_idr(char msgidr[35])
 
 int delete_send_msg(char* msgidr)
 {
-  char send_msg_file[512];
+  char send_msg_file[1024];
   sprintf(send_msg_file, "%s/%s.dat", gc_seqFilePath, msgidr);
   if( access(send_msg_file, F_OK) != -1 ) {
     unlink(send_msg_file);
@@ -271,7 +267,7 @@ int delete_send_msg(char* msgidr)
 */
 int save_send_msg(char* msgidr, unsigned char* msg, int msg_len)
 {
-  char send_msg_file[512];
+  char send_msg_file[1024];
   sprintf(send_msg_file, "%s/%s.dat", gc_seqFilePath, msgidr);
 
   // 파일 존재 여부 확인
@@ -447,11 +443,6 @@ int is_ack_response_msg(char* msg)
   if( ret < 0 ) {
     return 0;
   }
-
-  // search timer id with bizMsgIdr
-  int timer_id ;
-
-  // stop timer
 
   return 0;
 }

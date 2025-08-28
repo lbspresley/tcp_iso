@@ -64,6 +64,9 @@ int cli_send_1(char* PeerIP, char* PeerPort, char* LocalPort)
     ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
   }
 
+  // set timer
+  rdf_setTimer(TIMERID_KEY_CLI, 10000, -1, 0, 0, TF_Key_Timeout);
+
   return RC_NEXT_ACTION;
 }
 
@@ -121,6 +124,9 @@ int cli_recv_2(char* msg, int len)
     ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len ); 
     return -1;
   }
+
+  // set timer
+  rdf_setTimer(TIMERID_KEY_CLI, 10000, -1, 0, 0, TF_Key_Timeout);
 
   return 0;
 }

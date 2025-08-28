@@ -70,6 +70,10 @@ int svr_recv_1(char* msg, int len)
     ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
   }
 
+  // set timer
+  rdf_setTimer(TIMERID_KEY_SVR, 10000, -1, 0, 0, TF_Key_Timeout);
+
+
   return RC_NEXT_ACTION;
 }
 
@@ -126,6 +130,9 @@ int svr_recv_3(char* msg, int len)
     return -3;
   }
 
+  // set timer
+  rdf_setTimer(TIMERID_KEY_SVR, 10000, -1, 0, 0, TF_Key_Timeout);
+
   return RC_NEXT_ACTION;
 }
 
@@ -138,8 +145,6 @@ int svr_recv_5(char* msg, int len)
   int rc;
   int		out_len; 
   unsigned char*	pSKeyOut;
-
-
 
   ulog(_FLOW_, "[로그정보] Server 세션키 교환 통보(5) 수신\n%s", msg);
 
@@ -164,4 +169,20 @@ int svr_recv_5(char* msg, int len)
   ulog(_ERROR_, "[로그정보] 세션키 교환 완료 SERVER (BOK->BSBANK)\n" );
 
   return RC_NEXT_ACTION;
+}
+
+void TF_Key_Timeout(int TimerID, int lParam, int rParam)
+{
+  int isClient = TimerID == TIMERID_KEY_CLI ? 1 : 0;
+
+  if(isClient == 1) {
+    ulog(_ERROR_, "CLIENT SESSION-KEY Exchange Timeout. !!!!! ");
+  } else {
+    ulog(_ERROR_, "SERVER SESSION-KEY Exchange Timeout. !!!!! ");
+  }
+
+  // Close all sessions
+  close_all_sessions();
+
+  return;
 }
