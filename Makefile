@@ -23,6 +23,7 @@ SRCS1	= tcp_iso.c \
 		iso_utils.c \
 		iso_xml.c \
 		iso_ack.c \
+		iso_header.c \
 		$(SVCTAB1)
 
 #PRCS1	= db_Get_BOK_Inf.pc

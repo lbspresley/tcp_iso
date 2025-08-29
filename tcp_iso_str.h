@@ -22,4 +22,14 @@ typedef struct {
 } ISO_FEP_HEADER;
 #define SIZE_ISO_FEP_HEADER (sizeof(ISO_FEP_HEADER))
 
+typedef struct {
+	char RespCd   [7];   // REQ(O),RSP(O) (REQ:SPACE, RSP:SUCCESS/FAIL)
+	char MsgTpCd  [35];  // REQ(O),RSP(O) (Max 27)
+	char BizSvc   [35];  // REQ(X),RSP(O)
+	char BizMsgIdr[35];  // REQ(X),RSP(O)
+	char Id       [16];  // REQ(O),RSP(X)
+	char Password [16];  // REQ(O),RSP(X)
+} BOK_HEADER;
+#define SIZE_BOK_HEADER (sizeof(BOK_HEADER))
+
 #endif
