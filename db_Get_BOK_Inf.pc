@@ -127,7 +127,7 @@ int getEncIdPw( )
     return 0;
   }
 
-  rc = inl_encrypt(gc_PlainIdPswd, inlen, &pOut, &outlen);
+  rc = inl_encrypt(gc_PlainIdPswd, inlen, (char**)&pOut, &outlen);
   if( rc < 0 )
   {
     ulog(_ERROR_, "[장애로그] : ID/PSWD Encrypt 오류 BIZ[%s] [%d]", gc_BizCode, rc);
@@ -174,7 +174,7 @@ int getPlainIdPw( )
     return 0;
   }
 
-  rc = inl_decrypt(gc_EncIdPswd, inlen, &pOut, &outlen);
+  rc = inl_decrypt(gc_EncIdPswd, inlen, (char**)&pOut, &outlen);
   if( rc < 0 )
   {
     ulog(_ERROR_, "[장애로그] : ID/PSWD Decrypt 오류 BIZ[%s] [%d]", gc_BizCode, rc);
@@ -230,8 +230,8 @@ int	lf_GetSlsDt( char *Slsdate )
 		} 
 
 		roLog(_WARNING_, "[%s] 영업일자 취득 OK. (SlsDate=%.*s)"
-							, __FUNCTION__, vcSlsDate.len, vcSlsDate.arr);
-		memcpy(Slsdate, vcSlsDate.arr, vcSlsDate.len);
+							, __FUNCTION__, strlen(vcSlsDate), vcSlsDate);
+		memcpy(Slsdate, vcSlsDate, strlen(vcSlsDate));
 		break; 
 	}
 

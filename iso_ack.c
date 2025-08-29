@@ -2,7 +2,8 @@
 
 void ack_info_init()
 {
-  for(int i = 0; i < MAX_ACK_MSG_CNT; i++) {
+  int i;
+  for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
     g_ack_info[i].use_flag = 0;
     g_ack_info[i].retry_timer_id = TIMERID_REQ_ACK + i;
   }
@@ -15,7 +16,8 @@ ACK_INFO* add_ack_info(char* msgidr, char* msg, int msg_len)
     return ack_info;
   }
 
-  for(int i = 0; i < MAX_ACK_MSG_CNT; i++) {
+  int i;
+  for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
     if( g_ack_info[i].use_flag == 0 ) {
       g_ack_info[i].use_flag = 1;
       strcpy(g_ack_info[i].msgidr, msgidr);
@@ -30,7 +32,8 @@ ACK_INFO* add_ack_info(char* msgidr, char* msg, int msg_len)
 
 ACK_INFO* get_ack_info(int timer_id)
 {
-  for(int i = 0; i < MAX_ACK_MSG_CNT; i++) {
+  int i;
+  for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
     if( g_ack_info[i].use_flag == 1 && g_ack_info[i].retry_timer_id == timer_id ) {
       return &g_ack_info[i];
     }
@@ -40,7 +43,8 @@ ACK_INFO* get_ack_info(int timer_id)
 
 ACK_INFO* get_ack_info_with_msgidr(char msgidr[35])
 {
-  for(int i = 0; i < MAX_ACK_MSG_CNT; i++) {
+  int i;
+  for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
     if( g_ack_info[i].use_flag == 1 && memcmp(g_ack_info[i].msgidr, msgidr, 35) == 0 ) {
       return &g_ack_info[i];
     }
@@ -164,7 +168,8 @@ void TF_Ack_Timeout(int TimerID, int lParam, int rParam)
 void kill_all_timers()
 {
   // Kill all ACK timers
-  for(int i = 0; i < MAX_ACK_MSG_CNT; i++) {
+  int i;
+  for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
     if( g_ack_info[i].use_flag == 1 ) {
       rdf_killTimer(g_ack_info[i].retry_timer_id);
     }

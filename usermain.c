@@ -8,7 +8,6 @@ int CF_UpdateRecvCnt(int Type, long* pInfo);
 int CF_UpdateSendCnt(int Type, long* pInfo);
 int CF_APortConnect(int Type, long* pInfo);
 int	CF_ACloseSession(int Type, long* pInfo);
-
 int	CF_DisCntSession(int Type, long* pInfo);
 
 int	CF_ProcLogErr(int bufkind, unsigned char** ppFrame,
@@ -77,9 +76,9 @@ void tgmCallbackResiter()
 
 
   /* RMP Callback Function Register */
-  rmp_SetupCallback("CF_ProcLogErr", CF_ProcLogErr);
-  rmp_SetupCallback("CF_ImgLogSend", CF_ImgLogSend);
-  rmp_SetupCallback("CF_ImgLogRecv", CF_ImgLogRecv);
+  //rmp_SetupCallback("CF_ProcLogErr", CF_ProcLogErr);
+  //rmp_SetupCallback("CF_ImgLogSend", CF_ImgLogSend);
+  //rmp_SetupCallback("CF_ImgLogRecv", CF_ImgLogRecv);
   
 #endif
 

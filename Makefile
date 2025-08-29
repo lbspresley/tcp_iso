@@ -9,9 +9,6 @@ SRCS1	= tcp_iso.c \
 		CF_APortConnect.c \
 		CF_ACloseSession.c \
 		CF_DisCntSession.c \
-		CF_ProcLogErr.c \
-		CF_ImgLogRecv.c \
-		CF_ImgLogSend.c \
 		CF_ReceiveMessage.c \
 		CF_ProcessSessionKey.c \
 		CF_ProcessMessage.c \

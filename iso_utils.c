@@ -532,7 +532,8 @@ int is_need_ack_msg(char* msg)
     "pacs.002.CLS", "pacs.002.CORE", "pacs.004.CLS", "pacs.004.CORE", "pacs.008.CORE", "pacs.009.CLS", "pacs.009.CORE", "pacs.028"
   };
 
-  for( int i = 0; i < sizeof(ack_tr_cds) / sizeof(ack_tr_cds[0]); i++ ) {
+  int i;
+  for( i = 0; i < sizeof(ack_tr_cds) / sizeof(ack_tr_cds[0]); i++ ) {
     if( strcmp(msg_tp_cd, ack_tr_cds[i]) == 0 ) {
       return 1;
     }

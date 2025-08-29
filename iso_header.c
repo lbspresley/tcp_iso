@@ -16,7 +16,8 @@ int check_msg_tp_cd(char* msg_tp_cd)
     "pacs.028",
   };
 
-  for(int i = 0; i < sizeof(msg_tp_cd_list)/sizeof(msg_tp_cd_list[0]); i++) {
+  int i;
+  for(i = 0; i < sizeof(msg_tp_cd_list)/sizeof(msg_tp_cd_list[0]); i++) {
     if( strcmp(msg_tp_cd, msg_tp_cd_list[i]) == 0 ) {
       return 1;
     }
