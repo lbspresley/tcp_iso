@@ -34,17 +34,17 @@ PRCS1	= db_Get_BOK_Inf.pc
 endif
 
 # Module Name 
-DEST1	= tcp_iso
+#DEST1	= tcp_iso
 SVC1	= TCP_ISO
 
 SRCS2	= test_iso.c iso_xml.c iso_utils.c 
-#DEST2	= test_iso
+DEST2	= test_iso
 
 SRCS3	= validate_xml.c parson.c
-#DEST3	= validate_xml
+DEST3	= validate_xml
 
 SRCS4	= validate_xml_complex.c parson.c
-#DEST4	= validate_xml2
+DEST4	= validate_xml2
 
 include $(ROME_HOME)/work/rome.mkrule
 
