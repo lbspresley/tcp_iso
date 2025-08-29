@@ -38,7 +38,8 @@ int main() {
     printf("정규표현식 테스트: [0-9]{10} vs [0-9]{10,10}\n");
     printf("=================================================\n");
     
-    for (int i = 0; i < num_tests; i++) {
+    int i;
+    for (i = 0; i < num_tests; i++) {
         int result1 = test_regex(pattern1, test_cases[i]);
         int result2 = test_regex(pattern2, test_cases[i]);
         

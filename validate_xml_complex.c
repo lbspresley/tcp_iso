@@ -6,9 +6,9 @@
 #include <libxml/xpathInternals.h>
 #include <regex.h>
 
-#include "parson.h" // parson ë¼ì´ë¸ŒëŸ¬ë¦¬ í—¤ë”
+#include "parson.h" // parson ¶óÀÌºê·¯¸® Çì´õ
 
-// --- ì˜¤ë¥˜ ì •ë³´ êµ¬ì¡°ì²´ ì •ì˜ ---
+// --- ¿À·ù Á¤º¸ ±¸Á¶Ã¼ Á¤ÀÇ ---
 typedef struct {
     char* rule_description;
     char* error_message;
@@ -24,7 +24,7 @@ typedef struct {
     size_t capacity;
 } ErrorCollection;
 
-// --- ì „ë°© ì„ ì–¸ ---
+// --- Àü¹æ ¼±¾ğ ---
 char* extract_xpath_value(xmlDocPtr doc, const xmlChar* xpathExpr, xmlNodePtr context_node);
 int check_element_presence(xmlDocPtr doc, const char* xpathExpr, xmlNodePtr context_node);
 int validate_by_exact_value(const char* extracted_value, const char* expected_value);
@@ -33,85 +33,85 @@ int validate_cross_element_match(xmlDocPtr doc, const char* xpath1, const char* 
 // int check_value_in_list(const char* extracted_value, JSON_Array* values_array, int is_not_in_list);
 int check_value_in_list(const char* extracted_value, char** values_array, size_t num_values, int is_not_in_list);
 
-// ì˜¤ë¥˜ ê´€ë¦¬ í•¨ìˆ˜ë“¤
+// ¿À·ù °ü¸® ÇÔ¼öµé
 void init_error_collection(ErrorCollection* errors);
 void add_validation_error(ErrorCollection* errors, const char* rule_desc, const char* error_msg, 
                          const char* xpath, const char* expected, const char* actual, int rule_idx);
 void free_error_collection(ErrorCollection* errors);
 void output_errors_as_json(const ErrorCollection* errors, int overall_status);
 
-// --- ê·œì¹™ êµ¬ì¡°ì²´ ì •ì˜ ---
+// --- ±ÔÄ¢ ±¸Á¶Ã¼ Á¤ÀÇ ---
 
-// ì¡°ê±´ì˜ ìœ í˜•
+// Á¶°ÇÀÇ À¯Çü
 typedef enum {
     COND_TYPE_NONE,
-    COND_TYPE_PRESENCE,         // ìš”ì†Œê°€ ì¡´ì¬í•˜ëŠ”ì§€
-    COND_TYPE_ABSENCE,          // ìš”ì†Œê°€ ì¡´ì¬í•˜ì§€ ì•ŠëŠ”ì§€
-    COND_TYPE_VALUE_IN_LIST,    // ê°’ì´ ë¦¬ìŠ¤íŠ¸ì— í¬í•¨ë˜ëŠ”ì§€
-    COND_TYPE_VALUE_NOT_IN_LIST,// ê°’ì´ ë¦¬ìŠ¤íŠ¸ì— í¬í•¨ë˜ì§€ ì•ŠëŠ”ì§€
-    COND_TYPE_REGEX_MATCH       // ê°’ì´ ì •ê·œ í‘œí˜„ì‹ì— ë§¤ì¹˜ë˜ëŠ”ì§€
+    COND_TYPE_PRESENCE,         // ¿ä¼Ò°¡ Á¸ÀçÇÏ´ÂÁö
+    COND_TYPE_ABSENCE,          // ¿ä¼Ò°¡ Á¸ÀçÇÏÁö ¾Ê´ÂÁö
+    COND_TYPE_VALUE_IN_LIST,    // °ªÀÌ ¸®½ºÆ®¿¡ Æ÷ÇÔµÇ´ÂÁö
+    COND_TYPE_VALUE_NOT_IN_LIST,// °ªÀÌ ¸®½ºÆ®¿¡ Æ÷ÇÔµÇÁö ¾Ê´ÂÁö
+    COND_TYPE_REGEX_MATCH       // °ªÀÌ Á¤±Ô Ç¥Çö½Ä¿¡ ¸ÅÄ¡µÇ´ÂÁö
 } ConditionType;
 
-// ì•¡ì…˜ì˜ ìœ í˜• (ê²€ì¦ ë°©ì‹)
+// ¾×¼ÇÀÇ À¯Çü (°ËÁõ ¹æ½Ä)
 typedef enum {
     ACT_TYPE_NONE,
-    ACT_TYPE_EXACT_VALUE,       // ì •í™•í•œ ê°’ ì¼ì¹˜
-    ACT_TYPE_REGEX,             // ì •ê·œ í‘œí˜„ì‹ ë§¤ì¹˜
-    ACT_TYPE_PRESENCE,          // ìš”ì†Œê°€ ì¡´ì¬í•˜ëŠ”ì§€
-    ACT_TYPE_ABSENCE,           // ìš”ì†Œê°€ ì¡´ì¬í•˜ì§€ ì•ŠëŠ”ì§€
-    ACT_TYPE_CROSS_ELEMENT_MATCH,// ë‘ ìš”ì†Œì˜ ê°’ ì¼ì¹˜
-    ACT_TYPE_ONE_OF_PRESENT,    // ì—¬ëŸ¬ ìš”ì†Œ ì¤‘ í•˜ë‚˜ ì´ìƒ ì¡´ì¬í•˜ëŠ”ì§€
-    ACT_TYPE_ALL_PRESENT        // ì—¬ëŸ¬ ìš”ì†Œ ëª¨ë‘ ì¡´ì¬í•˜ëŠ”ì§€
+    ACT_TYPE_EXACT_VALUE,       // Á¤È®ÇÑ °ª ÀÏÄ¡
+    ACT_TYPE_REGEX,             // Á¤±Ô Ç¥Çö½Ä ¸ÅÄ¡
+    ACT_TYPE_PRESENCE,          // ¿ä¼Ò°¡ Á¸ÀçÇÏ´ÂÁö
+    ACT_TYPE_ABSENCE,           // ¿ä¼Ò°¡ Á¸ÀçÇÏÁö ¾Ê´ÂÁö
+    ACT_TYPE_CROSS_ELEMENT_MATCH,// µÎ ¿ä¼ÒÀÇ °ª ÀÏÄ¡
+    ACT_TYPE_ONE_OF_PRESENT,    // ¿©·¯ ¿ä¼Ò Áß ÇÏ³ª ÀÌ»ó Á¸ÀçÇÏ´ÂÁö
+    ACT_TYPE_ALL_PRESENT        // ¿©·¯ ¿ä¼Ò ¸ğµÎ Á¸ÀçÇÏ´ÂÁö
 } ActionType;
 
-// ì¼ë°˜ì ì¸ XPath ê¸°ë°˜ ê²€ì¦ ê·œì¹™
+// ÀÏ¹İÀûÀÎ XPath ±â¹İ °ËÁõ ±ÔÄ¢
 typedef struct {
     char* description;
-    char* xpath; // ì£¼ìš” XPath
-    char* value; // ê²€ì¦ ê°’ (exact_value, regex)
-    char* xpath1; // cross_element_matchìš©
-    char* xpath2; // cross_element_matchìš©
-    // Cì—ì„œ JSON_Arrayë¥¼ ì§ì ‘ ì €ì¥í•˜ê¸°ëŠ” ë¹„íš¨ìœ¨ì ì´ë¯€ë¡œ, ë³„ë„ì˜ StringList ë˜ëŠ” íŒŒì‹± ì‹œ ì²˜ë¦¬
+    char* xpath; // ÁÖ¿ä XPath
+    char* value; // °ËÁõ °ª (exact_value, regex)
+    char* xpath1; // cross_element_match¿ë
+    char* xpath2; // cross_element_match¿ë
+    // C¿¡¼­ JSON_Array¸¦ Á÷Á¢ ÀúÀåÇÏ±â´Â ºñÈ¿À²ÀûÀÌ¹Ç·Î, º°µµÀÇ StringList ¶Ç´Â ÆÄ½Ì ½Ã Ã³¸®
 } SimpleRuleData;
 
-// ì¡°ê±´ë¶€ ê·œì¹™ ë°ì´í„°
+// Á¶°ÇºÎ ±ÔÄ¢ µ¥ÀÌÅÍ
 typedef struct {
-    char* description; // ì¡°ê±´ë¶€ ê·œì¹™ì— ëŒ€í•œ ì„¤ëª… (ì˜ˆ: "if value is X then...")
+    char* description; // Á¶°ÇºÎ ±ÔÄ¢¿¡ ´ëÇÑ ¼³¸í (¿¹: "if value is X then...")
     ConditionType type;
-    char** xpaths; // ì¡°ê±´ ìš”ì†Œì˜ XPathë“¤ (ë‹¤ì¤‘ ì§€ì›)
+    char** xpaths; // Á¶°Ç ¿ä¼ÒÀÇ XPathµé (´ÙÁß Áö¿ø)
     size_t num_xpaths;
-    char** values; // value_in_list / value_not_in_list ìš© ë¬¸ìì—´ ë°°ì—´
+    char** values; // value_in_list / value_not_in_list ¿ë ¹®ÀÚ¿­ ¹è¿­
     size_t num_values;
-    char* regex_pattern; // regex_match ìš©
+    char* regex_pattern; // regex_match ¿ë
 } ConditionData;
 
-// ì¡°ê±´ë¶€ ê·œì¹™ì˜ ì•¡ì…˜ ë°ì´í„°
+// Á¶°ÇºÎ ±ÔÄ¢ÀÇ ¾×¼Ç µ¥ÀÌÅÍ
 typedef struct {
-    char* description; // ì•¡ì…˜ì— ëŒ€í•œ ì„¤ëª… (ì˜ˆ: "then element Y must be present")
+    char* description; // ¾×¼Ç¿¡ ´ëÇÑ ¼³¸í (¿¹: "then element Y must be present")
     ActionType type;
-    char** xpaths; // ë‹¤ì¤‘ XPath ì§€ì› (presence, absence, regex, exact_value, one_of_present, all_present)
+    char** xpaths; // ´ÙÁß XPath Áö¿ø (presence, absence, regex, exact_value, one_of_present, all_present)
     size_t num_xpaths;
-    char* xpath1; // cross_element_match ìš©
-    char* xpath2; // cross_element_match ìš©
-    char* value; // exact_value, regex ìš©
+    char* xpath1; // cross_element_match ¿ë
+    char* xpath2; // cross_element_match ¿ë
+    char* value; // exact_value, regex ¿ë
 } ActionData;
 
-// ë©”ì¸ ê·œì¹™ ìœ í˜•
+// ¸ŞÀÎ ±ÔÄ¢ À¯Çü
 typedef enum {
     RULE_TYPE_NONE,             // None
     RULE_TYPE_SIMPLE,             // exact_value, regex
-    RULE_TYPE_CROSS_ELEMENT_MATCH, // ë‘ XPath ê°’ ì¼ì¹˜
-    RULE_TYPE_MUTUALLY_EXCLUSIVE_PRESENCE, // ìƒí˜¸ ë°°íƒ€ì  ì¡´ì¬
-    RULE_TYPE_CONDITIONAL         // ì¡°ê±´ë¶€ ê·œì¹™ (IF-THEN)
+    RULE_TYPE_CROSS_ELEMENT_MATCH, // µÎ XPath °ª ÀÏÄ¡
+    RULE_TYPE_MUTUALLY_EXCLUSIVE_PRESENCE, // »óÈ£ ¹èÅ¸Àû Á¸Àç
+    RULE_TYPE_CONDITIONAL         // Á¶°ÇºÎ ±ÔÄ¢ (IF-THEN)
 } RuleType;
 
-// ì „ì²´ ê·œì¹™ êµ¬ì¡°ì²´ (ê°€ì¥ ë³µì¡í•œ ê·œì¹™ì„ í¬ê´„)
+// ÀüÃ¼ ±ÔÄ¢ ±¸Á¶Ã¼ (°¡Àå º¹ÀâÇÑ ±ÔÄ¢À» Æ÷°ı)
 typedef struct {
     char* description;
     RuleType rule_type;
-    char* context_xpath; // Conditional rulesì˜ ê²½ìš°, XPath í‰ê°€ì˜ ê¸°ì¤€ ë…¸ë“œ
+    char* context_xpath; // Conditional rulesÀÇ °æ¿ì, XPath Æò°¡ÀÇ ±âÁØ ³ëµå
 
-    // SIMPLE, CROSS_ELEMENT_MATCH ê·œì¹™ìš© í•„ë“œ (ë‹¤ì¤‘ XPath ì§€ì›)
+    // SIMPLE, CROSS_ELEMENT_MATCH ±ÔÄ¢¿ë ÇÊµå (´ÙÁß XPath Áö¿ø)
     char** xpaths_main; // multiple xpaths for SIMPLE rules
     size_t num_xpaths_main;
     char* xpath_compare1; // xpath1 for cross_element_match
@@ -119,26 +119,26 @@ typedef struct {
     char* value_expected; // for exact_value or regex patterns (SIMPLE rule)
     int simple_rule_sub_type; // ACT_TYPE_EXACT_VALUE or ACT_TYPE_REGEX
 
-    // MUTUALLY_EXCLUSIVE_PRESENCE ê·œì¹™ìš© í•„ë“œ
+    // MUTUALLY_EXCLUSIVE_PRESENCE ±ÔÄ¢¿ë ÇÊµå
     char** xpaths_mutual;
     size_t num_xpaths_mutual;
     int allow_absent;
 
-    // CONDITIONAL ê·œì¹™ìš© í•„ë“œ
+    // CONDITIONAL ±ÔÄ¢¿ë ÇÊµå
     ConditionData condition;
     ActionData action;
 } ValidationRule;
 
-// --- ì˜¤ë¥˜ ê´€ë¦¬ í•¨ìˆ˜ êµ¬í˜„ ---
+// --- ¿À·ù °ü¸® ÇÔ¼ö ±¸Çö ---
 
-// ì˜¤ë¥˜ ì»¬ë ‰ì…˜ ì´ˆê¸°í™”
+// ¿À·ù ÄÃ·º¼Ç ÃÊ±âÈ­
 void init_error_collection(ErrorCollection* errors) {
     errors->errors = NULL;
     errors->count = 0;
     errors->capacity = 0;
 }
 
-// ê²€ì¦ ì˜¤ë¥˜ ì¶”ê°€
+// °ËÁõ ¿À·ù Ãß°¡
 void add_validation_error(ErrorCollection* errors, const char* rule_desc, const char* error_msg, 
                          const char* xpath, const char* expected, const char* actual, int rule_idx) {
     if (errors->count >= errors->capacity) {
@@ -164,9 +164,10 @@ void add_validation_error(ErrorCollection* errors, const char* rule_desc, const 
     errors->count++;
 }
 
-// ì˜¤ë¥˜ ì»¬ë ‰ì…˜ ë©”ëª¨ë¦¬ í•´ì œ
+// ¿À·ù ÄÃ·º¼Ç ¸Ş¸ğ¸® ÇØÁ¦
 void free_error_collection(ErrorCollection* errors) {
-    for (size_t i = 0; i < errors->count; i++) {
+    size_t i;
+    for (i = 0; i < errors->count; i++) {
         if (errors->errors[i].rule_description) free(errors->errors[i].rule_description);
         if (errors->errors[i].error_message) free(errors->errors[i].error_message);
         if (errors->errors[i].xpath) free(errors->errors[i].xpath);
@@ -179,20 +180,21 @@ void free_error_collection(ErrorCollection* errors) {
     errors->capacity = 0;
 }
 
-// JSON í˜•íƒœë¡œ ì˜¤ë¥˜ ì¶œë ¥
+// JSON ÇüÅÂ·Î ¿À·ù Ãâ·Â
 void output_errors_as_json(const ErrorCollection* errors, int overall_status) {
     JSON_Value* root_value = json_value_init_object();
     JSON_Object* root_object = json_value_get_object(root_value);
     
-    // ì „ì²´ ê²€ì¦ ìƒíƒœ
+    // ÀüÃ¼ °ËÁõ »óÅÂ
     json_object_set_string(root_object, "validation_status", overall_status == 0 ? "PASS" : "FAIL");
     json_object_set_number(root_object, "total_errors", (double)errors->count);
     
-    // ì˜¤ë¥˜ ë°°ì—´ ìƒì„±
+    // ¿À·ù ¹è¿­ »ı¼º
     JSON_Value* errors_array_value = json_value_init_array();
     JSON_Array* errors_array = json_value_get_array(errors_array_value);
     
-    for (size_t i = 0; i < errors->count; i++) {
+    size_t i;
+    for (i = 0; i < errors->count; i++) {
         JSON_Value* error_value = json_value_init_object();
         JSON_Object* error_object = json_value_get_object(error_value);
         
@@ -223,7 +225,7 @@ void output_errors_as_json(const ErrorCollection* errors, int overall_status) {
     
     json_object_set_value(root_object, "errors", errors_array_value);
     
-    // JSON ë¬¸ìì—´ë¡œ ë³€í™˜ ë° ì¶œë ¥
+    // JSON ¹®ÀÚ¿­·Î º¯È¯ ¹× Ãâ·Â
     char* json_string = json_serialize_to_string_pretty(root_value);
     if (json_string) {
         printf("\n--- Validation Results (JSON) ---\n");
@@ -234,15 +236,16 @@ void output_errors_as_json(const ErrorCollection* errors, int overall_status) {
     json_value_free(root_value);
 }
 
-// ë™ì ìœ¼ë¡œ í• ë‹¹ëœ ValidationRule êµ¬ì¡°ì²´ ë°°ì—´ì„ í•´ì œí•˜ëŠ” í•¨ìˆ˜
+// µ¿ÀûÀ¸·Î ÇÒ´çµÈ ValidationRule ±¸Á¶Ã¼ ¹è¿­À» ÇØÁ¦ÇÏ´Â ÇÔ¼ö
 void free_validation_rules(ValidationRule* rules, size_t count) {
-    for (size_t i = 0; i < count; i++) {
+    size_t i, j;
+    for (i = 0; i < count; i++) {
         if (rules[i].description) free(rules[i].description);
         if (rules[i].context_xpath) free(rules[i].context_xpath);
 
         // Simple/Cross-element rule fields
         if (rules[i].xpaths_main) {
-            for (size_t j = 0; j < rules[i].num_xpaths_main; j++) {
+            for (j = 0; j < rules[i].num_xpaths_main; j++) {
                 if (rules[i].xpaths_main[j]) free(rules[i].xpaths_main[j]);
             }
             free(rules[i].xpaths_main);
@@ -253,7 +256,7 @@ void free_validation_rules(ValidationRule* rules, size_t count) {
 
         // Mutually exclusive fields
         if (rules[i].xpaths_mutual) {
-            for (size_t j = 0; j < rules[i].num_xpaths_mutual; j++) {
+            for (j = 0; j < rules[i].num_xpaths_mutual; j++) {
                 if (rules[i].xpaths_mutual[j]) free(rules[i].xpaths_mutual[j]);
             }
             free(rules[i].xpaths_mutual);
@@ -262,13 +265,13 @@ void free_validation_rules(ValidationRule* rules, size_t count) {
         // Conditional rule fields
         if (rules[i].condition.description) free(rules[i].condition.description);
         if (rules[i].condition.xpaths) {
-            for (size_t j = 0; j < rules[i].condition.num_xpaths; j++) {
+            for (j = 0; j < rules[i].condition.num_xpaths; j++) {
                 if (rules[i].condition.xpaths[j]) free(rules[i].condition.xpaths[j]);
             }
             free(rules[i].condition.xpaths);
         }
         if (rules[i].condition.values) {
-            for (size_t j = 0; j < rules[i].condition.num_values; j++) {
+            for (j = 0; j < rules[i].condition.num_values; j++) {
                 if (rules[i].condition.values[j]) free(rules[i].condition.values[j]);
             }
             free(rules[i].condition.values);
@@ -277,7 +280,7 @@ void free_validation_rules(ValidationRule* rules, size_t count) {
 
         if (rules[i].action.description) free(rules[i].action.description);
         if (rules[i].action.xpaths) {
-            for (size_t j = 0; j < rules[i].action.num_xpaths; j++) {
+            for (j = 0; j < rules[i].action.num_xpaths; j++) {
                 if (rules[i].action.xpaths[j]) free(rules[i].action.xpaths[j]);
             }
             free(rules[i].action.xpaths);
@@ -289,7 +292,7 @@ void free_validation_rules(ValidationRule* rules, size_t count) {
     if (rules) free(rules);
 }
 
-// JSON ë¬¸ìì—´ ë°°ì—´ì„ C ë¬¸ìì—´ ë°°ì—´ë¡œ ë³€í™˜í•˜ëŠ” í—¬í¼ í•¨ìˆ˜
+// JSON ¹®ÀÚ¿­ ¹è¿­À» C ¹®ÀÚ¿­ ¹è¿­·Î º¯È¯ÇÏ´Â ÇïÆÛ ÇÔ¼ö
 char** json_array_to_string_array(JSON_Array* json_arr, size_t* num_elements) {
     *num_elements = json_array_get_count(json_arr);
     char** str_arr = (char**)malloc(sizeof(char*) * (*num_elements));
@@ -297,7 +300,8 @@ char** json_array_to_string_array(JSON_Array* json_arr, size_t* num_elements) {
         fprintf(stderr, "Error: Failed to allocate memory for string array.\n");
         return NULL;
     }
-    for (size_t i = 0; i < *num_elements; i++) {
+    size_t i, j;
+    for (i = 0; i < *num_elements; i++) {
         const char* s = json_array_get_string(json_arr, i);
         if (s == NULL) {
             fprintf(stderr, "Warning: Non-string element found in JSON array at index %zu. Skipping.\n", i);
@@ -307,7 +311,7 @@ char** json_array_to_string_array(JSON_Array* json_arr, size_t* num_elements) {
             if (str_arr[i] == NULL) {
                 fprintf(stderr, "Error: Failed to strdup string from JSON array.\n");
                 // Clean up already allocated strings
-                for (size_t j = 0; j < i; j++) {
+                for (j = 0; j < i; j++) {
                     if (str_arr[j]) free(str_arr[j]);
                 }
                 free(str_arr);
@@ -319,7 +323,7 @@ char** json_array_to_string_array(JSON_Array* json_arr, size_t* num_elements) {
 }
 
 
-// --- JSON config íŒŒì‹± í•¨ìˆ˜ ---
+// --- JSON config ÆÄ½Ì ÇÔ¼ö ---
 int load_validation_rules_from_json(const char* config_file_path, ValidationRule** out_rules, size_t* out_count) {
     JSON_Value* root_value = NULL;
     JSON_Array* rules_array = NULL;
@@ -347,7 +351,8 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
         return -1;
     }
 
-    for (size_t i = 0; i < count; i++) {
+    size_t i;
+    for (i = 0; i < count; i++) {
         JSON_Object* rule_obj = json_array_get_object(rules_array, i);
         if (rule_obj == NULL) {
             fprintf(stderr, "Warning: Skipping invalid rule object at index %zu.\n", i);
@@ -368,7 +373,7 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
             rules[i].simple_rule_sub_type = ACT_TYPE_EXACT_VALUE;
             const char* value = json_object_get_string(rule_obj, "value");
             
-            // xpath í•„ë“œê°€ ë°°ì—´ì¸ì§€ ë¬¸ìì—´ì¸ì§€ í™•ì¸
+            // xpath ÇÊµå°¡ ¹è¿­ÀÎÁö ¹®ÀÚ¿­ÀÎÁö È®ÀÎ
             JSON_Array* xpath_array = json_object_get_array(rule_obj, "xpath");
             if (xpath_array) {
                 rules[i].xpaths_main = json_array_to_string_array(xpath_array, &rules[i].num_xpaths_main);
@@ -390,7 +395,7 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
             rules[i].simple_rule_sub_type = ACT_TYPE_REGEX;
             const char* value = json_object_get_string(rule_obj, "value");
             
-            // xpath í•„ë“œê°€ ë°°ì—´ì¸ì§€ ë¬¸ìì—´ì¸ì§€ í™•ì¸
+            // xpath ÇÊµå°¡ ¹è¿­ÀÎÁö ¹®ÀÚ¿­ÀÎÁö È®ÀÎ
             JSON_Array* xpath_array = json_object_get_array(rule_obj, "xpath");
             if (xpath_array) {
                 rules[i].xpaths_main = json_array_to_string_array(xpath_array, &rules[i].num_xpaths_main);
@@ -441,7 +446,7 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
             if (cond_desc) rules[i].condition.description = strdup(cond_desc);
             const char* cond_type_str = json_object_get_string(cond_obj, "type");
             
-            // xpath í•„ë“œê°€ ë°°ì—´ì¸ì§€ ë¬¸ìì—´ì¸ì§€ í™•ì¸
+            // xpath ÇÊµå°¡ ¹è¿­ÀÎÁö ¹®ÀÚ¿­ÀÎÁö È®ÀÎ
             JSON_Array* cond_xpath_array = json_object_get_array(cond_obj, "xpath");
             if (cond_xpath_array) {
                 rules[i].condition.xpaths = json_array_to_string_array(cond_xpath_array, &rules[i].condition.num_xpaths);
@@ -494,7 +499,7 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
 
             if (strcmp(act_type_str, "presence") == 0) {
                 rules[i].action.type = ACT_TYPE_PRESENCE;
-                // xpath í•„ë“œê°€ ë°°ì—´ì¸ì§€ ë¬¸ìì—´ì¸ì§€ í™•ì¸
+                // xpath ÇÊµå°¡ ¹è¿­ÀÎÁö ¹®ÀÚ¿­ÀÎÁö È®ÀÎ
                 JSON_Array* xpath_array = json_object_get_array(act_obj, "xpath");
                 if (xpath_array) {
                     rules[i].action.xpaths = json_array_to_string_array(xpath_array, &rules[i].action.num_xpaths);
@@ -509,7 +514,7 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
                 }
             } else if (strcmp(act_type_str, "absence") == 0) {
                 rules[i].action.type = ACT_TYPE_ABSENCE;
-                // xpath í•„ë“œê°€ ë°°ì—´ì¸ì§€ ë¬¸ìì—´ì¸ì§€ í™•ì¸
+                // xpath ÇÊµå°¡ ¹è¿­ÀÎÁö ¹®ÀÚ¿­ÀÎÁö È®ÀÎ
                 JSON_Array* xpath_array = json_object_get_array(act_obj, "xpath");
                 if (xpath_array) {
                     rules[i].action.xpaths = json_array_to_string_array(xpath_array, &rules[i].action.num_xpaths);
@@ -525,7 +530,7 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
             } else if (strcmp(act_type_str, "exact_value") == 0) {
                 rules[i].action.type = ACT_TYPE_EXACT_VALUE;
                 const char* value = json_object_get_string(act_obj, "value");
-                // xpath í•„ë“œê°€ ë°°ì—´ì¸ì§€ ë¬¸ìì—´ì¸ì§€ í™•ì¸
+                // xpath ÇÊµå°¡ ¹è¿­ÀÎÁö ¹®ÀÚ¿­ÀÎÁö È®ÀÎ
                 JSON_Array* xpath_array = json_object_get_array(act_obj, "xpath");
                 if (xpath_array) {
                     rules[i].action.xpaths = json_array_to_string_array(xpath_array, &rules[i].action.num_xpaths);
@@ -544,7 +549,7 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
             } else if (strcmp(act_type_str, "regex") == 0) {
                 rules[i].action.type = ACT_TYPE_REGEX;
                 const char* value = json_object_get_string(act_obj, "value");
-                // xpath í•„ë“œê°€ ë°°ì—´ì¸ì§€ ë¬¸ìì—´ì¸ì§€ í™•ì¸
+                // xpath ÇÊµå°¡ ¹è¿­ÀÎÁö ¹®ÀÚ¿­ÀÎÁö È®ÀÎ
                 JSON_Array* xpath_array = json_object_get_array(act_obj, "xpath");
                 if (xpath_array) {
                     rules[i].action.xpaths = json_array_to_string_array(xpath_array, &rules[i].action.num_xpaths);
@@ -570,13 +575,13 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
                 } else { fprintf(stderr, "Error: Missing xpath1/xpath2 for action type cross_element_match in rule %zu.\n", i); continue; }
             } else if (strcmp(act_type_str, "one_of_present") == 0 || strcmp(act_type_str, "all_present") == 0) {
                 rules[i].action.type = (strcmp(act_type_str, "one_of_present") == 0) ? ACT_TYPE_ONE_OF_PRESENT : ACT_TYPE_ALL_PRESENT;
-                // xpaths ë˜ëŠ” xpath í•„ë“œ ì²˜ë¦¬
+                // xpaths ¶Ç´Â xpath ÇÊµå Ã³¸®
                 JSON_Array* xpaths_json_arr = json_object_get_array(act_obj, "xpaths");
                 if (xpaths_json_arr) {
                     rules[i].action.xpaths = json_array_to_string_array(xpaths_json_arr, &rules[i].action.num_xpaths);
                     if (rules[i].action.xpaths == NULL) { fprintf(stderr, "Error: Failed to parse action xpaths for rule %zu.\n", i); continue; }
                 } else {
-                    // xpath í•„ë“œë¡œ ì‹œë„
+                    // xpath ÇÊµå·Î ½Ãµµ
                     JSON_Array* xpath_array = json_object_get_array(act_obj, "xpath");
                     if (xpath_array) {
                         rules[i].action.xpaths = json_array_to_string_array(xpath_array, &rules[i].action.num_xpaths);
@@ -599,12 +604,12 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
     return 0;
 }
 
-// --- XML íŒŒì‹± ë° XPath í—¬í¼ í•¨ìˆ˜ ---
+// --- XML ÆÄ½Ì ¹× XPath ÇïÆÛ ÇÔ¼ö ---
 
-// XPathë¥¼ í‰ê°€í•  XML ë…¸ë“œ ì»¨í…ìŠ¤íŠ¸ë¥¼ ì°¾ì•„ ë°˜í™˜
+// XPath¸¦ Æò°¡ÇÒ XML ³ëµå ÄÁÅØ½ºÆ®¸¦ Ã£¾Æ ¹İÈ¯
 xmlNodePtr get_xpath_context_node(xmlDocPtr doc, const char* context_xpath_str) {
     if (context_xpath_str == NULL) {
-        return (xmlNodePtr)doc; // ë¬¸ì„œ ë£¨íŠ¸ë¥¼ ì»¨í…ìŠ¤íŠ¸ë¡œ ì‚¬ìš©
+        return (xmlNodePtr)doc; // ¹®¼­ ·çÆ®¸¦ ÄÁÅØ½ºÆ®·Î »ç¿ë
     }
 
     xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
@@ -622,7 +627,7 @@ xmlNodePtr get_xpath_context_node(xmlDocPtr doc, const char* context_xpath_str) 
 
     xmlNodePtr context_node = NULL;
     if (xpathObj->type == XPATH_NODESET && !xmlXPathNodeSetIsEmpty(xpathObj->nodesetval)) {
-        context_node = xpathObj->nodesetval->nodeTab[0]; // ì²« ë²ˆì§¸ ë…¸ë“œë¥¼ ì»¨í…ìŠ¤íŠ¸ë¡œ ì‚¬ìš©
+        context_node = xpathObj->nodesetval->nodeTab[0]; // Ã¹ ¹øÂ° ³ëµå¸¦ ÄÁÅØ½ºÆ®·Î »ç¿ë
     } else {
         fprintf(stderr, "Warning: Context XPath '%s' did not resolve to a node. Using document root.\n", context_xpath_str);
         context_node = (xmlNodePtr)doc;
@@ -634,7 +639,7 @@ xmlNodePtr get_xpath_context_node(xmlDocPtr doc, const char* context_xpath_str) 
 }
 
 
-// íŠ¹ì • XPathì—ì„œ ê°’ì„ ì¶”ì¶œí•˜ëŠ” í—¬í¼ í•¨ìˆ˜ (ì»¨í…ìŠ¤íŠ¸ ë…¸ë“œ ì§€ì› ì¶”ê°€)
+// Æ¯Á¤ XPath¿¡¼­ °ªÀ» ÃßÃâÇÏ´Â ÇïÆÛ ÇÔ¼ö (ÄÁÅØ½ºÆ® ³ëµå Áö¿ø Ãß°¡)
 char* extract_xpath_value(xmlDocPtr doc, const xmlChar* xpathExpr, xmlNodePtr context_node) {
     xmlXPathContextPtr xpathCtx;
     xmlXPathObjectPtr xpathObj;
@@ -695,7 +700,7 @@ char* extract_xpath_value(xmlDocPtr doc, const xmlChar* xpathExpr, xmlNodePtr co
     return value;
 }
 
-// ìš”ì†Œì˜ ì¡´ì¬ ì—¬ë¶€ë¥¼ í™•ì¸í•˜ëŠ” í—¬í¼ í•¨ìˆ˜
+// ¿ä¼ÒÀÇ Á¸Àç ¿©ºÎ¸¦ È®ÀÎÇÏ´Â ÇïÆÛ ÇÔ¼ö
 int check_element_presence(xmlDocPtr doc, const char* xpathExpr, xmlNodePtr context_node) {
     xmlXPathContextPtr xpathCtx;
     xmlXPathObjectPtr xpathObj;
@@ -713,7 +718,7 @@ int check_element_presence(xmlDocPtr doc, const char* xpathExpr, xmlNodePtr cont
         return 0;
     }
 
-    // XPath í‘œí˜„ì‹ì„ í‰ê°€í•˜ì—¬ ë…¸ë“œ ì§‘í•©ì„ ì–»ìŒ
+    // XPath Ç¥Çö½ÄÀ» Æò°¡ÇÏ¿© ³ëµå ÁıÇÕÀ» ¾òÀ½
     xpathObj = xmlXPathEvalExpression((const xmlChar*)xpathExpr, xpathCtx);
     if (xpathObj == NULL) {
         // fprintf(stderr, "Error: Could not evaluate XPath expression '%s' for presence check.\n", xpathExpr);
@@ -722,7 +727,7 @@ int check_element_presence(xmlDocPtr doc, const char* xpathExpr, xmlNodePtr cont
     }
 
     if (xpathObj->type == XPATH_NODESET && !xmlXPathNodeSetIsEmpty(xpathObj->nodesetval)) {
-        is_present = 1; // ë…¸ë“œê°€ í•˜ë‚˜ ì´ìƒ ì¡´ì¬í•¨
+        is_present = 1; // ³ëµå°¡ ÇÏ³ª ÀÌ»ó Á¸ÀçÇÔ
     }
 
     xmlXPathFreeObject(xpathObj);
@@ -731,9 +736,9 @@ int check_element_presence(xmlDocPtr doc, const char* xpathExpr, xmlNodePtr cont
 }
 
 
-// --- ìœ íš¨ì„± ê²€ì¦ ë¡œì§ í•¨ìˆ˜ë“¤ ---
+// --- À¯È¿¼º °ËÁõ ·ÎÁ÷ ÇÔ¼öµé ---
 
-// ì¶”ì¶œëœ ê°’ì´ íŠ¹ì • ë¬¸ìì—´ê³¼ ì¼ì¹˜í•˜ëŠ”ì§€ ê²€ì¦í•˜ëŠ” í•¨ìˆ˜
+// ÃßÃâµÈ °ªÀÌ Æ¯Á¤ ¹®ÀÚ¿­°ú ÀÏÄ¡ÇÏ´ÂÁö °ËÁõÇÏ´Â ÇÔ¼ö
 int validate_by_exact_value(const char* extracted_value, const char* expected_value) {
     if (extracted_value == NULL || expected_value == NULL) {
         return 0;
@@ -741,7 +746,7 @@ int validate_by_exact_value(const char* extracted_value, const char* expected_va
     return strcmp(extracted_value, expected_value) == 0;
 }
 
-// ì¶”ì¶œëœ ê°’ì´ ì •ê·œ í‘œí˜„ì‹ì— ë§¤ì¹˜ë˜ëŠ”ì§€ ê²€ì¦í•˜ëŠ” í•¨ìˆ˜
+// ÃßÃâµÈ °ªÀÌ Á¤±Ô Ç¥Çö½Ä¿¡ ¸ÅÄ¡µÇ´ÂÁö °ËÁõÇÏ´Â ÇÔ¼ö
 int validate_by_regex(const char* extracted_value, const char* regex_pattern) {
     if (extracted_value == NULL || regex_pattern == NULL) {
         return 0;
@@ -773,7 +778,7 @@ int validate_by_regex(const char* extracted_value, const char* regex_pattern) {
     return result;
 }
 
-// ë‘ ì¶”ì¶œëœ ê°’ì´ ì¼ì¹˜í•˜ëŠ”ì§€ ê²€ì¦í•˜ëŠ” í•¨ìˆ˜ (XML ì»¨í…ìŠ¤íŠ¸ì—ì„œ ì§ì ‘ ì¶”ì¶œ)
+// µÎ ÃßÃâµÈ °ªÀÌ ÀÏÄ¡ÇÏ´ÂÁö °ËÁõÇÏ´Â ÇÔ¼ö (XML ÄÁÅØ½ºÆ®¿¡¼­ Á÷Á¢ ÃßÃâ)
 int validate_cross_element_match(xmlDocPtr doc, const char* xpath1, const char* xpath2, xmlNodePtr context_node) {
     char* value1 = extract_xpath_value(doc, (const xmlChar*)xpath1, context_node);
     char* value2 = extract_xpath_value(doc, (const xmlChar*)xpath2, context_node);
@@ -785,14 +790,15 @@ int validate_cross_element_match(xmlDocPtr doc, const char* xpath1, const char* 
     return result;
 }
 
-// ê°’ì´ ì£¼ì–´ì§„ ë¬¸ìì—´ ë¦¬ìŠ¤íŠ¸ì— í¬í•¨ë˜ëŠ”ì§€/í¬í•¨ë˜ì§€ ì•ŠëŠ”ì§€ í™•ì¸
+// °ªÀÌ ÁÖ¾îÁø ¹®ÀÚ¿­ ¸®½ºÆ®¿¡ Æ÷ÇÔµÇ´ÂÁö/Æ÷ÇÔµÇÁö ¾Ê´ÂÁö È®ÀÎ
 int check_value_in_list(const char* extracted_value, char** values_array, size_t num_values, int is_not_in_list) {
     if (extracted_value == NULL || values_array == NULL || num_values == 0) {
         return is_not_in_list ? 1 : 0; // if not in list, and no values, then true for 'not in list'
     }
 
     int found = 0;
-    for (size_t i = 0; i < num_values; i++) {
+    size_t i;
+    for (i = 0; i < num_values; i++) {
         if (values_array[i] && strcmp(extracted_value, values_array[i]) == 0) {
             found = 1;
             break;
@@ -802,31 +808,33 @@ int check_value_in_list(const char* extracted_value, char** values_array, size_t
     return is_not_in_list ? !found : found;
 }
 
-// ìƒí˜¸ ë°°íƒ€ì  ì¡´ì¬ ê·œì¹™ ê²€ì¦
+// »óÈ£ ¹èÅ¸Àû Á¸Àç ±ÔÄ¢ °ËÁõ
 int validate_mutually_exclusive_presence(xmlDocPtr doc, char** xpaths, size_t num_xpaths, int allow_absent) {
     int present_count = 0;
-    for (size_t i = 0; i < num_xpaths; i++) {
+    size_t i;
+    for (i = 0; i < num_xpaths; i++) {
         if (check_element_presence(doc, xpaths[i], NULL)) { // Assume top-level XPath for mutual exclusivity
             present_count++;
         }
     }
 
     if (present_count == 0) {
-        return allow_absent; // ëª¨ë‘ ë¶€ì¬í•˜ëŠ” ê²½ìš° allow_absentì— ë”°ë¦„
+        return allow_absent; // ¸ğµÎ ºÎÀçÇÏ´Â °æ¿ì allow_absent¿¡ µû¸§
     } else if (present_count == 1) {
-        return 1; // í•˜ë‚˜ë§Œ ì¡´ì¬í•˜ëŠ” ê²½ìš° ìœ íš¨
+        return 1; // ÇÏ³ª¸¸ Á¸ÀçÇÏ´Â °æ¿ì À¯È¿
     } else {
-        return 0; // ë‘ ê°œ ì´ìƒ ì¡´ì¬í•˜ëŠ” ê²½ìš° ìœ íš¨í•˜ì§€ ì•ŠìŒ
+        return 0; // µÎ °³ ÀÌ»ó Á¸ÀçÇÏ´Â °æ¿ì À¯È¿ÇÏÁö ¾ÊÀ½
     }
 }
 
-// ì¡°ê±´ í‰ê°€ í•¨ìˆ˜ (ë‹¤ì¤‘ XPath ì§€ì›)
+// Á¶°Ç Æò°¡ ÇÔ¼ö (´ÙÁß XPath Áö¿ø)
 int evaluate_condition(xmlDocPtr doc, const ConditionData* condition, xmlNodePtr context_node) {
     char* extracted_val = NULL;
     int result = 0;
 
-    // ë‹¤ì¤‘ XPathì˜ ê²½ìš° ëª¨ë“  XPathì— ëŒ€í•´ ì¡°ê±´ì´ ë§Œì¡±ë˜ì–´ì•¼ í•¨ (AND ë¡œì§)
-    for (size_t xpath_idx = 0; xpath_idx < condition->num_xpaths; xpath_idx++) {
+    // ´ÙÁß XPathÀÇ °æ¿ì ¸ğµç XPath¿¡ ´ëÇØ Á¶°ÇÀÌ ¸¸Á·µÇ¾î¾ß ÇÔ (AND ·ÎÁ÷)
+    size_t xpath_idx;
+    for (xpath_idx = 0; xpath_idx < condition->num_xpaths; xpath_idx++) {
         const char* current_xpath = condition->xpaths[xpath_idx];
         int current_result = 0;
         
@@ -861,26 +869,27 @@ int evaluate_condition(xmlDocPtr doc, const ConditionData* condition, xmlNodePtr
         if (xpath_idx == 0) {
             result = current_result;
         } else {
-            result = result && current_result; // AND ë¡œì§
+            result = result && current_result; // AND ·ÎÁ÷
         }
         
-        // í•˜ë‚˜ë¼ë„ ì‹¤íŒ¨í•˜ë©´ ì¡°ê¸° ì¢…ë£Œ
+        // ÇÏ³ª¶óµµ ½ÇÆĞÇÏ¸é Á¶±â Á¾·á
         if (!result) break;
     }
     
     return result;
 }
 
-// ì•¡ì…˜ ì‹¤í–‰ í•¨ìˆ˜ (ë‹¤ì¤‘ XPath ì§€ì›)
+// ¾×¼Ç ½ÇÇà ÇÔ¼ö (´ÙÁß XPath Áö¿ø)
 int execute_action(xmlDocPtr doc, const ActionData* action, xmlNodePtr context_node) {
     char* extracted_val = NULL;
     int result = 0;
+    size_t i;
 
     switch (action->type) {
         case ACT_TYPE_PRESENCE: {
-            // ëª¨ë“  XPathê°€ ì¡´ì¬í•´ì•¼ í•¨ (AND ë¡œì§)
+            // ¸ğµç XPath°¡ Á¸ÀçÇØ¾ß ÇÔ (AND ·ÎÁ÷)
             result = 1;
-            for (size_t i = 0; i < action->num_xpaths; i++) {
+            for (i = 0; i < action->num_xpaths; i++) {
                 if (!check_element_presence(doc, action->xpaths[i], context_node)) {
                     result = 0;
                     break;
@@ -889,9 +898,9 @@ int execute_action(xmlDocPtr doc, const ActionData* action, xmlNodePtr context_n
             break;
         }
         case ACT_TYPE_ABSENCE: {
-            // ëª¨ë“  XPathê°€ ì¡´ì¬í•˜ì§€ ì•Šì•„ì•¼ í•¨ (AND ë¡œì§)
+            // ¸ğµç XPath°¡ Á¸ÀçÇÏÁö ¾Ê¾Æ¾ß ÇÔ (AND ·ÎÁ÷)
             result = 1;
-            for (size_t i = 0; i < action->num_xpaths; i++) {
+            for (i = 0; i < action->num_xpaths; i++) {
                 if (check_element_presence(doc, action->xpaths[i], context_node)) {
                     result = 0;
                     break;
@@ -900,9 +909,9 @@ int execute_action(xmlDocPtr doc, const ActionData* action, xmlNodePtr context_n
             break;
         }
         case ACT_TYPE_EXACT_VALUE: {
-            // ëª¨ë“  XPathì˜ ê°’ì´ ì˜ˆìƒ ê°’ê³¼ ì¼ì¹˜í•´ì•¼ í•¨ (AND ë¡œì§)
+            // ¸ğµç XPathÀÇ °ªÀÌ ¿¹»ó °ª°ú ÀÏÄ¡ÇØ¾ß ÇÔ (AND ·ÎÁ÷)
             result = 1;
-            for (size_t i = 0; i < action->num_xpaths; i++) {
+            for (i = 0; i < action->num_xpaths; i++) {
                 extracted_val = extract_xpath_value(doc, (const xmlChar*)action->xpaths[i], context_node);
                 if (!validate_by_exact_value(extracted_val, action->value)) {
                     result = 0;
@@ -914,9 +923,9 @@ int execute_action(xmlDocPtr doc, const ActionData* action, xmlNodePtr context_n
             break;
         }
         case ACT_TYPE_REGEX: {
-            // ëª¨ë“  XPathì˜ ê°’ì´ ì •ê·œì‹ê³¼ ì¼ì¹˜í•´ì•¼ í•¨ (AND ë¡œì§)
+            // ¸ğµç XPathÀÇ °ªÀÌ Á¤±Ô½Ä°ú ÀÏÄ¡ÇØ¾ß ÇÔ (AND ·ÎÁ÷)
             result = 1;
-            for (size_t i = 0; i < action->num_xpaths; i++) {
+            for (i = 0; i < action->num_xpaths; i++) {
                 extracted_val = extract_xpath_value(doc, (const xmlChar*)action->xpaths[i], context_node);
                 if (!validate_by_regex(extracted_val, action->value)) {
                     result = 0;
@@ -932,7 +941,7 @@ int execute_action(xmlDocPtr doc, const ActionData* action, xmlNodePtr context_n
             break;
         case ACT_TYPE_ONE_OF_PRESENT: {
             int found_one = 0;
-            for (size_t i = 0; i < action->num_xpaths; i++) {
+            for (i = 0; i < action->num_xpaths; i++) {
                 if (check_element_presence(doc, action->xpaths[i], context_node)) {
                     found_one = 1;
                     break;
@@ -943,7 +952,7 @@ int execute_action(xmlDocPtr doc, const ActionData* action, xmlNodePtr context_n
         }
         case ACT_TYPE_ALL_PRESENT: {
             int all_found = 1;
-            for (size_t i = 0; i < action->num_xpaths; i++) {
+            for (i = 0; i < action->num_xpaths; i++) {
                 if (!check_element_presence(doc, action->xpaths[i], context_node)) {
                     all_found = 0;
                     break;
@@ -961,7 +970,7 @@ int execute_action(xmlDocPtr doc, const ActionData* action, xmlNodePtr context_n
 }
 
 
-// --- ë©”ì¸ í•¨ìˆ˜ ---
+// --- ¸ŞÀÎ ÇÔ¼ö ---
 int main(int argc, char **argv) {
     if (argc < 3) {
         fprintf(stderr, "Usage: %s <xml_file> <config_file>\n", argv[0]);
@@ -975,8 +984,9 @@ int main(int argc, char **argv) {
 
     ValidationRule* rules = NULL;
     size_t num_rules = 0;
+    size_t i, j, xpath_idx;
     
-    // ì˜¤ë¥˜ ì»¬ë ‰ì…˜ ì´ˆê¸°í™”
+    // ¿À·ù ÄÃ·º¼Ç ÃÊ±âÈ­
     ErrorCollection validation_errors;
     init_error_collection(&validation_errors);
 
@@ -999,7 +1009,7 @@ int main(int argc, char **argv) {
     printf("Successfully loaded %zu rules.\n", num_rules);
     printf("\n--- Starting XML Validation based on Configured Rules ---\n");
 
-    for (size_t i = 0; i < num_rules; i++) {
+    for (i = 0; i < num_rules; i++) {
         printf("\nRule %zu: '%s'\n", i + 1, rules[i].description ? rules[i].description : "No description");
         int current_rule_status = 0;
 
@@ -1037,10 +1047,10 @@ int main(int argc, char **argv) {
                 printf("  Expected: '%s'\n", rules[i].value_expected);
                 printf("  XPaths to check: %zu\n", rules[i].num_xpaths_main);
                 
-                current_rule_status = 1; // ê¸°ë³¸ì ìœ¼ë¡œ ì„±ê³µìœ¼ë¡œ ì‹œì‘
+                current_rule_status = 1; // ±âº»ÀûÀ¸·Î ¼º°øÀ¸·Î ½ÃÀÛ
                 
-                // ëª¨ë“  XPathì— ëŒ€í•´ ê²€ì¦ ìˆ˜í–‰
-                for (size_t xpath_idx = 0; xpath_idx < rules[i].num_xpaths_main; xpath_idx++) {
+                // ¸ğµç XPath¿¡ ´ëÇØ °ËÁõ ¼öÇà
+                for (xpath_idx = 0; xpath_idx < rules[i].num_xpaths_main; xpath_idx++) {
                     char* extracted_value = extract_xpath_value(doc, (const xmlChar*)rules[i].xpaths_main[xpath_idx], rule_context_node);
                     printf("    XPath[%zu]: %s\n", xpath_idx + 1, rules[i].xpaths_main[xpath_idx]);
                     
@@ -1055,7 +1065,7 @@ int main(int argc, char **argv) {
                         }
                         
                         if (!xpath_result) {
-                            current_rule_status = 0; // í•˜ë‚˜ë¼ë„ ì‹¤íŒ¨í•˜ë©´ ì „ì²´ ì‹¤íŒ¨
+                            current_rule_status = 0; // ÇÏ³ª¶óµµ ½ÇÆĞÇÏ¸é ÀüÃ¼ ½ÇÆĞ
                             add_validation_error(&validation_errors, 
                                                 rules[i].description,
                                                 rules[i].simple_rule_sub_type == ACT_TYPE_EXACT_VALUE ? 
@@ -1091,7 +1101,7 @@ int main(int argc, char **argv) {
                     printf("  Values match.\n");
                 } else {
                     printf("  Values do NOT match.\n");
-                    // ì‹¤ì œ ê°’ë“¤ì„ ì¶”ì¶œí•´ì„œ ì˜¤ë¥˜ ì •ë³´ì— í¬í•¨
+                    // ½ÇÁ¦ °ªµéÀ» ÃßÃâÇØ¼­ ¿À·ù Á¤º¸¿¡ Æ÷ÇÔ
                     char* value1 = extract_xpath_value(doc, (const xmlChar*)rules[i].xpath_compare1, rule_context_node);
                     char* value2 = extract_xpath_value(doc, (const xmlChar*)rules[i].xpath_compare2, rule_context_node);
                     
@@ -1119,7 +1129,7 @@ int main(int argc, char **argv) {
             case RULE_TYPE_MUTUALLY_EXCLUSIVE_PRESENCE: {
                 printf("  Type: Mutually Exclusive Presence\n");
                 printf("  Xpaths to check: [");
-                for(size_t j=0; j<rules[i].num_xpaths_mutual; ++j) {
+                for(j=0; j<rules[i].num_xpaths_mutual; ++j) {
                     printf("'%s'%s", rules[i].xpaths_mutual[j], (j == rules[i].num_xpaths_mutual - 1) ? "" : ", ");
                 }
                 printf("]\n");
@@ -1127,10 +1137,10 @@ int main(int argc, char **argv) {
                 current_rule_status = validate_mutually_exclusive_presence(doc, rules[i].xpaths_mutual, rules[i].num_xpaths_mutual, rules[i].allow_absent);
                 
                 if (!current_rule_status) {
-                    // ì–´ë–¤ ìš”ì†Œë“¤ì´ ì¡´ì¬í•˜ëŠ”ì§€ í™•ì¸í•˜ì—¬ ìƒì„¸ ì •ë³´ ì œê³µ
+                    // ¾î¶² ¿ä¼ÒµéÀÌ Á¸ÀçÇÏ´ÂÁö È®ÀÎÇÏ¿© »ó¼¼ Á¤º¸ Á¦°ø
                     char present_elements[2048] = "";
                     int present_count = 0;
-                    for (size_t j = 0; j < rules[i].num_xpaths_mutual; j++) {
+                    for (j = 0; j < rules[i].num_xpaths_mutual; j++) {
                         if (check_element_presence(doc, rules[i].xpaths_mutual[j], NULL)) {
                             if (present_count > 0) strcat(present_elements, ", ");
                             strcat(present_elements, rules[i].xpaths_mutual[j]);
@@ -1139,7 +1149,7 @@ int main(int argc, char **argv) {
                     }
                     
                     char all_xpaths[2048] = "";
-                    for (size_t j = 0; j < rules[i].num_xpaths_mutual; j++) {
+                    for (j = 0; j < rules[i].num_xpaths_mutual; j++) {
                         if (j > 0) strcat(all_xpaths, ", ");
                         strcat(all_xpaths, rules[i].xpaths_mutual[j]);
                     }
@@ -1174,14 +1184,14 @@ int main(int argc, char **argv) {
                     current_rule_status = execute_action(doc, &rules[i].action, rule_context_node);
                     
                     if (!current_rule_status) {
-                        // ì•¡ì…˜ ì‹¤í–‰ ì‹¤íŒ¨ ì‹œ ìƒì„¸ ì˜¤ë¥˜ ì •ë³´ ìˆ˜ì§‘
+                        // ¾×¼Ç ½ÇÇà ½ÇÆĞ ½Ã »ó¼¼ ¿À·ù Á¤º¸ ¼öÁı
                         char context_info[2048] = "Condition XPaths: ";
-                        for (size_t j = 0; j < rules[i].condition.num_xpaths; j++) {
+                        for (j = 0; j < rules[i].condition.num_xpaths; j++) {
                             if (j > 0) strcat(context_info, ", ");
                             strcat(context_info, rules[i].condition.xpaths[j]);
                         }
                         strcat(context_info, "; Action XPaths: ");
-                        for (size_t j = 0; j < rules[i].action.num_xpaths; j++) {
+                        for (j = 0; j < rules[i].action.num_xpaths; j++) {
                             if (j > 0) strcat(context_info, ", ");
                             strcat(context_info, rules[i].action.xpaths[j]);
                         }
@@ -1230,10 +1240,10 @@ int main(int argc, char **argv) {
         printf("One or more rules failed validation.\n");
     }
 
-    // JSON í˜•íƒœë¡œ ê²€ì¦ ê²°ê³¼ ì¶œë ¥
+    // JSON ÇüÅÂ·Î °ËÁõ °á°ú Ãâ·Â
     output_errors_as_json(&validation_errors, overall_validation_status);
 
-    // ë©”ëª¨ë¦¬ ì •ë¦¬
+    // ¸Ş¸ğ¸® Á¤¸®
     free_error_collection(&validation_errors);
     free_validation_rules(rules, num_rules);
     xmlFreeDoc(doc);

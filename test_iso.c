@@ -329,7 +329,8 @@ int main() {
 
     printf("\n=== Testing get_msg_idr function ===\n");
     char msg_idr[35];
-    for (int i = 0; i < 5; i++) {
+    int i;
+    for (i = 0; i < 5; i++) {
         get_msg_idr(msg_idr);
         printf("Generated Message ID %d: %s\n", i+1, msg_idr);
     }

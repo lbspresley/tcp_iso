@@ -6,9 +6,9 @@
 #include <libxml/xpathInternals.h>
 #include <regex.h>
 
-#include "parson.h" // parson ë¼ì´ë¸ŒëŸ¬ë¦¬ í—¤ë”
+#include "parson.h" // parson ¶óÀÌºê·¯¸® Çì´õ
 
-// --- ê·œì¹™ êµ¬ì¡°ì²´ ì •ì˜ ---
+// --- ±ÔÄ¢ ±¸Á¶Ã¼ Á¤ÀÇ ---
 typedef enum {
     RULE_TYPE_NONE,
     RULE_TYPE_EXACT_VALUE,
@@ -22,9 +22,10 @@ typedef struct {
     char* value;
 } ValidationRule;
 
-// ë™ì ìœ¼ë¡œ í• ë‹¹ëœ ValidationRule êµ¬ì¡°ì²´ ë°°ì—´ì„ í•´ì œí•˜ëŠ” í•¨ìˆ˜
+// µ¿ÀûÀ¸·Î ÇÒ´çµÈ ValidationRule ±¸Á¶Ã¼ ¹è¿­À» ÇØÁ¦ÇÏ´Â ÇÔ¼ö
 void free_validation_rules(ValidationRule* rules, size_t count) {
-    for (size_t i = 0; i < count; i++) {
+    size_t i;
+    for (i = 0; i < count; i++) {
         if (rules[i].description) free(rules[i].description);
         if (rules[i].xpath) free(rules[i].xpath);
         if (rules[i].value) free(rules[i].value);
@@ -32,16 +33,16 @@ void free_validation_rules(ValidationRule* rules, size_t count) {
     if (rules) free(rules);
 }
 
-// --- JSON config íŒŒì‹± í•¨ìˆ˜ ---
-// config_file_path: JSON ê·œì¹™ íŒŒì¼ ê²½ë¡œ
-// out_rules: íŒŒì‹±ëœ ê·œì¹™ë“¤ì„ ì €ì¥í•  ValidationRule ë°°ì—´ í¬ì¸í„°
-// out_count: íŒŒì‹±ëœ ê·œì¹™ì˜ ê°œìˆ˜ë¥¼ ì €ì¥í•  í¬ì¸í„°
-// ë°˜í™˜: ì„±ê³µ ì‹œ 0, ì‹¤íŒ¨ ì‹œ -1
+// --- JSON config ÆÄ½Ì ÇÔ¼ö ---
+// config_file_path: JSON ±ÔÄ¢ ÆÄÀÏ °æ·Î
+// out_rules: ÆÄ½ÌµÈ ±ÔÄ¢µéÀ» ÀúÀåÇÒ ValidationRule ¹è¿­ Æ÷ÀÎÅÍ
+// out_count: ÆÄ½ÌµÈ ±ÔÄ¢ÀÇ °³¼ö¸¦ ÀúÀåÇÒ Æ÷ÀÎÅÍ
+// ¹İÈ¯: ¼º°ø ½Ã 0, ½ÇÆĞ ½Ã -1
 int load_validation_rules_from_json(const char* config_file_path, ValidationRule** out_rules, size_t* out_count) {
     JSON_Value* root_value = NULL;
     JSON_Array* rules_array = NULL;
     ValidationRule* rules = NULL;
-    size_t count = 0;
+    size_t i, count = 0;
 
     root_value = json_parse_file(config_file_path);
     if (root_value == NULL) {
@@ -64,11 +65,11 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
         return -1;
     }
 
-    for (size_t i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) {
         JSON_Object* rule_obj = json_array_get_object(rules_array, i);
         if (rule_obj == NULL) {
             fprintf(stderr, "Warning: Skipping invalid rule object at index %zu.\n", i);
-            // ë©”ëª¨ë¦¬ ëˆ„ìˆ˜ë¥¼ í”¼í•˜ê¸° ìœ„í•´ í˜„ì¬ê¹Œì§€ í• ë‹¹ëœ ê·œì¹™ í•´ì œ
+            // ¸Ş¸ğ¸® ´©¼ö¸¦ ÇÇÇÏ±â À§ÇØ ÇöÀç±îÁö ÇÒ´çµÈ ±ÔÄ¢ ÇØÁ¦
             free_validation_rules(rules, i);
             json_value_free(root_value);
             *out_rules = NULL;
@@ -124,9 +125,9 @@ int load_validation_rules_from_json(const char* config_file_path, ValidationRule
     return 0;
 }
 
-// --- ì´ì „ ì½”ë“œì—ì„œ ì¬ì‚¬ìš©í•  í•¨ìˆ˜ë“¤ (ë³€í™” ì—†ìŒ) ---
+// --- ÀÌÀü ÄÚµå¿¡¼­ Àç»ç¿ëÇÒ ÇÔ¼öµé (º¯È­ ¾øÀ½) ---
 
-// íŠ¹ì • XPathì—ì„œ ê°’ì„ ì¶”ì¶œí•˜ëŠ” í—¬í¼ í•¨ìˆ˜
+// Æ¯Á¤ XPath¿¡¼­ °ªÀ» ÃßÃâÇÏ´Â ÇïÆÛ ÇÔ¼ö
 char* extract_xpath_value(xmlDocPtr doc, const xmlChar* xpathExpr) {
     xmlXPathContextPtr xpathCtx;
     xmlXPathObjectPtr xpathObj;
@@ -169,7 +170,7 @@ char* extract_xpath_value(xmlDocPtr doc, const xmlChar* xpathExpr) {
     return value;
 }
 
-// ì¶”ì¶œëœ ê°’ì´ íŠ¹ì • ë¬¸ìì—´ê³¼ ì¼ì¹˜í•˜ëŠ”ì§€ ê²€ì¦í•˜ëŠ” í•¨ìˆ˜
+// ÃßÃâµÈ °ªÀÌ Æ¯Á¤ ¹®ÀÚ¿­°ú ÀÏÄ¡ÇÏ´ÂÁö °ËÁõÇÏ´Â ÇÔ¼ö
 int validate_by_exact_value(const char* extracted_value, const char* expected_value) {
     if (extracted_value == NULL || expected_value == NULL) {
         return 0;
@@ -177,7 +178,7 @@ int validate_by_exact_value(const char* extracted_value, const char* expected_va
     return strcmp(extracted_value, expected_value) == 0;
 }
 
-// ì¶”ì¶œëœ ê°’ì´ ì •ê·œ í‘œí˜„ì‹ì— ë§¤ì¹˜ë˜ëŠ”ì§€ ê²€ì¦í•˜ëŠ” í•¨ìˆ˜
+// ÃßÃâµÈ °ªÀÌ Á¤±Ô Ç¥Çö½Ä¿¡ ¸ÅÄ¡µÇ´ÂÁö °ËÁõÇÏ´Â ÇÔ¼ö
 int validate_by_regex(const char* extracted_value, const char* regex_pattern) {
     if (extracted_value == NULL || regex_pattern == NULL) {
         return 0;
@@ -223,19 +224,19 @@ int main(int argc, char **argv) {
     int overall_validation_status = 0; // 0 = all passed, 1 = at least one failed
 
     ValidationRule* rules = NULL;
-    size_t num_rules = 0;
+    size_t i, num_rules = 0;
 
-    // XML íŒŒì„œ ì´ˆê¸°í™”
+    // XML ÆÄ¼­ ÃÊ±âÈ­
     LIBXML_TEST_VERSION
 
-    // XML íŒŒì¼ íŒŒì‹±
+    // XML ÆÄÀÏ ÆÄ½Ì
     doc = xmlReadFile(xml_file, NULL, 0);
     if (doc == NULL) {
         fprintf(stderr, "Error: Could not parse XML file %s\n", xml_file);
         return 1;
     }
 
-    // JSON config íŒŒì¼ì—ì„œ ê·œì¹™ ë¡œë“œ
+    // JSON config ÆÄÀÏ¿¡¼­ ±ÔÄ¢ ·Îµå
     printf("Loading validation rules from '%s'...\n", config_file);
     if (load_validation_rules_from_json(config_file, &rules, &num_rules) != 0) {
         fprintf(stderr, "Error: Failed to load validation rules.\n");
@@ -247,8 +248,8 @@ int main(int argc, char **argv) {
     printf("Successfully loaded %zu rules.\n", num_rules);
     printf("\n--- Starting XML Validation based on Configured Rules ---\n");
 
-    // ë¡œë“œëœ ê° ê·œì¹™ì— ëŒ€í•´ ìœ íš¨ì„± ê²€ì¦ ìˆ˜í–‰
-    for (size_t i = 0; i < num_rules; i++) {
+    // ·ÎµåµÈ °¢ ±ÔÄ¢¿¡ ´ëÇØ À¯È¿¼º °ËÁõ ¼öÇà
+    for (i = 0; i < num_rules; i++) {
         // Skip invalid/incomplete rules that might have been marked as NONE during parsing
         if (rules[i].type == RULE_TYPE_NONE || rules[i].xpath == NULL || rules[i].value == NULL) {
             fprintf(stderr, "Skipping rule %zu due to parsing errors or missing fields.\n", i + 1);
@@ -276,15 +277,15 @@ int main(int argc, char **argv) {
                 printf("  Result: PASS\n");
             } else {
                 printf("  Result: FAIL\n");
-                overall_validation_status = 1; // í•˜ë‚˜ë¼ë„ ì‹¤íŒ¨í•˜ë©´ ìµœì¢… ê²°ê³¼ ì‹¤íŒ¨
+                overall_validation_status = 1; // ÇÏ³ª¶óµµ ½ÇÆĞÇÏ¸é ÃÖÁ¾ °á°ú ½ÇÆĞ
             }
             xmlFree(extracted_value);
         } else {
             printf("  Extracted value: NOT FOUND or EMPTY (for XPath '%s')\n", rules[i].xpath);
-            // XPathê°€ ì—†ê±°ë‚˜ ë¹„ì–´ìˆëŠ” ê²ƒì´ í•­ìƒ ì‹¤íŒ¨ë¥¼ ì˜ë¯¸í•˜ì§€ëŠ” ì•Šì„ ìˆ˜ ìˆìŠµë‹ˆë‹¤.
-            // ì—¬ê¸°ì„œëŠ” ê·œì¹™ì— ë”°ë¼ "any_value"ë¡œ ê²€ì¦í•˜ë ¤ê³  í–ˆìœ¼ë¯€ë¡œ,
-            // ê°’ì´ ì—†ëŠ” ê²½ìš° ìœ íš¨ì„± ê²€ì¦ì€ (í•´ë‹¹ ê°’ì„ ì°¾ì§€ ëª»í–ˆìœ¼ë‹ˆ) ì‹¤íŒ¨ë¡œ ê°„ì£¼í•©ë‹ˆë‹¤.
-            // í•„ìš”ì— ë”°ë¼ 'required' í”Œë˜ê·¸ ë“±ì„ ê·œì¹™ì— ì¶”ê°€í•˜ì—¬ ì²˜ë¦¬ ë¡œì§ì„ ë” ì •êµí•˜ê²Œ ë§Œë“¤ ìˆ˜ ìˆìŠµë‹ˆë‹¤.
+            // XPath°¡ ¾ø°Å³ª ºñ¾îÀÖ´Â °ÍÀÌ Ç×»ó ½ÇÆĞ¸¦ ÀÇ¹ÌÇÏÁö´Â ¾ÊÀ» ¼ö ÀÖ½À´Ï´Ù.
+            // ¿©±â¼­´Â ±ÔÄ¢¿¡ µû¶ó "any_value"·Î °ËÁõÇÏ·Á°í ÇßÀ¸¹Ç·Î,
+            // °ªÀÌ ¾ø´Â °æ¿ì À¯È¿¼º °ËÁõÀº (ÇØ´ç °ªÀ» Ã£Áö ¸øÇßÀ¸´Ï) ½ÇÆĞ·Î °£ÁÖÇÕ´Ï´Ù.
+            // ÇÊ¿ä¿¡ µû¶ó 'required' ÇÃ·¡±× µîÀ» ±ÔÄ¢¿¡ Ãß°¡ÇÏ¿© Ã³¸® ·ÎÁ÷À» ´õ Á¤±³ÇÏ°Ô ¸¸µé ¼ö ÀÖ½À´Ï´Ù.
             printf("  Result: FAIL (Value not found for XPath)\n");
             overall_validation_status = 1;
         }
@@ -297,8 +298,8 @@ int main(int argc, char **argv) {
         printf("One or more rules failed validation.\n");
     }
 
-    // í• ë‹¹ëœ ëª¨ë“  ë¦¬ì†ŒìŠ¤ í•´ì œ
-    free_validation_rules(rules, num_rules); // ê·œì¹™ ë©”ëª¨ë¦¬ í•´ì œ
+    // ÇÒ´çµÈ ¸ğµç ¸®¼Ò½º ÇØÁ¦
+    free_validation_rules(rules, num_rules); // ±ÔÄ¢ ¸Ş¸ğ¸® ÇØÁ¦
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
