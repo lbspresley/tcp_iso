@@ -25,3 +25,41 @@ int check_msg_tp_cd(char* msg_tp_cd)
     return 0;
 }
 
+/* 
+ * 표준 전문 송신
+ */
+int send_standard_msg(char* msg, int msg_len)
+{
+  // timer id with bizMsgIdr
+  char* bizMsgIdr = (char*)get_tag_value(msg, "BizMsgIdr");
+  if( bizMsgIdr == NULL ) {
+    return -1;
+  }
+
+  int rc = send_message(bizMsgIdr, msg, msg_len);
+  if( rc < 0 ) {
+    return -2;
+  }
+
+  return 0;
+}
+
+
+/* 
+ * POLL 요청메시지 처리
+ */
+int process_poll_request(char* msg)
+{
+  int rc;
+  char* resp_msg = (char*)make_poll_response(msg);
+  if( resp_msg == NULL ) {
+    return -1;
+  }
+
+  rc = send_standard_msg(resp_msg, strlen(resp_msg));
+  if( rc < 0 ) {
+    return -2;
+  }
+
+  return 0;
+}

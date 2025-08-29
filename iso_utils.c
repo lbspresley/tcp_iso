@@ -1,15 +1,55 @@
 #include "tcp_iso.h"
 
-unsigned char* make_network_msg()
+/*
+ * Setting variables
+ * 1. BizMsgIdr(request 복사)
+ * 2. MmbId(자신의 은행 코드)
+ * 3. BizMsgIdr (신규발행)
+ * 4. CreDt (현재시간)
+ * 5. BizPrcgDt (개시 시간 : 현재날짜+9시 고정)
+ * 6. MsgId (3번항목 동일)
+ * 7. OrgtrRef (1번항목 동일)
+ * 8. EvtTm (request 복사)
+*/
+unsigned char* make_poll_response(char* reqxml)
 {
-  static unsigned char _network_msg[1024];
+  static unsigned char _poll_response[2048];
 
-  // date time
-  char timestr[32];
-  get_iso_datetime(timestr);
+  // 1. get BizMsgIdr
+  char biz_msg_idr [36] ;
+  char new_biz_msg_idr [36] ;
 
-  sprintf((char*)_network_msg, NETWORK_TEMPLATE, gc_org_cd, timestr);
-  return _network_msg;
+  char* value = (char*)get_tag_value(reqxml, "BizMsgIdr");
+  if( value == NULL ) {
+    return NULL;
+  }
+  strcpy(biz_msg_idr, value);
+
+  // 2. get new BizMsgIdr
+  get_msg_idr(new_biz_msg_idr);
+
+  // 3. get date time
+  char cre_dt[32];
+  get_iso_datetime(cre_dt);
+
+  // 4. get BizPrcgDt
+  char biz_prcg_dt[32];
+  get_iso_date(biz_prcg_dt, NULL);
+
+  // 5. get EvtTm
+  char evt_tm[32];
+  value = (char*)get_tag_value(reqxml, "EvtTm");
+  if( value == NULL ) {
+    return NULL;
+  }
+  strcpy(evt_tm, value);
+
+  sprintf((char*)_poll_response, POLL_RSP_TEMPLATE, 
+      biz_msg_idr, gc_org_cd, new_biz_msg_idr, 
+      cre_dt, biz_prcg_dt, 
+      new_biz_msg_idr, biz_msg_idr,
+      evt_tm);
+  return _poll_response;
 }
 
 unsigned char* make_sess_key_msg(int step, char* key)
@@ -156,6 +196,29 @@ void get_iso_datetime(char timestr[32])
 
   return;
 }
+
+void get_iso_date(char datestr[10], char timestr[8])
+{
+  char local_timestr[40];
+  struct tm *pTm;
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+  pTm = localtime(&tv.tv_sec);
+
+  if( timestr != NULL ) {
+    strftime(local_timestr, sizeof(local_timestr), "%Y-%m-%dT", pTm );
+    strcat(local_timestr, timestr);
+    strcat(local_timestr, "+09:00");
+  } else {
+    strftime(local_timestr, sizeof(local_timestr), "%Y-%m-%dT09:00:00+09:00", pTm);
+  }
+
+  strcpy(datestr, local_timestr);
+
+  return;
+}
+
 
 void get_today(char date[10])
 {
@@ -479,37 +542,19 @@ int is_need_ack_msg(char* msg)
   return 0;
 }
 
-/* 
- * 표준 전문 송신
+/*
+ * POLL 요청메시지 여부 체크
  */
-int send_standard_msg(char* msg, int msg_len)
+int is_poll_request_msg(char* msg)
 {
-  char* bizMsgIdr = (char*)get_tag_value(msg, "BizMsgIdr");
-  if( bizMsgIdr == NULL ) {
+  char* value = (char*)get_tag_value(msg, "EvtCd");
+  if( value == NULL ) {
     return 0;
   }
 
-  // timer id with bizMsgIdr
+  if( strcmp(value, "PING") == 0 ) {
+    return 1;
+  }
 
   return 0;
 }
-
-
-#if 0
-unsigned char* make_poll_req(char* reqxml)
-{
-  static unsigned char _poll_req[1024];
-
-  sprintf((char*)_poll_req, POLL_REQ_TEMPLATE, msgtpcd, bizsvc, bizmsgidr);
-  return _poll_req;
-}
-
-unsigned char* make_poll_rsp(char* reqxml)
-{
-  static unsigned char _poll_rsp[1024];
-
-  parse_xml_xpath(reqxml, "//Request/MsgTpCd", msgtpcd);
-  sprintf((char*)_poll_rsp, POLL_RSP_TEMPLATE, respcd, msgtpcd, bizsvc, bizmsgidr);
-  return _poll_rsp;
-}
-#endif

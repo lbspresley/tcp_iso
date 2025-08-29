@@ -9,18 +9,6 @@
     </bwh:BokwireHeader>\
 </bwh:BokwireEnvelope>"
 
-#define NETWORK_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
-     <bwh:BokwireHeader>\
-        <admi.004.001.01>\
-            <EvtInf>\
-                <EvtCd>PING</EvtCd>\
-                <EvtParam>%s</EvtParam>\
-                <EvtTm>%s</EvtTm>\
-            </EvtInf>\
-        </admi.004.001.01>\
-    </bwh:BokwireHeader>\
-</bwh:BokwireEnvelope>"
-
 #define ACK_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
      <bwh:BokwireHeader>\
         <Response>\
@@ -32,10 +20,72 @@
     </bwh:BokwireHeader>\
 </bwh:BokwireEnvelope>"
 
+// Setting variables
+// 1. BizMsgIdr(request 복사)
+// 2. MmbId(자신의 은행 코드)
+// 3. BizMsgIdr (신규발행)
+// 4. CreDt (현재시간)
+// 5. BizPrcgDt (개시 시간 : 현재날짜+9시 고정)
+// 6. MsgId (3번항목 동일)
+// 7. OrgtrRef (1번항목 동일)
+// 8. EvtTm (request 복사)
+#define POLL_RSP_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
+    <bwh:BokwireHeader>\
+        <Response>\
+            <RespCd>SUCCESS</RespCd>\
+            <MsgTpCd>admi.004.ConnectionCheck</MsgTpCd>\
+            <BizSvc>bok.rtgs.ping.01</BizSvc>\
+            <BizMsgIdr>%s</BizMsgIdr>\
+        </Response>\
+    </bwh:BokwireHeader>\
+    <AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.03\">\
+        <Fr>\
+            <FIId>\
+                <FinInstnId>\
+                    <ClrSysMmbId>\
+                        <ClrSysId>\
+                            <Cd>KRBOK</Cd>\
+                        </ClrSysId>\
+                        <MmbId>%s</MmbId>\
+                    </ClrSysMmbId>\
+                </FinInstnId>\
+            </FIId>\
+        </Fr>\
+        <To>\
+            <FIId>\
+                <FinInstnId>\
+                    <ClrSysMmbId>\
+                        <ClrSysId>\
+                            <Cd>KRBOK</Cd>\
+                        </ClrSysId>\
+                        <MmbId>1016</MmbId>\
+                    </ClrSysMmbId>\
+                </FinInstnId>\
+            </FIId>\
+        </To>\
+        <BizMsgIdr>%s</BizMsgIdr>\
+        <MsgDefIdr>admi.011.001.01</MsgDefIdr>\
+        <BizSvc>bok.rtgs.01</BizSvc>\
+        <CreDt>%s</CreDt>\
+        <BizPrcgDt>%s</BizPrcgDt>\
+    </AppHdr>\
+    <Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:admi.011.001.01\">\
+        <SysEvtAck>\
+            <MsgId>%s</MsgId>\
+            <OrgtrRef>%s</OrgtrRef>\
+            <AckDtls>\
+                <EvtCd>PING</EvtCd>\
+                <EvtParam>1016</EvtParam>\
+                <EvtTm>%s</EvtTm>\
+            </AckDtls>\
+        </SysEvtAck>\
+    </Document>\
+</bwh:BokwireEnvelope>"
+
 #define POLL_REQ_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
      <bwh:BokwireHeader>\
         <Request>\
-            <MsgTpCd>pacs.002.GTR</MsgTpCd>\
+            <MsgTpCd>admi.004.ConnectionCheck</MsgTpCd>\
             <Id>%s</Id>\
             <Password>%s</Password>\
         </Request>\
@@ -85,6 +135,7 @@
 #define MAX_MSG_LEN 200*1024
 
 void get_iso_datetime(char timestr[32]);
+void get_iso_date(char datestr[10], char timestr[8]);
 void get_msg_idr(char msgidr[35]); // 메시지 고유번호 생성
 
 unsigned char* make_sess_key_msg(int step, char* key); // 세션키 메시지 생성
@@ -98,9 +149,13 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
 
 unsigned char* make_network_msg(); // 네트워크 체크 메시지 생성
 unsigned char* make_ack_msg(char* reqxml); // ACK 메시지 생성
+int is_poll_request_msg(char* msg); // POLL 요청메시지 여부 체크
 int is_ack_response_msg(char* msg); // ACK 응답메시지 여부 체크
 int is_need_ack_msg(char* msg); // ACK 필요 여부 체크
 int send_standard_msg(char* msg, int msg_len); // 표준 메시지 전송
+
+int process_poll_request(char* msg); // POLL 요청메시지 처리
+int process_ack_response(char* msg); // ACK 응답메시지 처리
 
 int inl_decrypt(char* in, int inlen, char** out, int* outlen); // 복호화
 int inl_encrypt(char* in, int inlen, char** out, int* outlen); // 암호화
@@ -144,3 +199,8 @@ int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
     char SrcSvc[64],int Srcpidx,
     char* callback_name,
     long* info1, long* info2);
+
+// iso_header.c
+int check_msg_tp_cd(char* msg_tp_cd);
+
+unsigned char* make_poll_response(char* reqxml);

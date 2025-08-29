@@ -8,6 +8,7 @@ int g_tcp_fd = -1;
 struct trs_req_t *g_trs_req;
 struct trs_req_t *g_trs_rsp;
 
+#ifdef USE_CURL
 // HTTP 응답 데이터를 저장할 구조체
 struct http_response {
     char *data;
@@ -33,6 +34,7 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
 
     return realsize;
 }
+#endif
 
 int init_trs_req(char *trs_ip, int trs_port) 
 {
@@ -181,6 +183,7 @@ int tcp_connect(const char* ip, int port)
     return sock_fd;
 }
 
+#ifdef USE_CURL
 int http_request(const char *url, const char *method, const char *headers[], 
                 const char *body, char *response, int response_size) 
 {
@@ -297,3 +300,4 @@ void cleanup_http_request()
 {
     curl_global_cleanup();
 }
+#endif

@@ -50,12 +50,41 @@ ACK_INFO* get_ack_info_with_msgidr(char msgidr[35])
 
 void remove_ack_info(int timer_id)
 {
-  for(int i = 0; i < MAX_ACK_MSG_CNT; i++) {
-    if( g_ack_info[i].retry_timer_id == timer_id ) {
+  int i;
+  for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
+    if( g_ack_info[i].use_flag == 1 && g_ack_info[i].retry_timer_id == timer_id ) {
       g_ack_info[i].use_flag = 0;
+      rdf_killTimer(timer_id);
+      break;
     }
   }
-  rdf_killTimer(timer_id);
+  ulog( _ERROR_, "remove_ack_info(timer_id:%d) Fail. !!!!! ", timer_id );
+}
+
+int process_ack_response(char* msg)
+{
+  char* value = NULL;
+  char msgidr[35+1];
+
+  // 1. check msgidr
+  value = (char *)get_tag_value(msg, "BizMsgIdr");
+  if( value == NULL ) {
+    ulog( _ERROR_, "BizMsgIdr 추출 실패 !!");
+    return -1;
+  }
+  strcpy(msgidr, value);
+
+  // 2. get ack_info
+  ACK_INFO* ack_info = get_ack_info_with_msgidr(msgidr);
+  if( ack_info == NULL ) {
+    ulog( _ERROR_, "ACK 응답메시지 수신. msgidr(%s) 없음 !!!!! ", msgidr );
+    return -2;
+  }
+
+  // 3. remove ack_info
+  remove_ack_info(ack_info->retry_timer_id);
+
+  return 0;
 }
 
 int ack_retry(ACK_INFO* ack_info)
@@ -77,11 +106,16 @@ int ack_retry(ACK_INFO* ack_info)
 
 int send_message(char* msgidr, char* msg, int msg_len)
 {
+  static unsigned char _send_msg[MAX_MSG_LEN];
   int rc;
+
+  // make send message
+  sprintf((char*)_send_msg, "%06d%s", msg_len, msg);
+  int send_msg_len = msg_len + 6;
 
   /* call rmp action */
   strcpy(g_rmpSvcName, "SNDMSG_ISO");
-  rc = rmp_MessageProc( g_rmpSvcName, 0, (unsigned char*)msg, msg_len, 0, 0 );
+  rc = rmp_MessageProc( g_rmpSvcName, 0, _send_msg, send_msg_len, 0, 0 );
   if( rc < 0 )
   {
     ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
@@ -89,7 +123,7 @@ int send_message(char* msgidr, char* msg, int msg_len)
   }
 
   // save message
-  ACK_INFO* ack_info = add_ack_info(msgidr, msg, msg_len);
+  ACK_INFO* ack_info = add_ack_info(msgidr, (char*)_send_msg, send_msg_len);
   if( ack_info == NULL ) {
     ulog( _ERROR_, "Error in Getting ACK info. !!!!! " );
     return -1;

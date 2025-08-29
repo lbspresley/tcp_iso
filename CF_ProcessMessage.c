@@ -8,6 +8,7 @@ int CF_ProcessMessage(int bufkind, unsigned char** ppFrame,
 {
   int rc;
   char *in = (char *)*ppFrame;
+  int inlen = *pFrameLen;
   char *outbuf = (char *)NULL;
   int outlen = 0;
   int length_offset = 6;
@@ -22,38 +23,114 @@ int CF_ProcessMessage(int bufkind, unsigned char** ppFrame,
       6. FEP 헤더 조립
       7. 코어 송신(E2B)
   */
-  rc = inl_decrypt(in + length_offset, *pFrameLen - length_offset, &outbuf, &outlen);
-  if (rc < 0)
-  {
-    ulog(_ERROR_, "[로그정보] 데이터 전문 복호화 실패 !!");
-    return RC_NEXT_ACTION;
+
+  in += length_offset;
+  inlen -= length_offset;
+
+  // Encrypt 안 할 경우
+  if( g_Encrypt_Flag == 0 ) {
+    ulog( _WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen );
+    outbuf = in;
+    outlen = inlen;
+  } else {
+    rc = inl_decrypt(in, inlen, &outbuf, &outlen);
+    if (rc < 0)
+    {
+      ulog(_ERROR_, "[로그정보] 데이터 전문 복호화 실패 !!");
+      return RC_NEXT_ACTION;
+    }
   }
 
-  char *tr_cd = (char *)get_tr_cd(outbuf);
-  if (tr_cd == NULL)
-  {
-    ulog(_ERROR_, "[로그정보] 트랜잭션 코드 추출 실패 !!");
-    return RC_NEXT_ACTION;
-  }
-
-  ulog(_ERROR_, "[로그정보] 트랜잭션 코드 : %s", tr_cd);
-
-  // ACK 처리 로직
-  // 1. check whether the message is response-ACK
-  //   1-1. check requested Timer for response-ACK
-  //   1-2. stop timer
-  //   1-3. check time-out for each message
-  // 
-  // 2. check whether the message is need to send ACK
-  //   2-1. make ACK message
-  //   2-2. send ACK message
-
+  // ACK 응답 전문 여부 확인
   if( is_ack_response_msg(outbuf) ) {
-    ulog(_ERROR_, "[로그정보] ACK 응답메시지 수신 !!");
-    //   1-1. check requested Timer for response-ACK
-    //   1-2. stop timer
-    //   1-3. check time-out for each message
+    ulog(_ERROR_, "[ACK] 응답메시지 수신 !!");
+    int rc = process_ack_response(outbuf);
+    if( rc < 0 ) {
+      ulog(_ERROR_, "[ACK] 응답메시지 처리 실패 !!");
+      return RC_NEXT_ACTION;
+    }
     return RC_NEXT_ACTION;
+  }
+
+  // POLL 전문 여부 확인
+  if( is_poll_request_msg(outbuf) ) {
+    ulog(_ERROR_, "[POLL] 요청메시지 수신 !!");
+    int rc = process_poll_request(outbuf);
+    if( rc < 0 ) {
+      ulog(_ERROR_, "[POLL] 요청메시지 처리 실패 !!");
+      return RC_NEXT_ACTION;
+    }
+    return RC_NEXT_ACTION;
+  }
+
+
+
+  // Make BOK Header
+  BOK_HEADER bok_header;
+  BOK_HEADER *pHeader = (BOK_HEADER *)outbuf;
+  memset((char*)&bok_header, 0x20, SIZE_BOK_HEADER);
+
+  // Request/Response 구분
+  int is_request = 0;
+  char* value = NULL;
+  if( strstr(outbuf, "<Request>") != NULL || strstr(outbuf, "<bwh:Request>") != NULL ) {
+    is_request = 1;
+  }
+
+  value = (char *)get_tag_value(outbuf, "MsgTpCd");
+  if( value == NULL ) {
+    ulog(_ERROR_, "MsgTpCd 추출 실패 !!");
+    return RC_NEXT_ACTION;
+  }
+
+  if( check_msg_tp_cd(value) == 0 ) {
+    ulog(_ERROR_, "[MsgTpCd] 메시지 유형 코드 체크 실패 !!(%s)", value);
+    return RC_NEXT_ACTION;
+  }
+  memcpy(pHeader->MsgTpCd, value, strlen(value));
+
+  if (is_request == 0) {
+    // Response
+    value = (char *)get_tag_value(outbuf, "RespCd");
+    if (value == NULL)
+    {
+      ulog(_ERROR_, "RespCd 추출 실패 !!");
+      return RC_NEXT_ACTION;
+    }
+    strcpy(pHeader->RespCd, value);
+
+    value = (char *)get_tag_value(outbuf, "BizSvc");
+    if (value == NULL)
+    {
+      ulog(_ERROR_, "BizSvc 추출 실패 !!");
+      return RC_NEXT_ACTION;
+    }
+    strcpy(pHeader->BizSvc, value);
+
+    value = (char *)get_tag_value(outbuf, "BizMsgIdr");
+    if (value == NULL)
+    {
+      ulog(_ERROR_, "BizMsgIdr 추출 실패 !!");
+      return RC_NEXT_ACTION;
+    }
+    strcpy(pHeader->BizMsgIdr, value);
+  } else {
+    // Request
+    value = (char *)get_tag_value(outbuf, "Id");
+    if (value == NULL)
+    {
+      ulog(_ERROR_, "Id 추출 실패 !!");
+      return RC_NEXT_ACTION;
+    }
+    strcpy(pHeader->Id, value);
+
+    value = (char *)get_tag_value(outbuf, "Password");
+    if (value == NULL)
+    {
+      ulog(_ERROR_, "Password 추출 실패 !!");
+      return RC_NEXT_ACTION;
+    }
+    strcpy(pHeader->Password, value);
   }
 
 
