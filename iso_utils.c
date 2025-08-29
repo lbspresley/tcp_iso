@@ -1,5 +1,6 @@
 #include "tcp_iso.h"
 
+
 /*
  * Setting variables
  * 1. BizMsgIdr(request บนป็)
@@ -372,7 +373,11 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char
     strcpy(from_charset, "UTF-8");
     strcpy(to_charset, "CP949");
   } else {
+    #ifdef ISO_TEST
+    printf("Invalid encode type\n");
+    #else
     ulog(_ERROR_, "Invalid encode type");
+    #endif
     return -1;
   }
 
@@ -408,7 +413,11 @@ unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, siz
   if( _utf8_converted_msg == NULL ) {
     _utf8_converted_msg = (unsigned char*)malloc(_utf8_converted_msg_len);
     if( _utf8_converted_msg == NULL ) {
+      #ifdef ISO_TEST
+      printf("Failed to allocate memory for utf8 converted message\n");
+      #else
       ulog(_ERROR_, "Failed to allocate memory for utf8 converted message");
+      #endif
       return (unsigned char*)NULL;
     }
   }
@@ -419,13 +428,21 @@ unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, siz
   } else if( strcmp(kr_encoding, "CP949") == 0 ) {
     kr_encoding_type = 2;
   } else {
+    #ifdef ISO_TEST
+    printf("Invalid kr encoding\n");
+    #else
     ulog(_ERROR_, "Invalid kr encoding");
+    #endif
     return (unsigned char*)NULL;
   }
 
   size_t out_len = charset_convert(kr_encoding_type, msg, msg_len, _utf8_converted_msg, out_msg_len);
   if( out_len < 0 ) {
+    #ifdef ISO_TEST
+    printf("Failed to convert message to utf8\n");
+    #else
     ulog(_ERROR_, "Failed to convert message to utf8");
+    #endif
     return (unsigned char*)NULL;  
   }
 
@@ -442,7 +459,11 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
   if( _kr_converted_msg == NULL ) {
     _kr_converted_msg = (unsigned char*)malloc(_kr_converted_msg_len);
     if( _kr_converted_msg == NULL ) {
+      #ifdef ISO_TEST
+      printf("Failed to allocate memory for kr converted message\n");
+      #else
       ulog(_ERROR_, "Failed to allocate memory for kr converted message");
+      #endif
       return (unsigned char*)NULL;
     }
   }
@@ -453,13 +474,21 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
   } else if( strcmp(kr_encoding, "CP949") == 0 ) {
     kr_encoding_type = 3;
   } else {
+    #ifdef ISO_TEST
+    printf("Invalid kr encoding\n");
+    #else
     ulog(_ERROR_, "Invalid kr encoding");
+    #endif
     return (unsigned char*)NULL;
   }
 
   size_t out_len = charset_convert(kr_encoding_type, msg, msg_len, _kr_converted_msg, out_msg_len);
   if( out_len < 0 ) {
+    #ifdef ISO_TEST
+    printf("Failed to convert message to kr\n");
+    #else
     ulog(_ERROR_, "Failed to convert message to kr");
+    #endif
     return (unsigned char*)NULL;
   }
 

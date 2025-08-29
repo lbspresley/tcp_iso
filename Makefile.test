@@ -27,15 +27,10 @@ SRCS1	= tcp_iso.c \
 		inl_utils.c \
 		$(SVCTAB1)
 
-ifeq ($(shell uname -s), Linux)
-SRCS1	+= db_tmp.c INL_tmp.c
-else
+#SRCS1	+= db_tmp.c INL_tmp.c
 PRCS1	= db_Get_BOK_Inf.pc
-endif
 
 # Module Name 
-#DEST1	= tcp_iso
-SVC1	= TCP_ISO
 
 SRCS2	= test_iso.c iso_xml.c iso_utils.c 
 DEST2	= test_iso
@@ -52,6 +47,7 @@ include $(ROME_HOME)/work/rome.mkrule
 #INISAFENET_HOME=$(HOME)/INITEC/INISAFE_HP
 INCS	+= -I$(CL_HOME)/inc
 INCS  += -I$(INISAFENET_HOME)/include 
+INCS  += -I$(HOME)/libxml2-devel/include/libxml2
 
 PROC_INC += $(INCS:-I%=include=%)
 
@@ -59,7 +55,7 @@ PROC_INC += $(INCS:-I%=include=%)
 # Library Link
 COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
 COMMON_LIB += -ltgl_s_nh -lsmt
-COMMON_LIB += -ltpucs -ltxnon
+#COMMON_LIB += -ltpucs -ltxnon
 COMMON_LIB += $(XMLLIB)
 #COMMON_LIB += -lcurl
 #COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI
@@ -72,6 +68,7 @@ COMMON_LIB += $(XMLLIB)
 #DEFINES	+= -D_DEBUG_
 #	암복호화
 DEFINES	+= -D_CRYPT_
+DEFINES	+= -DISO_TEST
 
 install: all bininstall
 clobber: clean binclobber
