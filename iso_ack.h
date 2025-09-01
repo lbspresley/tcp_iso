@@ -18,6 +18,8 @@ typedef struct {
 
 ACK_INFO g_ack_info[MAX_ACK_MSG_CNT];
 
+int send_ack_response(char* outbuf);
+
 void ack_info_init();
 ACK_INFO* add_ack_info(char* msgidr, char* msg, int msg_len);
 ACK_INFO* get_ack_info(int timer_id);

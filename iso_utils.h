@@ -188,6 +188,7 @@ int lf_Client_SessionKey(char* msg, int len, char* tr_cd);
 // Server Session Key
 int lf_Server_SessionKey(char* msg, int len, char* tr_cd);
 
+#if 0
 int CF_ProcessMessage(int bufkind, unsigned char** ppFrame,
     int* pBufLen, int* pFrameLen,
     char SrcSvc[64],int Srcpidx,
@@ -199,6 +200,10 @@ int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
     char SrcSvc[64],int Srcpidx,
     char* callback_name,
     long* info1, long* info2);
+#else
+int process_message(char* in, int inlen);
+int process_session_key(char* SrcSvc, char* in, int inlen);
+#endif
 
 // iso_header.c
 int check_msg_tp_cd(char* msg_tp_cd);

@@ -1,5 +1,15 @@
 #include "tcp_iso.h"
 
+// ACK 전문 송신
+int send_ack_response(char* outbuf)
+{
+  char* ack_msg = (char*)make_ack_msg(outbuf);
+  int ack_msg_len = strlen(ack_msg);
+
+  // send message without ack-retry
+  return send_message(NULL, ack_msg, ack_msg_len);
+}
+
 void ack_info_init()
 {
   int i;
@@ -112,10 +122,20 @@ int send_message(char* msgidr, char* msg, int msg_len)
 {
   static unsigned char _send_msg[MAX_MSG_LEN];
   int rc;
+  char* _encrypt_msg = (char*)NULL;
+  int encrypt_msg_len = 0;
+
+  // encrypt message
+  rc = inl_encrypt(msg, msg_len, &_encrypt_msg, &encrypt_msg_len);
+  if( rc != 0 ) {
+    ulog( _ERROR_, "Error in encrypting message. !!!!! " );
+    return -1;
+  }
 
   // make send message
-  sprintf((char*)_send_msg, "%06d%s", msg_len, msg);
-  int send_msg_len = msg_len + 6;
+  sprintf((char*)_send_msg, "%05d%s", encrypt_msg_len, _encrypt_msg);
+  int send_msg_len = encrypt_msg_len + 5;
+
 
   /* call rmp action */
   strcpy(g_rmpSvcName, "SNDMSG_ISO");
@@ -124,6 +144,11 @@ int send_message(char* msgidr, char* msg, int msg_len)
   {
     ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
     return -1;
+  }
+
+  // send message without ack-retry
+  if( msgidr == NULL ) {
+    return 0;
   }
 
   // save message

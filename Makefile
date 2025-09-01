@@ -10,13 +10,14 @@ SRCS1	= tcp_iso.c \
 		CF_ACloseSession.c \
 		CF_DisCntSession.c \
 		CF_ReceiveMessage.c \
-		CF_ProcessSessionKey.c \
-		CF_ProcessMessage.c \
 		CF_UpdateSendCnt.c \
 		CF_UpdateRecvCnt.c \
+		lf_SendMessage.c \
 		trs_req.c \
 		session_key_cli.c \
 		session_key_svr.c \
+		process_message.c \
+		process_skey_message.c \
 		iso_ack.c \
 		iso_utils.c \
 		iso_xml.c \

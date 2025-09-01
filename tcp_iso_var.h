@@ -115,4 +115,6 @@ int cf_dbcnx();
 void cf_Disconnect();
 int cf_GoImgLog(char *svc, char *dir, char *title, char* msg, int len);
 
+int lf_SendMessage(char* pFrame, int len);
+int send_to_core(char* outbuf, int outlen);
 #endif

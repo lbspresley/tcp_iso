@@ -6,7 +6,9 @@ int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
     char* callback_name,
     long* info1, long* info2)
 {
-  char*	in				= (char*) *ppFrame;
+  char*	in	= (char*) *ppFrame;
+  int inlen = *pFrameLen;
+  int rc = 0;
 
   /*
     1. 암호화 여부 확인
@@ -30,9 +32,18 @@ int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
 
   if( strstr(in, "BokwireEnvelope") != NULL ) {
     ulog(_ERROR_, "[로그정보] Handshake 전문 수신 !!");
-    return CF_ProcessSessionKey(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, Srcpidx, callback_name, info1, info2);
+    // return CF_ProcessSessionKey(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, Srcpidx, callback_name, info1, info2);
+    rc = process_session_key(SrcSvc, in, inlen);
   }
 
   ulog(_ERROR_, "[로그정보] 업무 전문 수신 !!");
-  return CF_ProcessMessage(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, Srcpidx, callback_name, info1, info2);
+  // return CF_ProcessMessage(bufkind, ppFrame, pBufLen, pFrameLen, SrcSvc, Srcpidx, callback_name, info1, info2);
+  rc = process_message(in, inlen);
+
+  if( rc < 0 ) {
+    ulog(_ERROR_, "[로그정보] 업무 전문 처리 실패 !!");
+    return RC_NEXT_ACTION;
+  }
+
+  return RC_NEXT_ACTION;
 }

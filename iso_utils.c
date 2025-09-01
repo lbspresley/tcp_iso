@@ -1,6 +1,5 @@
 #include "tcp_iso.h"
 
-
 /*
  * Setting variables
  * 1. BizMsgIdr(request 복사)
@@ -496,6 +495,7 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
   return _kr_converted_msg;
 }
 
+// ACK 메시지 생성
 unsigned char* make_ack_msg(char* reqxml)
 {
   static unsigned char _ack_msg[1024];
