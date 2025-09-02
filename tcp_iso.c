@@ -17,7 +17,7 @@ void TCP_ISO(TPSVCINFO *msg)
 
   rc = lf_SendMessage( msg->data, msg->len );
   if( rc < 0 ) {
-    ulog( _ERROR_, "lf_SendMessage(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg->len );
+    ulog( _ERROR_, "lf_SendMessage() Fail. (rc:%d/len:%d)", rc, msg->len );
     tpreturn_r( TPFAIL, -1, NULL, 0, 0 );
     return;
   }
