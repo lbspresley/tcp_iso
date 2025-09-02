@@ -86,10 +86,7 @@ int cli_recv_2(char* msg, int len)
   unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut;
 
-  /* 사용하지 않는 매개변수 경고 제거 */
-  (void)len;
-
-  ulog(_FLOW_, "[로그정보] Client 세션키 교환 통보(2) 수신\n%s", msg);
+  ulog(_FLOW_, "[로그정보] Client 세션키 교환 통보(2) 수신(%d)\n%s", len, msg);
 
   unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
@@ -148,10 +145,7 @@ int cli_recv_4(char* msg, int len)
   unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut;
 
-  /* 사용하지 않는 매개변수 경고 제거 */
-  (void)len;
-
-  ulog(_FLOW_, "[로그정보] Client 세션키 교환 통보(4) 수신\n%s", msg);
+  ulog(_FLOW_, "[로그정보] Client 세션키 교환 통보(4) 수신(%d)\n%s", len, msg);
 
   unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {

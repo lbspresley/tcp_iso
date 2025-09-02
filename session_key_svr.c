@@ -13,7 +13,7 @@ int svr_recv_1(char* msg, int len)
   unsigned char*	pSKeyOut = NULL;
 
 
-  ulog(_FLOW_, "[로그정보] Server 세션키 교환 요구(1) 수신\n%s", msg); 
+  ulog(_FLOW_, "[로그정보] Server 세션키 교환 요구(1) 수신(%d)\n%s", len, msg); 
 
   /*  Server  */
   rc = INL_Initialize( SERVER_CTX, g_inisafe_conf, NULL );
@@ -94,7 +94,7 @@ int svr_recv_3(char* msg, int len)
   unsigned char*	pSKeyOut;
 
 
-  ulog(_FLOW_, "[로그정보] Server 세션키 교환 통보(3) 수신\n%s", msg);
+  ulog(_FLOW_, "[로그정보] Server 세션키 교환 통보(3) 수신(%d)\n%s", len, msg);
 
   unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
@@ -146,7 +146,7 @@ int svr_recv_5(char* msg, int len)
   int		out_len; 
   unsigned char*	pSKeyOut;
 
-  ulog(_FLOW_, "[로그정보] Server 세션키 교환 통보(5) 수신\n%s", msg);
+  ulog(_FLOW_, "[로그정보] Server 세션키 교환 통보(5) 수신(%d)\n%s", len, msg);
 
   unsigned char* pKey = get_sess_key(msg);
   if(pKey == NULL) {
