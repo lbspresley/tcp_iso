@@ -187,7 +187,7 @@ int cli_recv_4(char* msg, int len)
     return -1;
   }
 
-  ulog(_ERROR_, "[로그정보] 세션키 교환 완료 CLIENT (BSBANK->BOK)\n" );
+  ulog(_ERROR_, "[로그정보] 세션키 교환 완료 CLIENT (Client Session to BOK)\n" );
 
   return 0;
 }

@@ -166,7 +166,7 @@ int svr_recv_5(char* msg, int len)
 
   if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
 
-  ulog(_ERROR_, "[로그정보] 세션키 교환 완료 SERVER (BOK->BSBANK)\n" );
+  ulog(_ERROR_, "[로그정보] 세션키 교환 완료 SERVER (Server Session from BOK)\n" );
 
   return RC_NEXT_ACTION;
 }
