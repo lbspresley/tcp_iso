@@ -5,7 +5,7 @@ int process_message(char* in, int inlen)
   int rc;
   char *outbuf = (char *)NULL;
   int outlen = 0;
-  int length_offset = 6;
+  // int length_offset = 5;  // 길이 5바이트 오프셋
 
   /*
       1. 암호화 여부 및 복호화 처리
@@ -18,9 +18,6 @@ int process_message(char* in, int inlen)
         c. 인코딩 변환 처리
   */
 
-  in += length_offset;
-  inlen -= length_offset;
-
   // 1. 암호화 여부 및 복호화 처리
   if( g_Encrypt_Flag == 0 ) {
     ulog( _WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen );
@@ -30,7 +27,7 @@ int process_message(char* in, int inlen)
     rc = inl_decrypt(in, inlen, &outbuf, &outlen);
     if (rc < 0)
     {
-      ulog(_ERROR_, "[로그정보] 데이터 전문 복호화 실패 !!");
+      ulog(_ERROR_, "[로그정보] 데이터 전문 복호화 실패 !! rc(%d)", rc);
       return -1;
     }
   }
