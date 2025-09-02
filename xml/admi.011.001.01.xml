@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bwh:BokwireEnvelope xmlns:bwh="urn:bok:std:iso:20022:xsd:001">
+	<bwh:BokwireHeader> 
+		<bwh:Response> 
+			<bwh:RespCd>SUCCESS</bwh:RespCd> 
+			<bwh:MsgTpCd>admi.004.ConnectionCheck</bwh:MsgTpCd> 
+			<bwh:BizSvc>bok.rtgs.01</bwh:BizSvc> 
+			<bwh:BizMsgIdr>202401051016S00000000000001</bwh:BizMsgIdr> 
+		</bwh:Response> 
+	</bwh:BokwireHeader>
+	<bwh:BokwireBody>
+	<h:AppHdr xmlns:h="urn:iso:std:iso:20022:tech:xsd:head.001.001.03">
+		<h:Fr>
+			<h:FIId>
+				<h:FinInstnId>
+					<h:ClrSysMmbId>
+						<h:ClrSysId>
+							<h:Cd>KRBOK</h:Cd>
+						</h:ClrSysId>
+						<h:MmbId>1030</h:MmbId>
+					</h:ClrSysMmbId>
+				</h:FinInstnId>
+			</h:FIId>
+		</h:Fr>
+		<h:To>
+			<h:FIId>
+				<h:FinInstnId>
+					<h:ClrSysMmbId>
+						<h:ClrSysId>
+							<h:Cd>KRBOK</h:Cd>
+						</h:ClrSysId>
+						<h:MmbId>1016</h:MmbId>
+					</h:ClrSysMmbId>
+				</h:FinInstnId>
+			</h:FIId>
+		</h:To>
+		<h:BizMsgIdr>202401051030S00000000000001</h:BizMsgIdr>
+		<h:MsgDefIdr>admi.011.001.01</h:MsgDefIdr>
+		<h:BizSvc>bok.rtgs.01</h:BizSvc>
+		<h:CreDt>2024-01-05T08:50:00.000+09:00</h:CreDt>
+		<h:BizPrcgDt>2024-01-05T09:00:00+09:00</h:BizPrcgDt>
+	</h:AppHdr>
+	<Document xmlns="urn:iso:std:iso:20022:tech:xsd:admi.011.001.01"> 
+		<SysEvtAck> 
+			<MsgId>202401051030S00000000000001</MsgId> 
+			<OrgtrRef>202401051016S00000000000001</OrgtrRef> 
+			<AckDtls> 
+				<EvtCd>PING</EvtCd> 
+				<EvtParam>1016</EvtParam> 
+				<EvtTm>2024-01-05T08:50:00.000+09:00</EvtTm>
+			</AckDtls> 
+		</SysEvtAck> 
+	</Document>
+	</bwh:BokwireBody>
+</bwh:BokwireEnvelope>
