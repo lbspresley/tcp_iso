@@ -33,8 +33,8 @@
     <bwh:BokwireHeader>\
         <Response>\
             <RespCd>SUCCESS</RespCd>\
-            <MsgTpCd>admi.004.ConnectionCheck</MsgTpCd>\
-            <BizSvc>bok.rtgs.ping.01</BizSvc>\
+            <MsgTpCd>admi.011.001.01</MsgTpCd>\
+            <BizSvc>bok.rtgs.01</BizSvc>\
             <BizMsgIdr>%s</BizMsgIdr>\
         </Response>\
     </bwh:BokwireHeader>\
@@ -135,7 +135,9 @@
 #define MAX_MSG_LEN 200*1024
 
 void get_iso_datetime(char timestr[32]);
-void get_iso_date(char datestr[10], char timestr[8]);
+void get_iso_date(char datestr[32], char timestr[9]);
+void get_today(char date[32]);
+void get_seq(char seq[7], char date[32]);
 void get_msg_idr(char msgidr[35]); // 메시지 고유번호 생성
 
 unsigned char* make_sess_key_msg(int step, char* key); // 세션키 메시지 생성
