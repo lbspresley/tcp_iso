@@ -197,7 +197,7 @@ void get_iso_datetime(char timestr[32])
   return;
 }
 
-void get_iso_date(char datestr[10], char timestr[8])
+void get_iso_date(char datestr[32], char timestr[9])
 {
   char local_timestr[40];
   struct tm *pTm;
@@ -220,7 +220,7 @@ void get_iso_date(char datestr[10], char timestr[8])
 }
 
 
-void get_today(char date[10])
+void get_today(char date[32])
 {
   char tmpstr[20];
   struct tm *pTm;
@@ -237,7 +237,7 @@ void get_today(char date[10])
   return;
 }
 
-void get_seq(char seq[7], char date[10])
+void get_seq(char seq[7], char date[32])
 {
     char seq_file[1024];
     int current_seq = 900001;
@@ -293,7 +293,7 @@ void get_seq(char seq[7], char date[10])
  */
 void get_msg_idr(char msgidr[35])
 {
-    char date[10];
+    char date[32];
     char orgid[5] = {0};
     char serial[9] = "00000000";
     char seq[7] = {0};
@@ -309,7 +309,8 @@ void get_msg_idr(char msgidr[35])
     }
     
     // 메시지 ID 생성
-    sprintf(msgidr, "%8s%4sS%8s%6s", date, orgid, serial, seq);
+    sprintf(msgidr, "%.8s%.4s%c%.8s%.6s", date, orgid, 'S', serial, seq);
+    // sprintf(msgidr, "%8s%4s%c%8s%6s", date, orgid, 'S', serial, seq);
     
     return;
 }
