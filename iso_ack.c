@@ -103,19 +103,35 @@ int process_ack_response(char* msg)
 
 int ack_retry(ACK_INFO* ack_info)
 {
+  int rc = 0;
+
   if( ack_info->retry_count > 0 ) {
     // re-send message
-    int rc = send_message(ack_info->msgidr, ack_info->msg, ack_info->msg_len);
-    if( rc < 0 ) {
-      ulog( _ERROR_, "Error in Re-Sending ACK message. !!!!! " );
+    unsigned char *retry_msg = (unsigned char *)ack_info->msg;
+    int send_msg_len = ack_info->msg_len;
+
+    /* call rmp action */
+    strcpy(g_rmpSvcName, "SNDMSG_ISO");
+    rc = rmp_MessageProc(g_rmpSvcName, 0, retry_msg, send_msg_len, 0, 0);
+    if (rc < 0)
+    {
+      ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, send_msg_len);
       return -1;
     }
 
+    // decrease retry count
+    ack_info->retry_count--;
+    ulog(_ERROR_, "Retry count is %d. msgIdr(%s)", ack_info->retry_count, ack_info->msgidr);
+
     // set timer
     rdf_setTimer( ack_info->retry_timer_id, ACK_RETRY_INTERVAL*1000, -1, 0, 0, TF_Ack_Timeout);
-    return 0;
+
+    return ack_info->retry_count;
   }
-  return -1;
+
+  // retry count is 0
+  ulog(_ERROR_, "Retry count is 0. msgIdr(%s)", ack_info->msgidr);
+  return -2;
 }
 
 int send_message(char* msgidr, char* msg, int msg_len)
@@ -178,7 +194,7 @@ void TF_Ack_Timeout(int TimerID, int lParam, int rParam)
   }
 
   int rc = ack_retry(ack_info);
-  if( rc == 0 ) {
+  if( rc < 0 ) {
     // timeout
     ulog( _ERROR_, "TIMEOUT : End-of-Retry for msgIdr(%s). !!!!! ", ack_info->msgidr );
 
