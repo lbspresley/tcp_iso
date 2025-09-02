@@ -1,16 +1,9 @@
 #include "tcp_iso.h"
 
-#if 0
-int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2)
-#else
 int process_session_key( char* SrcSvc, char* in, int inlen)
-#endif
 {
   int		rc;
+  int isClientSession = 0;
   /*
     1. SrcSvc : "CLI" or "SVR"
       1. CLI : session key(CLI)
@@ -21,7 +14,6 @@ int process_session_key( char* SrcSvc, char* in, int inlen)
       3. 진행 상태에 따른 세션키 교환 전문 처리 
   */
 
-  int isClientSession = 0;
   if(strcasecmp(SrcSvc, "CLI") == 0) {
     ulog(_ERROR_, "[로그정보] CLI 세션키 교환 전문 수신 !!");
     isClientSession = 1;
@@ -31,7 +23,7 @@ int process_session_key( char* SrcSvc, char* in, int inlen)
   }
   else {
     ulog(_ERROR_, "[로그정보] 세션 종류 확인 실패 !! SrcSvc : %s", SrcSvc);
-    return RC_NEXT_ACTION;
+    return -1;
   }
 
   char tr_cd[16];
@@ -46,11 +38,11 @@ int process_session_key( char* SrcSvc, char* in, int inlen)
   }
 
   if( rc < 0 ) {
-    ulog(_ERROR_, "[로그정보] 세션키 교환 전문 처리 실패 !! tr_cd : %s", tr_cd);
-    return RC_NEXT_ACTION;
+    ulog(_ERROR_, "[로그정보] 세션키 교환 전문 처리 실패 rc(%d)!! tr_cd : %s", rc, tr_cd);
+    return -2;
   }
 
-  return RC_NEXT_ACTION;
+  return 0;
 }
 
 int lf_Client_SessionKey(char* msg, int len, char* tr_cd)
