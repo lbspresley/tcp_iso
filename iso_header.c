@@ -1,5 +1,9 @@
 #include "tcp_iso.h"
 
+/*
+ * 메시지 유형코드 체크
+ * 정의된 메시지 유형코드 목록에 있는지 체크
+*/
 int check_msg_tp_cd(char* msg_tp_cd)
 {
   static char* msg_tp_cd_list[] = {
@@ -27,7 +31,7 @@ int check_msg_tp_cd(char* msg_tp_cd)
 }
 
 /* 
- * 표준 전문 송신
+ * 표준 전문(XML) 송신
  */
 int send_standard_msg(char* msg, int msg_len)
 {
@@ -47,7 +51,7 @@ int send_standard_msg(char* msg, int msg_len)
 
 
 /* 
- * POLL 요청메시지 처리
+ * POLL 요청 메시지 수신후 응답 송신처리
  */
 int process_poll_request(char* msg)
 {
