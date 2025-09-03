@@ -1,5 +1,5 @@
 # ROME+ Application Make Property include
-include $(CL_HOME)/work/rome.mkconf
+include $(ROME_HOME)/work/rome.mkconf
 
 SRCS1	= tcp_iso.c \
 		tpsvrinit.c \
@@ -43,9 +43,9 @@ include $(ROME_HOME)/work/rome.mkrule
 
 # Include Path
 #INISAFENET_HOME=$(HOME)/INITEC/INISAFE_HP
-INISAFENET_HOME=$(HOME)/initech/inisafenet
-INCS	+= -I$(CL_HOME)/inc
-INCS  += -I$(INISAFENET_HOME)/include 
+INISAFENET_HOME=$(CL_HOME)/initech/inisafenet
+INCS += -I$(CL_HOME)/src/inc
+INCS += -I$(INISAFENET_HOME)/include 
 
 PROC_INC += $(INCS:-I%=include=%)
 
@@ -54,6 +54,7 @@ COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
 COMMON_LIB += -ltgl_s_nh -lsmt
 COMMON_LIB += -ltpucs -ltxnon
 #COMMON_LIB += -lxmlall
+COMMON_LIB += -liconv
 COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI
 COMMON_LIB += $(ORA_CLILIB) -L$(CL_HOME)/lib -ldbcmn 
 
