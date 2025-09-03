@@ -71,5 +71,8 @@ COMMON_LIB += $(XMLLIB)
 #	암복호화
 DEFINES	+= -D_CRYPT_
 
+#	libxml2 사용 여부
+DEFINES	+= -D__USE_XML_PARSER__
+
 install: all bininstall
 clobber: clean binclobber
