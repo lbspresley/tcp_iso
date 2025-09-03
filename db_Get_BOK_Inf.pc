@@ -1,7 +1,7 @@
 #include "tcp_iso.h"
 
-EXEC SQL INCLUDE    "table/tb_clc_code_dtl_pt.h";
 EXEC SQL INCLUDE sqlca;
+//EXEC SQL INCLUDE    "table/tb_clc_code_dtl_pt.h";
 
 // 0 : BOK (국고)
 // 1 : FTP (신한은망)
