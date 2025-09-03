@@ -507,9 +507,25 @@ unsigned char* make_ack_msg(char* reqxml)
     char bizsvc[36] = {0};
     char bizmsgidr[36] = {0};
 
+#ifdef __USE_XML_PARSER__
     parse_xml_xpath(reqxml, "//Request/MsgTpCd", msgtpcd);
     parse_xml_xpath(reqxml, "//h:BizSvc", bizsvc);
     parse_xml_xpath(reqxml, "//h:BizMsgIdr", bizmsgidr);
+#else
+    char *value = NULL;
+    value = get_tag_value(reqxml, "Request/MsgTpCd");
+    if( value != NULL ) {
+      strcpy(msgtpcd, value);
+    }
+    value = get_tag_value(reqxml, "h:BizSvc");
+    if( value != NULL ) {
+      strcpy(bizsvc, value);
+    }
+    value = get_tag_value(reqxml, "h:BizMsgIdr");
+    if( value != NULL ) {
+      strcpy(bizmsgidr, value);
+    }
+#endif
 
   sprintf((char*)_ack_msg, ACK_TEMPLATE, respcd, msgtpcd, bizsvc, bizmsgidr);
   return _ack_msg;
@@ -521,20 +537,36 @@ unsigned char* make_ack_msg(char* reqxml)
 int is_ack_response_msg(char* msg)
 {
   char respcd[36] = {0};
+  char biz_msg_idr[36] = {0};
+
+#ifdef __USE_XML_PARSER__
   int ret = parse_xml_xpath(msg, "//Response/RespCd", respcd);
   if( ret < 0 ) {
     return 0;
   }
 
-  if( strcmp(respcd, "SUCCESS") == 0 || strcmp(respcd, "FAILURE") == 0 ) {
-    return 1;
-  }
-
   // get BizMsgIdr
-  char biz_msg_idr[36] = {0};
   ret = parse_xml_xpath(msg, "//Response/BizMsgIdr", biz_msg_idr);
   if( ret < 0 ) {
     return 0;
+  }
+#else
+  char *value = NULL;
+  value = get_tag_value(msg, "Response/RespCd");
+  if( value == NULL ) {
+    return 0;
+  }
+  strcpy(respcd, value);
+
+  value = get_tag_value(msg, "Response/BizMsgIdr");
+  if( value == NULL ) {
+    return 0;
+  }
+  strcpy(biz_msg_idr, value);
+#endif
+
+  if( strcmp(respcd, "SUCCESS") == 0 || strcmp(respcd, "FAILURE") == 0 ) {
+    return 1;
   }
 
   return 0;
@@ -551,10 +583,19 @@ int is_need_ack_msg(char* msg)
 {
   // char *tr_cd = (char*)get_tr_cd(msg);
   char msg_tp_cd[36] = {0};
+
+#ifdef __USE_XML_PARSER__
   int ret = parse_xml_xpath(msg, "//Request/MsgTpCd", msg_tp_cd);
   if( ret < 0 ) {
     return 0;
   }
+#else
+  char *value = get_tag_value(msg, "Request/MsgTpCd");
+  if( value == NULL ) {
+    return 0;
+  }
+  strcpy(msg_tp_cd, value);
+#endif
 
   const char* ack_tr_cds[] = {
     "admi.002", "admi.004.ConnectionCheck", "admi.004.SystemNotification", "admi.006", "admi.007", "admi.011",

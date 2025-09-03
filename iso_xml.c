@@ -1,5 +1,6 @@
 #include "tcp_iso.h"
 
+#ifdef __USE_XML_PARSER__
 int parse_xml(char* xml, char* tag, char* value)
 {
     xmlDocPtr doc = NULL;
@@ -627,3 +628,4 @@ int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx) {
     xmlFreeDoc(doc);
     return count;
 }
+#endif
