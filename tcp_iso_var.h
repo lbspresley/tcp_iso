@@ -109,6 +109,8 @@ void TF_SendPollReq(int TimerID, int lParam, int rParam);
 int dbInsertIDPW(char* pID, char* pPass);
 int dbGetIDPW( );
 int dbUpdateIDPW(char* pID, char* pPass);
+int lf_Get_BOK_ID();
+int lf_Get_BOK_PW();
 
 // db_tmp.c
 int cf_dbcnx();

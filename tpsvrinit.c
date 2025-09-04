@@ -35,6 +35,11 @@ int tpsvrinit(int argc, char* argv[])
   }
   ulog(_FLOW_, "Sequence File Path[%s]", gc_seqFilePath);
 
+#ifdef _KSFC_
+  // Bizcode 취득
+  strcpy( gc_BizCode, "FTP" );    // 신한은망, ISO :FTP 
+  strcpy( gc_org_cd, "8070" );    // 증권금융
+#else
   // Bizcode 취득
   strcpy( gc_BizCode, "BOK" );    // 국고:BOK, 신한은망:FTP
   memset(tmpstr, 0x00, sizeof(tmpstr));
@@ -54,6 +59,7 @@ int tpsvrinit(int argc, char* argv[])
     ulog(_ABEND_, "[%s] %s 취득 실패 rc=%d : 한국은행 참가기관 코드", "Local", "OrgCode", rc);
     return(-2);
   }
+#endif
 
 #if 1
 	// BOK-ISO 한국은행코드 고정 : 1016
@@ -133,11 +139,6 @@ int tpsvrinit(int argc, char* argv[])
     ulog( _ABEND_, "BizCode[%s] : ID/PSWD 취득 오류 rc(%d)", gc_BizCode, rc );
     return -3;
   }
-
-#if 0 // test
-  rc = dbGetIDPW( );
-  ulog(2, "BIZ/ID/PW :%s/%s/%s", gc_BizCode, gc_plain_id, gc_plain_pw );
-#endif
 
   return 0;
 }

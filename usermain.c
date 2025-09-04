@@ -4,23 +4,20 @@ void tgmCallbackResiter();
 void UserInit();
 
 #if 1
-int CF_UpdateRecvCnt(int Type, long* pInfo);
-int CF_UpdateSendCnt(int Type, long* pInfo);
+  /* TGL Callback Function Register */
 int CF_APortConnect(int Type, long* pInfo);
 int	CF_ACloseSession(int Type, long* pInfo);
 int	CF_DisCntSession(int Type, long* pInfo);
+int CF_UpdateRecvCnt(int Type, long* pInfo);
+int CF_UpdateSendCnt(int Type, long* pInfo);
 
-int	CF_ProcLogErr(int bufkind, unsigned char** ppFrame,
+  /* RMP Callback Function Register */
+int	CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
     int* pBufLen, int* pFrameLen, 
     char SrcSvc[64],int Srcpidx, 
     char* callback_name, 
     long* info1, long* info2);
 
-int CF_GetPassWd(int bufkind, unsigned char** ppFrame,
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
 int CF_ImgLogSend(int bufkind, unsigned char** ppFrame,
     int* pBufLen, int* pFrameLen,
     char SrcSvc[64],int Srcpidx,
@@ -76,9 +73,10 @@ void tgmCallbackResiter()
 
 
   /* RMP Callback Function Register */
+  rmp_SetupCallback("CF_ReceiveMessage", CF_ReceiveMessage);
+  rmp_SetupCallback("CF_ImgLogSend", CF_ImgLogSend);
+  rmp_SetupCallback("CF_ImgLogRecv", CF_ImgLogRecv);
   //rmp_SetupCallback("CF_ProcLogErr", CF_ProcLogErr);
-  //rmp_SetupCallback("CF_ImgLogSend", CF_ImgLogSend);
-  //rmp_SetupCallback("CF_ImgLogRecv", CF_ImgLogRecv);
   
 #endif
 

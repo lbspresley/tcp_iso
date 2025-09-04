@@ -1,12 +1,24 @@
 #include "tcp_iso.h"
 
 EXEC SQL INCLUDE sqlca;
-//EXEC SQL INCLUDE    "table/tb_clc_code_dtl_pt.h";
 
 // 0 : BOK (국고)
 // 1 : FTP (신한은망)
 int dbGetIDPW( )
 {
+#ifdef _KSFC_
+  int rc = lf_Get_BOK_ID();
+  if( rc < 0 ) {
+    return -1;
+  }
+
+  rc = lf_Get_BOK_PW();
+  if( rc < 0 ) {
+    return -2;
+  }
+
+  return 0;
+#else
   EXEC SQL BEGIN DECLARE SECTION;
   int rc =0;
   char dtl_cd  [128+1];
@@ -47,8 +59,8 @@ int dbGetIDPW( )
 
   memset( gc_plain_pw, 0x00, sizeof( gc_plain_pw ) );
   memcpy( gc_plain_pw, dtl_cd_cntn2, strlen(dtl_cd_cntn2) );
-
   return 0;
+#endif
 }
 
 int dbUpdateIDPW(char* pID, char* pPass)
@@ -237,3 +249,65 @@ int	lf_GetSlsDt( char *Slsdate )
 
   return 0;
 }
+
+#ifdef _KSFC_
+int lf_Get_BOK_ID()
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  char    field_name[64+1]="BOK_ID";
+  char    str_value[64+1];
+  EXEC SQL END DECLARE SECTION;
+
+  memset( field_name, 0x00, sizeof( field_name ) );
+  memset( str_value, 0x00, sizeof( str_value ) );
+
+  EXEC SQL SELECT NVL(trim(STR_VALUE), ' ')
+    INTO :str_value
+    FROM TB_CL_VAR
+    WHERE FIELD_NAME = :field_name
+      AND VAR_IDX = 1
+    ;
+
+  if( SQLCODE != SQL_OK )
+  {
+    ulog(_ERROR_, "[장애로그] 한국은행 ID 취득 실패. "
+         "(SqlCode=%d, field_name=%s, str_value=%s)", SQLCODE, field_name, str_value);
+    return -1;
+  }
+
+  memset( gc_plain_id, 0x00, sizeof( gc_plain_id ) );
+  memcpy( gc_plain_id, str_value, strlen(str_value) );
+
+  return 0;
+}
+
+int lf_Get_BOK_PW()
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  char    field_name[64+1]="BOK_PW";
+  char    str_value[64+1];
+  EXEC SQL END DECLARE SECTION;
+
+  memset( field_name, 0x00, sizeof( field_name ) );
+  memset( str_value, 0x00, sizeof( str_value ) );
+
+  EXEC SQL SELECT NVL(trim(STR_VALUE), ' ')
+    INTO :str_value
+    FROM TB_CL_VAR
+    WHERE FIELD_NAME = :field_name
+      AND VAR_IDX = 1
+    ;
+
+  if( SQLCODE != SQL_OK )
+  {
+    ulog(_ERROR_, "[장애로그] 한국은행 PW 취득 실패. "
+         "(SqlCode=%d, field_name=%s, str_value=%s)", SQLCODE, field_name, str_value);
+    return -1;
+  }
+
+  memset( gc_plain_pw, 0x00, sizeof( gc_plain_pw ) );
+  memcpy( gc_plain_pw, str_value, strlen(str_value) );
+
+  return 0;
+}
+#endif
