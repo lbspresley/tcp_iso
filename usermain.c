@@ -74,8 +74,8 @@ void tgmCallbackResiter()
 
   /* RMP Callback Function Register */
   rmp_SetupCallback("CF_ReceiveMessage", CF_ReceiveMessage);
-  rmp_SetupCallback("CF_ImgLogSend", CF_ImgLogSend);
-  rmp_SetupCallback("CF_ImgLogRecv", CF_ImgLogRecv);
+  //rmp_SetupCallback("CF_ImgLogSend", CF_ImgLogSend);
+  //rmp_SetupCallback("CF_ImgLogRecv", CF_ImgLogRecv);
   //rmp_SetupCallback("CF_ProcLogErr", CF_ProcLogErr);
   
 #endif
