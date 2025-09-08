@@ -43,6 +43,19 @@ void test_parse_bokwire_envelope()
     // 빈 문자열 테스트
     // ret = parse_xml_xpath("", "//TrCd", ret_value);
     // printf("Empty string case result: %d\n", ret);
+
+	// strip XML test
+	printf("Original xml : \n%s\n", test_xml);
+	char* strip_msg = (char*)strip_xml_message((char*)test_xml);
+	printf("Strip xml : \n%s\n", strip_msg);
+
+	// XML escape test
+	char* test_escape = "XML Escape Test : & < > \" ' characters";
+	printf("\nOriginal text: %s\n", test_escape);
+	char* rst = make_escaped_value((char*)test_escape);
+	printf(" Escaped text: %s\n", (char*)rst);
+	printf(" Unescaped text: %s\n", (char*)make_unescaped_value((char*)rst));
+
 }
 
 void test_build_SecurityHandshake() 
@@ -313,7 +326,7 @@ int main() {
     xmlInitParser();
     
     
-    // test_parse_bokwire_envelope();
+    test_parse_bokwire_envelope();
     // test_build_SecurityHandshake();
     // test_build_ACK("SUCCESS", "pacs.009_CORE", "bok.rtgs.gtr.01", "202506131518S000000001");
     // test_response_ACK();

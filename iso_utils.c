@@ -3,19 +3,19 @@
 /*
  * Setting variables
  * 1. BizMsgIdr(request 복사)
- * 2. MmbId(자신의 은행 코드)
- * 3. BizMsgIdr (신규발행)
- * 4. CreDt (현재시간)
+ * 2. MmbId(자신의 은행 코드) : gc_org_cd
+ * 3. BizMsgIdr (신규발행) : new_biz_msg_idr
+ * 4. CreDt (현재시간) : cre_dt
  * 5. BizPrcgDt (개시 시간 : 현재날짜+9시 고정)
- * 6. MsgId (3번항목 동일)
- * 7. OrgtrRef (1번항목 동일)
+ * 6. MsgId (3번항목 동일) : new_biz_msg_idr
+ * 7. OrgtrRef (1번항목 동일) : biz_msg_idr
  * 8. EvtTm (request 복사)
 */
 unsigned char* make_poll_response(char* reqxml)
 {
   static unsigned char _poll_response[2048];
 
-  // 1. get BizMsgIdr
+  // 1. get BizMsgIdr from request
   char biz_msg_idr [36] ;
   char new_biz_msg_idr [36] ;
 
@@ -36,7 +36,7 @@ unsigned char* make_poll_response(char* reqxml)
   char biz_prcg_dt[32];
   get_iso_date(biz_prcg_dt, NULL);
 
-  // 5. get EvtTm
+  // 5. get EvtTm from request
   char evt_tm[32];
   value = (char*)get_tag_value(reqxml, "EvtTm");
   if( value == NULL ) {
@@ -44,13 +44,224 @@ unsigned char* make_poll_response(char* reqxml)
   }
   strcpy(evt_tm, value);
 
+  // 9개 항목
   sprintf((char*)_poll_response, POLL_RSP_TEMPLATE, 
-      biz_msg_idr, gc_org_cd, new_biz_msg_idr, 
-      cre_dt, biz_prcg_dt, 
-      new_biz_msg_idr, biz_msg_idr,
-      evt_tm);
+      gc_plain_id, gc_plain_pw, gc_org_cd, 
+      new_biz_msg_idr, cre_dt, biz_prcg_dt, 
+      new_biz_msg_idr, biz_msg_idr, evt_tm);
   return _poll_response;
 }
+
+/*
+ * Setting variables
+ * 1. BizMsgIdr (신규발행)
+ * 2. CreDt (현재시간) : cre_dt
+ * 3. BizPrcgDt (개시 시간 : 현재날짜+9시 고정) : biz_prcg_dt
+*/
+unsigned char* make_poll_request()
+{
+  static unsigned char _poll_request[2048];
+
+  // 1. get new BizMsgIdr
+  char new_biz_msg_idr [36] ;
+  get_msg_idr(new_biz_msg_idr);
+
+  // 2. get date time
+  char cre_dt[32];
+  get_iso_datetime(cre_dt);
+
+  // 3. get BizPrcgDt
+  char biz_prcg_dt[32];
+  get_iso_date(biz_prcg_dt, NULL);
+
+  // 8개 항목
+  sprintf((char*)_poll_request, POLL_REQ_TEMPLATE, 
+      gc_plain_id, gc_plain_pw, gc_org_cd, 
+      new_biz_msg_idr, cre_dt, biz_prcg_dt, 
+      gc_org_cd, cre_dt);
+  return _poll_request;
+}
+
+unsigned char* make_header(char* msg_tp_cd, char* body)
+{
+  static unsigned char _iso_full_message [1024*60];
+
+  sprintf((char*)_iso_full_message, BOKWIRE_HEADER_TEMPLATE, 
+        msg_tp_cd, gc_plain_id, gc_plain_pw, body);
+  return _iso_full_message;
+}
+
+unsigned char* get_body(char* msg)
+{
+  static unsigned char _body [1024*60];
+
+  char* body = (char*)get_tag_value(msg, "BokwireBody");
+  if( body == NULL ) {
+    return NULL;
+  }
+
+  strcpy((char*)_body, body);
+  return _body;
+}
+
+unsigned char* strip_xml_message(char* msg)
+{
+  static unsigned char _stripped_message [1024*60];
+
+  strcpy((char*)_stripped_message, (char*)msg);
+
+  // remove xml declaration
+  char* xml_decl = strstr((char*)_stripped_message, "<?xml");
+  if( xml_decl != NULL ) {
+    char* content_start = strstr(xml_decl, "?>");
+    if( content_start != NULL ) {
+      content_start += 2;
+      memmove((char*)_stripped_message, content_start, strlen(content_start) + 1);
+    }
+  }
+
+  // remove whitespace between tags with regex
+  regex_t regex;
+  regmatch_t match;
+  if( regcomp(&regex, ">\\s+<", REG_EXTENDED) == 0 ) {
+    while( regexec(&regex, (char*)_stripped_message, 1, &match, 0) == 0 ) {
+      int match_len = match.rm_eo - match.rm_so;
+      if( match_len > 0 ) {
+        memmove((char*)_stripped_message + match.rm_so, (char*)_stripped_message + match.rm_eo, strlen((char*)_stripped_message + match.rm_eo) + 1);
+      }
+    }
+    regfree(&regex);
+  }
+
+  // remove empty tags with regex
+  if( regcomp(&regex, "<[^/>][^>]*/>", REG_EXTENDED) == 0 ) {
+    while( regexec(&regex, (char*)_stripped_message, 1, &match, 0) == 0 ) {
+      int match_len = match.rm_eo - match.rm_so;
+      if( match_len > 0 ) {
+        memmove((char*)_stripped_message + match.rm_so, (char*)_stripped_message + match.rm_eo, strlen((char*)_stripped_message + match.rm_eo) + 1);
+      }
+    }
+    regfree(&regex);
+  }
+
+
+  return _stripped_message;
+}
+
+unsigned char* make_unescaped_value(char* msg)
+{
+  static char* __escaped_strings[] = {
+    "&amp;",
+    "&lt;",
+    "&gt;",
+    "&quot;",
+    "&apos;"
+  };
+  static char* __escaped_values[] = {
+    "&",
+    "<",
+    ">",
+    "\"",
+    "'"
+  };
+  static int __escaped_values_len = sizeof(__escaped_values) / sizeof(__escaped_values[0]);
+  static unsigned char _unescaped_value[1024];
+
+  int src_len;
+  int dst_pos = 0;
+  int i, j;
+  int found = 0;
+
+  if( msg == NULL ) {
+    return NULL;
+  }
+
+  src_len = strlen(msg);
+
+  for( i = 0; i < src_len && dst_pos < sizeof(_unescaped_value) - 10; i++ ) {
+    found = 0;
+    
+    // 현재 위치에서 이스케이프된 문자열이 시작되는지 확인
+    for( j = 0; j < __escaped_values_len; j++ ) {
+      int escape_len = strlen(__escaped_strings[j]);
+      if( strncmp(msg + i, __escaped_strings[j], escape_len) == 0 ) {
+        // 이스케이프된 문자열을 찾았음
+        strcpy((char*)_unescaped_value + dst_pos, __escaped_values[j]);
+        dst_pos += strlen(__escaped_values[j]);
+        i += escape_len - 1; // -1은 for 루프에서 i++이 실행되기 때문
+        found = 1;
+        break;
+      }
+    }
+    
+    if( !found ) {
+      // 이스케이프된 문자열이 아니면 그대로 복사
+      _unescaped_value[dst_pos++] = msg[i];
+    }
+  }
+
+  _unescaped_value[dst_pos] = '\0';
+  return _unescaped_value;
+}
+
+unsigned char* make_escaped_value(char* msg)
+{
+  static unsigned char _escaped_value[1024];
+  int src_len = strlen(msg);
+  int dst_pos = 0;
+  int i;
+
+  if( msg == NULL ) {
+    return NULL;
+  }
+
+  // 최대 길이 체크 (이스케이프로 인해 최대 5배까지 증가 가능)
+  if( src_len * 5 >= sizeof(_escaped_value) - 1 ) {
+    return NULL;
+  }
+
+  for( i = 0; i < src_len && dst_pos < sizeof(_escaped_value) - 10; i++ ) {
+    switch( msg[i] ) {
+      case '&':
+        if( dst_pos + 5 < sizeof(_escaped_value) ) {
+          strcpy((char*)_escaped_value + dst_pos, "&amp;");
+          dst_pos += 5;
+        }
+        break;
+      case '<':
+        if( dst_pos + 4 < sizeof(_escaped_value) ) {
+          strcpy((char*)_escaped_value + dst_pos, "&lt;");
+          dst_pos += 4;
+        }
+        break;
+      case '>':
+        if( dst_pos + 4 < sizeof(_escaped_value) ) {
+          strcpy((char*)_escaped_value + dst_pos, "&gt;");
+          dst_pos += 4;
+        }
+        break;
+      case '"':
+        if( dst_pos + 6 < sizeof(_escaped_value) ) {
+          strcpy((char*)_escaped_value + dst_pos, "&quot;");
+          dst_pos += 6;
+        }
+        break;
+      case '\'':
+        if( dst_pos + 6 < sizeof(_escaped_value) ) {
+          strcpy((char*)_escaped_value + dst_pos, "&apos;");
+          dst_pos += 6;
+        }
+        break;
+      default:
+        _escaped_value[dst_pos++] = msg[i];
+        break;
+    }
+  }
+
+  _escaped_value[dst_pos] = '\0';
+  return _escaped_value;
+}
+
 
 unsigned char* make_sess_key_msg(int step, char* key)
 {

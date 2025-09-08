@@ -20,6 +20,17 @@
     </bwh:BokwireHeader>\
 </bwh:BokwireEnvelope>"
 
+#define BOKWIRE_HEADER_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
+     <bwh:BokwireHeader>\
+        <Request>\
+            <MsgTpCd>%s</MsgTpCd>\
+            <Id>%s</Id>\
+            <Password>%s</Password>\
+        </Request>\
+    </bwh:BokwireHeader>\
+    <bwh:BokwireBody>%s</bwh:BokwireBody>\
+</bwh:BokwireEnvelope>"
+
 // Setting variables
 // 1. BizMsgIdr(request 복사)
 // 2. MmbId(자신의 은행 코드)
@@ -31,55 +42,56 @@
 // 8. EvtTm (request 복사)
 #define POLL_RSP_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
     <bwh:BokwireHeader>\
-        <Response>\
-            <RespCd>SUCCESS</RespCd>\
-            <MsgTpCd>admi.011.001.01</MsgTpCd>\
-            <BizSvc>bok.rtgs.01</BizSvc>\
-            <BizMsgIdr>%s</BizMsgIdr>\
-        </Response>\
+        <Request>\
+            <MsgTpCd>admi.011</MsgTpCd>\
+            <Id>%s</Id>\
+            <Password>%s</Password>\
+        </Request>\
     </bwh:BokwireHeader>\
-    <AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.03\">\
-        <Fr>\
-            <FIId>\
-                <FinInstnId>\
-                    <ClrSysMmbId>\
-                        <ClrSysId>\
-                            <Cd>KRBOK</Cd>\
-                        </ClrSysId>\
-                        <MmbId>%s</MmbId>\
-                    </ClrSysMmbId>\
-                </FinInstnId>\
-            </FIId>\
-        </Fr>\
-        <To>\
-            <FIId>\
-                <FinInstnId>\
-                    <ClrSysMmbId>\
-                        <ClrSysId>\
-                            <Cd>KRBOK</Cd>\
-                        </ClrSysId>\
-                        <MmbId>1016</MmbId>\
-                    </ClrSysMmbId>\
-                </FinInstnId>\
-            </FIId>\
-        </To>\
-        <BizMsgIdr>%s</BizMsgIdr>\
-        <MsgDefIdr>admi.011.001.01</MsgDefIdr>\
-        <BizSvc>bok.rtgs.01</BizSvc>\
-        <CreDt>%s</CreDt>\
-        <BizPrcgDt>%s</BizPrcgDt>\
-    </AppHdr>\
-    <Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:admi.011.001.01\">\
-        <SysEvtAck>\
-            <MsgId>%s</MsgId>\
-            <OrgtrRef>%s</OrgtrRef>\
-            <AckDtls>\
-                <EvtCd>PING</EvtCd>\
-                <EvtParam>1016</EvtParam>\
-                <EvtTm>%s</EvtTm>\
-            </AckDtls>\
-        </SysEvtAck>\
-    </Document>\
+    <bwh:BokwireBody>\
+        <AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.03\">\
+            <Fr>\
+                <FIId>\
+                    <FinInstnId>\
+                        <ClrSysMmbId>\
+                            <ClrSysId>\
+                                <Cd>KRBOK</Cd>\
+                            </ClrSysId>\
+                            <MmbId>%s</MmbId>\
+                        </ClrSysMmbId>\
+                    </FinInstnId>\
+                </FIId>\
+            </Fr>\
+            <To>\
+                <FIId>\
+                    <FinInstnId>\
+                        <ClrSysMmbId>\
+                            <ClrSysId>\
+                                <Cd>KRBOK</Cd>\
+                            </ClrSysId>\
+                            <MmbId>1016</MmbId>\
+                        </ClrSysMmbId>\
+                    </FinInstnId>\
+                </FIId>\
+            </To>\
+            <BizMsgIdr>%s</BizMsgIdr>\
+            <MsgDefIdr>admi.011.001.01</MsgDefIdr>\
+            <BizSvc>bok.rtgs.01</BizSvc>\
+            <CreDt>%s</CreDt>\
+            <BizPrcgDt>%s</BizPrcgDt>\
+        </AppHdr>\
+        <Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:admi.011.001.01\">\
+            <SysEvtAck>\
+                <MsgId>%s</MsgId>\
+                <OrgtrRef>%s</OrgtrRef>\
+                <AckDtls>\
+                    <EvtCd>PING</EvtCd>\
+                    <EvtParam>1016</EvtParam>\
+                    <EvtTm>%s</EvtTm>\
+                </AckDtls>\
+            </SysEvtAck>\
+        </Document>\
+    </bwh:BokwireBody>\
 </bwh:BokwireEnvelope>"
 
 #define POLL_REQ_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
@@ -90,47 +102,50 @@
             <Password>%s</Password>\
         </Request>\
     </bwh:BokwireHeader>\
-    <AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.03\">\
-        <Fr>\
-            <FIId>\
-                <FinInstnId>\
-                    <ClrSysMmbId>\
-                        <ClrSysId>\
-                            <Cd>KRBOK</Cd>\
-                        </ClrSysId>\
-                        <MmbId>%s</MmbId>\
-                    </ClrSysMmbId>\
-                </FinInstnId>\
-            </FIId>\
-        </Fr>\
-        <To>\
-            <FIId>\
-                <FinInstnId>\
-                    <ClrSysMmbId>\
-                        <ClrSysId>\
-                            <Cd>KRBOK</Cd>\
-                        </ClrSysId>\
-                        <MmbId>1016</MmbId>\
-                    </ClrSysMmbId>\
-                </FinInstnId>\
-            </FIId>\
-        </To>\
-        <BizMsgIdr>%s</BizMsgIdr>\
-        <MsgDefIdr>admi.004.001.01</MsgDefIdr>\
-        <BizSvc>bok.rtgs.ping.01</BizSvc>\
-        <CreDt>%s</CreDt>\
-        <BizPrcgDt>%s</BizPrcgDt>\
-    </AppHdr>\
-    <Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:admi.004.001.01\">\
-        <admi.004.001.01>\
-            <EvtInf>\
-                <EvtCd>PING</EvtCd>\
-                <EvtParam>%s</EvtParam>\
-                <EvtTm>%s</EvtTm>\
-            </EvtInf>\
-        </admi.004.001.01>\
-    </Document>\
+    <bwh:BokwireBody>\
+        <AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.03\">\
+            <Fr>\
+                <FIId>\
+                    <FinInstnId>\
+                        <ClrSysMmbId>\
+                            <ClrSysId>\
+                                <Cd>KRBOK</Cd>\
+                            </ClrSysId>\
+                            <MmbId>%s</MmbId>\
+                        </ClrSysMmbId>\
+                    </FinInstnId>\
+                </FIId>\
+            </Fr>\
+            <To>\
+                <FIId>\
+                    <FinInstnId>\
+                        <ClrSysMmbId>\
+                            <ClrSysId>\
+                                <Cd>KRBOK</Cd>\
+                            </ClrSysId>\
+                            <MmbId>1016</MmbId>\
+                        </ClrSysMmbId>\
+                    </FinInstnId>\
+                </FIId>\
+            </To>\
+            <BizMsgIdr>%s</BizMsgIdr>\
+            <MsgDefIdr>admi.004.001.01</MsgDefIdr>\
+            <BizSvc>bok.rtgs.01</BizSvc>\
+            <CreDt>%s</CreDt>\
+            <BizPrcgDt>%s</BizPrcgDt>\
+        </AppHdr>\
+        <Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:admi.004.001.01\">\
+            <admi.004.001.01>\
+                <EvtInf>\
+                    <EvtCd>PING</EvtCd>\
+                    <EvtParam>%s</EvtParam>\
+                    <EvtTm>%s</EvtTm>\
+                </EvtInf>\
+            </admi.004.001.01>\
+        </Document>\
+    </bwh:BokwireBody>\
 </bwh:BokwireEnvelope>"
+
 
 #define MAX_MSG_LEN 200*1024
 
@@ -211,3 +226,9 @@ int process_session_key(char* SrcSvc, char* in, int inlen);
 int check_msg_tp_cd(char* msg_tp_cd);
 
 unsigned char* make_poll_response(char* reqxml);
+unsigned char* make_poll_request();
+unsigned char* make_header(char* msg_tp_cd, char* body);
+unsigned char* get_body(char* msg);
+unsigned char* strip_xml_message(char* msg);
+unsigned char* make_escaped_value(char* msg);
+unsigned char* make_unescaped_value(char* msg);

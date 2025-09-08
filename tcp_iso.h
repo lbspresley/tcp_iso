@@ -4,6 +4,7 @@
 #include "tplib/atmi.h"
 #include "tplib/ulog.h"
 #include "tgl/tgl.h"
+#include <regex.h>
 
 #include "INISAFENet.h"
 #include "INL_external.h"
