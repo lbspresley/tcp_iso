@@ -52,8 +52,12 @@ COMMON_LIB += $(ORA_CLILIB) -L$(CL_HOME)/lib -ldbcmn
 #DEFINES	+= -D_DEBUG_
 # 암복호화
 DEFINES	+= -D_CRYPT_
+# KSFC
+DEFINES	+= -D_KSFC_
 # libxml2 사용 여부
 #DEFINES	+= -D__USE_XML_PARSER__
+
+PROC_INC += $(DEFINES:-D%=define=%)
 
 install: all bininstall
 clobber: clean binclobber

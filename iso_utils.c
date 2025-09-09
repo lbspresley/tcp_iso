@@ -724,15 +724,15 @@ unsigned char* make_ack_msg(char* reqxml)
     parse_xml_xpath(reqxml, "//h:BizMsgIdr", bizmsgidr);
 #else
     char *value = NULL;
-    value = get_tag_value(reqxml, "Request/MsgTpCd");
+    value = (char*)get_tag_value(reqxml, "Request/MsgTpCd");
     if( value != NULL ) {
       strcpy(msgtpcd, value);
     }
-    value = get_tag_value(reqxml, "h:BizSvc");
+    value = (char*)get_tag_value(reqxml, "h:BizSvc");
     if( value != NULL ) {
       strcpy(bizsvc, value);
     }
-    value = get_tag_value(reqxml, "h:BizMsgIdr");
+    value = (char*)get_tag_value(reqxml, "h:BizMsgIdr");
     if( value != NULL ) {
       strcpy(bizmsgidr, value);
     }
@@ -763,13 +763,13 @@ int is_ack_response_msg(char* msg)
   }
 #else
   char *value = NULL;
-  value = get_tag_value(msg, "Response/RespCd");
+  value = (char*)get_tag_value(msg, "Response/RespCd");
   if( value == NULL ) {
     return 0;
   }
   strcpy(respcd, value);
 
-  value = get_tag_value(msg, "Response/BizMsgIdr");
+  value = (char*)get_tag_value(msg, "Response/BizMsgIdr");
   if( value == NULL ) {
     return 0;
   }
@@ -801,7 +801,7 @@ int is_need_ack_msg(char* msg)
     return 0;
   }
 #else
-  char *value = get_tag_value(msg, "Request/MsgTpCd");
+  char *value = (char*)get_tag_value(msg, "Request/MsgTpCd");
   if( value == NULL ) {
     return 0;
   }
