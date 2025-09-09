@@ -13,6 +13,7 @@ SRCS1	= tcp_iso.c \
 		CF_UpdateSendCnt.c \
 		CF_UpdateRecvCnt.c \
 		lf_SendMessage.c \
+		lf_ProcLoginInf.c \
 		trs_req.c \
 		session_key_cli.c \
 		session_key_svr.c \
@@ -73,6 +74,12 @@ DEFINES	+= -D_CRYPT_
 
 #	libxml2 사용 여부
 DEFINES	+= -D__USE_XML_PARSER__
+
+#	SHB : 수협중앙회버전
+DEFINES	+= -D_SHB_
+
+#	KSFC : 증권금융버전
+#DEFINES	+= -D_KSFC_
 
 install: all bininstall
 clobber: clean binclobber

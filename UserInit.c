@@ -1,16 +1,13 @@
 #include "tcp_iso.h"
 
-extern int  func_NacfGetMaxSessC(char *strAdtName);
+// extern int  func_NacfGetMaxSessC(char *strAdtName);
 
-void UserInit()
+int UserInit()
 {
-  /*	var	*----------------------------------------------------------------*/
   char	ServerName[64];
   int		rc;
   int		i = 0;
-  //char	TmpStr[64];
-
-  /*	init	*------------------------------------------------------------*/
+  
   memset(ServerName, 0x00, sizeof(ServerName));
   roGetSvcName(ServerName);
 
@@ -19,48 +16,56 @@ void UserInit()
   ccl_InitLog(ServerName, "TCPC", NULL);
 #endif
 
+#ifdef _SHB_
+	/* BOK LOGIN INF ini filename 취득 */
+	memset(gc_login_file, 0x00, sizeof(gc_login_file));
+	rc = roReadConfigString( NULL, "BOK_CONFIG", "LOGIN_INF_FILE", gc_login_file);
+	if(rc != 0) 
+	{ 
+		ulog(_ABEND_, "한국은행 로그인 정보 파일 경로 취득 실패 : [BOK_CONFIG] LOGIN_INF_FILE -> rc(%d)", rc);
+		return -1; 
+	}
+	ulog(_FLOW_, "한국은행 로그인 정보 파일 경로 [%s]" , gc_login_file);
+#else
   /* DB 연결 */
   rc = cf_dbcnx();
   if( rc != 0 )
   {
     ulog(_ABEND_, "[%s] db connect error [%d]", FF, rc);
-    //return -1;
-    exit(-1);
+    return -2;
   }
+#endif
 
-
-  /*	proc	*------------------------------------------------------------*/
   rc = roReadConfigInt(  NULL, "SessionInfo", "DownSessCnt", &g_DnSessLimit);
   if ( rc < 0 )
   {
-    ulog(_ERROR_,  "[%s] Read Down Session Cnt failed rc = %d", __FUNCTION__, rc);
+    ulog(_ERROR_,  "Read Down Session Cnt failed rc = %d", rc);
 
     // default 0
     g_DnSessLimit= 0;
   }
-  ulog(_FLOW_, "[%s] Down Session Count : %d", __FUNCTION__, g_DnSessLimit);
+  ulog(_FLOW_, "Down Session Count : %d", g_DnSessLimit);
 
 
   rc = roReadConfigInt(  NULL, "SessionInfo", "UpSessCnt", &g_UpSessLimit);
   if ( rc < 0 )
   {
-    ulog(_ERROR_,  "[%s] Read Up Session Cnt failed rc = %d", __FUNCTION__, rc);
+    ulog(_ERROR_,  "Read Up Session Cnt failed rc = %d", rc);
 
     // default 1
     g_UpSessLimit= 1;
   }
-  ulog(_FLOW_, "[%s] Up Session Count : %d", __FUNCTION__, g_UpSessLimit);
+  ulog(_FLOW_, "Up Session Count : %d", g_UpSessLimit);
 
 
   g_maxterm_cnt = func_NacfGetMaxSessC(ServerName);
   if(g_maxterm_cnt <= 0 )
   {
-    ulog(_ERROR_,  "[%s] Get Max Session failed g_maxterm_cnt = %d", __FUNCTION__, g_maxterm_cnt);
+    ulog(_ERROR_,  "Get Max Session failed g_maxterm_cnt = %d", g_maxterm_cnt);
 
     g_maxterm_cnt = 0;
   }
-
-  ulog(_FLOW_, "[%s] Max Session Count : %d", __FUNCTION__, g_maxterm_cnt);
+  ulog(_FLOW_, "Max Session Count : %d", g_maxterm_cnt);
 
 
   // Init TermTbl
@@ -68,9 +73,10 @@ void UserInit()
   g_TermTable = (TERM_TABLE*)malloc(sizeof(TERM_TABLE)*(g_maxterm_cnt+1));
   if( g_TermTable == NULL)
   {
-    ulog(_ERROR_,  "[%s] malloc() failed : Agent Local Table : errno = %d", __FUNCTION__, errno);
-    exit(-1);
+    ulog(_ERROR_,  "malloc() failed : Agent Local Table : errno = %d", errno);
+    return -3;
   }
+
   memset(g_TermTable, 0x00, sizeof(TERM_TABLE)*(g_maxterm_cnt));
   for(i=0; i<g_maxterm_cnt; i++)
   {
@@ -85,7 +91,7 @@ void UserInit()
     // default 미사용 : 0
     g_AutoDisCnt = 0;
   }
-  ulog(_FLOW_, "[%s] 세션 종료 사용여부(0:미사용, 1:사용) => [%d]", __FUNCTION__, g_AutoDisCnt);
+  ulog(_FLOW_, "세션 종료 사용여부(0:미사용, 1:사용) => [%d]", g_AutoDisCnt);
 
   if( g_AutoDisCnt == 1)
   {
@@ -93,27 +99,24 @@ void UserInit()
     rc = roReadConfigInt(	NULL, "SessionInfo", "DisCntInterval", &g_DisCntInterval);
     if ( rc < 0 ) 
     {
-      ulog(_WARNING_, "[%s] Config 취득 실패(rc:%d)\n"
-          "[SessionInfo] DisCntInterval -> default 60 sec로 설정", __FUNCTION__, rc);
+      ulog(_WARNING_, "Config 취득 실패 : [SessionInfo] DisCntInterval -> default 60 sec로 설정");
 
-      // TimerInterval의 기본값 - 1분
-      g_DisCntInterval = 60; 
+      // TimerInterval의 기본값 - 10분
+      g_DisCntInterval = 600; 
     }
     if(g_DisCntInterval < 1) 
     {
-      ulog(_WARNING_, "[%s] Config 설정 오류(value:%d)\n"
-          "[SessionInfo] DisCntInterval -> default 60 sec로 설정", __FUNCTION__, g_DisCntInterval);
+      ulog(_WARNING_, "Config 설정 오류(value:%d) : [SessionInfo] DisCntInterval -> default 10분으로 설정", g_DisCntInterval);
 
-      // TimerInterval의 기본값 - 1분
+      // TimerInterval의 기본값 - 10분
       g_DisCntInterval = 600; 
     }
-    ulog(_FLOW_, "[%s] 세션 종료 주기 => [%d]", __FUNCTION__, g_DisCntInterval);
+    ulog(_FLOW_, "자동 세션 종료 주기 => [%d]", g_DisCntInterval);
   }
 
 
   // Poll 정보 취득 : PollInfo - UsePoll
   g_UsePoll = 0; 	// default 미사용 : 0
-
   rc = roReadConfigInt(	NULL, "PollInfo", "UsePoll", &g_UsePoll);
   if ( rc < 0 )
   {
@@ -121,7 +124,7 @@ void UserInit()
     g_UsePoll = 0;
   }
 
-  ulog(_FLOW_, "[%s] Poll 사용여부(0:미사용, 1:사용) => [%d]", __FUNCTION__, g_UsePoll);
+  ulog(_FLOW_, "Poll 사용여부(0:미사용, 1:사용) => [%d]", g_UsePoll);
 
   if(g_UsePoll == 1)
   {
@@ -129,60 +132,56 @@ void UserInit()
     rc = roReadConfigInt(  NULL, "PollInfo", "PollInterval", &g_ReqPollInterval    );
     if ( rc < 0 ) 
     { 
-      ulog(_WARNING_, "[%s] Config 취득 실패(rc:%d)\n" 
-          "[PollInfo] PollSInterval -> default 60 sec로 설정", __FUNCTION__, rc);
+      ulog(_WARNING_, "Config 취득 실패 : [PollInfo] PollInterval -> default 30분으로 설정", rc);
 
-      // TimerInterval의 기본값 - 1분
-      g_ReqPollInterval = 300;
+      // PollSInterval의 기본값 - 30분
+      g_ReqPollInterval = 30*60;
     }
+
     if(g_ReqPollInterval < 1)
     {
-      ulog(_WARNING_, "[%s] Config 설정 오류(value:%d)\n" 
-          "[PollInfo] PollSInterval -> default 60 sec로 설정", __FUNCTION__, g_ReqPollInterval);
+      ulog(_WARNING_, "Config 설정 오류(value:%d) : [PollInfo] PollInterval -> default 30분으로 설정", g_ReqPollInterval);
 
-      // PollSInterval의 기본값 - 1분
-      g_ReqPollInterval = 60;
+      // PollSInterval의 기본값 - 30분
+      g_ReqPollInterval = 30*60;
     }
-    ulog(_FLOW_, "[%s] POLL 주기 : %d", __FUNCTION__, g_ReqPollInterval);
+    ulog(_FLOW_, "POLL 주기 : %d", g_ReqPollInterval);
 
 
     // Get PollInfo - PollTimeOut 
     rc = roReadConfigInt(  NULL, "PollInfo", "PollTimeOut", &g_RspPollInterval    );
     if ( rc < 0 )
     {
-      ulog(_WARNING_, "[%s] Config 취득 실패(rc:%d)\n"
-          "[PollInfo] PollWInterval -> default 60 sec로 설정", __FUNCTION__, rc);
+      ulog(_WARNING_, "Config 취득 실패 : [PollInfo] PollTimeOut -> default 30 sec로 설정");
 
-      // TimerInterval의 기본값 - 1분
-      g_RspPollInterval = 60;
+      // Poll 응답 타이머 기본값 - 30초
+      g_RspPollInterval = 30;
     }
     if(g_RspPollInterval < 1)
     {
-      ulog(_WARNING_, "[%s] Config 설정 오류(value:%d)\n" 
-          "[PollInfo] PollWInterval -> default 60 sec로 설정", __FUNCTION__, g_RspPollInterval);
+      ulog(_WARNING_, "Config 설정 오류(value:%d) : [PollInfo] PollTimeOut -> default 30 sec로 설정", g_RspPollInterval);
 
-      // PollWInterval의 기본값 - 1분
-      g_RspPollInterval = 60;
+      // Poll 응답 타이머 기본값 - 30초
+      g_RspPollInterval = 30;
     }
-    ulog(_FLOW_, "[%s] POLL 응답 대기 IMMER : %d", __FUNCTION__, g_RspPollInterval);
+    ulog(_FLOW_, "POLL 응답 대기 IMMER : %d", g_RspPollInterval);
   }
 
 
-  // Get PollInfo - PollTimeOut
+  // Get SessionInfo - SessMoniter/SessMonitor
   g_SessMonitor = 0;
   rc = roReadConfigInt(  NULL, "SessionInfo", "SessMoniter", &g_SessMonitor);
   if ( rc < 0 )
   {
-    ulog(_WARNING_, "[%s] Config 취득 실패(rc:%d)\n"
-        "[SessInfo] 세션관리 여부 -> default 0(미사용) 설정", __FUNCTION__, rc);
+    rc = roReadConfigInt(  NULL, "SessionInfo", "SessMonitor", &g_SessMonitor);
+    if (rc < 0) {
+      ulog(_WARNING_, "Config 취득 실패 : [SessionInfo] SessMoniter/SessMonitor -> default 0(미사용) 설정");
 
-    //  기본값 - 0
-    g_SessMonitor=0;
+      //  기본값 - 0
+      g_SessMonitor = 0;
+    }
   }
-  else
-  {
-    ulog(_FLOW_, "[%s] 세션관리 사용함");
-  }
+  ulog(_FLOW_, "세션관리 : %d", g_SessMonitor);
 
 
   //Get Session Mgr Service
@@ -190,60 +189,35 @@ void UserInit()
   rc = roReadConfigString( NULL, "SessionInfo", "SessMgrSvc", g_APSvc);
   if( (rc != 0) && (g_SessMonitor==1) )
   {
-    ulog(_ABEND_, "[UserInit] [%s] %s 취득 실패 rc=%d",
-        "Local", "세션관리서비스명", rc);
-    exit(-1);
+    ulog(_ABEND_, "세션관리서비스명 취득 실패 : [SessionInfo] SessMgrSvc -> rc(%d)", rc);
+    return -4;
   }
 
-
-#if 0 // use VanCode to g_ServiceName
-  // Get VanCode
-  memset( g_VANCode, 0x00, sizeof(g_VANCode) );
-  rc = roReadConfigString( NULL, "SessionInfo", "VanCode", g_VANCode );
-  if(rc != 0)
-  {
-    ulog(_ABEND_, "[UserInit] [%s] %s 취득 실패 rc=%d",
-        "Local", "채널코드", rc);
-    exit(-1);
-  }
-  memcpy( g_ChanID, g_VANCode, strlen(g_VANCode) );
-#else
   memset( g_VANCode, 0, sizeof(g_VANCode) );
   memset( g_ChanID, 0, sizeof(g_ChanID) );
   memcpy( g_VANCode, g_ServiceName, strlen(g_ServiceName) );
   memcpy( g_ChanID, g_ServiceName, strlen(g_ServiceName) );
-#endif
 
 
-  /*  Proc 4. gi_ApDataBufAllocSize   *-------------------------------------*/
-  gi_ApDataBufAllocSize = 0;
-  rc = roReadConfigInt( gc_CmnCfg, "Common", GI_ALLOCSZ, &gi_ApDataBufAllocSize );
-  if( rc != 0 )
-  {
-    ulog(_WARNING_, "Common Max Message Length rc(%d): set default [%d]", rc, MAX_MSG_LEN );
-    gi_ApDataBufAllocSize = MAX_MSG_LEN;
-  }
+  gi_ApDataBufAllocSize = MAX_MSG_LEN;
+  ulog(_WARNING_, "Common Max Message Length set default [%d]", MAX_MSG_LEN );
 
   memset(gc_LogYn, 0x00, sizeof(gc_LogYn));
   rc = roReadConfigString( gc_CmnCfg, "ImageLog", "DB_LOG", gc_LogYn );
   if( rc != 0 )
   {
-    ulog(_WARNING_, "[%s] Image Logging 여부 취득오류\n" 
-        "[ImageLog/DB_LOG][%d]\n"
-        "Default N Set"
-        , FF, rc );
+    ulog(_WARNING_, "Image Logging 여부 취득오류 : [ImageLog] DB_LOG --> Set default to N");
     gc_LogYn[0] = 'N';
   }
-  ulog(_FLOW_, "[%s] Image Logging 여부[%c]", FF, gc_LogYn[0]);
+  ulog(_FLOW_, "Image Logging 여부[%c]", gc_LogYn[0]);
 
   /*  Proc 5. ap data *-----------------------------------------------------*/
   g_EncryptBuf = NULL;
   g_EncryptBuf = (char*)malloc(gi_ApDataBufAllocSize);
   if(g_EncryptBuf == (char*)NULL)
   {
-    ulog(_ABEND_,  "[%s] Initial malloc g_EncryptBuf error [%d]\n"
-        , FF, errno);
-    exit(-1);
+    ulog(_ABEND_,  "Initial g_EncryptBuf malloc error [%d]" , errno);
+    return -5;
   }
   memset(g_EncryptBuf, 0x00, gi_ApDataBufAllocSize);
 
@@ -251,8 +225,8 @@ void UserInit()
   g_DecryptBuf = (char*)malloc(gi_ApDataBufAllocSize);
   if(g_DecryptBuf == (char*)NULL)
   {
-    ulog(_ABEND_,  "Initial malloc g_DecryptBuf error [%d]\n", errno);
-    exit(-1);
+    ulog(_ABEND_,  "Initial g_DecryptBuf malloc error [%d]" , errno);
+    return -6;
   }
   memset(g_DecryptBuf, 0x00, gi_ApDataBufAllocSize);
 
@@ -260,8 +234,7 @@ void UserInit()
   if((g_UsePoll==1) && (g_AutoDisCnt==1) )
   {
     g_UsePoll = 0;
-    ulog(_FLOW_, "Poll과 자동세션Close는 함께 사용할수 없음\n", 
-        "자동세션Close 사용으로 강제설정" );
+    ulog(_FLOW_, "Poll과 자동세션Close는 함께 사용할수 없음 --> 자동세션Close 사용으로 강제설정" );
   }
 
   // 실제 연결된 세션수
@@ -276,5 +249,5 @@ void UserInit()
   // DOWN:0  UP:1
   g_SessStat = 0;
 
-
+  return 0;
 }

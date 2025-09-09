@@ -5,6 +5,8 @@
 #include "tplib/ulog.h"
 #include "tgl/tgl.h"
 #include <regex.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "INISAFENet.h"
 #include "INL_external.h"

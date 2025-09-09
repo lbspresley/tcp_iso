@@ -55,6 +55,7 @@ char			gc_plain_pw[32];
 char			gc_enc_id[32];		
 char			gc_enc_pw[32];	
 char 			g_inisafe_conf[512];
+char 			gc_login_file[512];
 net_ctx*		g_client_ctx;
 net_ctx*		g_server_ctx;
 
@@ -66,6 +67,9 @@ char    gc_org_cd[32];
 char    gc_bok_cd[32]; // 신-한은망용 한국은행 코드(1016)
 
 int 	g_poll_started; // polling start flag
+
+int	func_NacfGetMaxSessC(char *strAdtName);
+int UserInit();
 
 int	lf_Rcv_000000001(char* msg, int len);
 int	lf_Rcv_000000002(char* msg, int len);
@@ -111,6 +115,7 @@ int dbGetIDPW( );
 int dbUpdateIDPW(char* pID, char* pPass);
 int lf_Get_BOK_ID();
 int lf_Get_BOK_PW();
+int lf_BackupFile(const char* src_file, const char* dst_file);
 
 // db_tmp.c
 int cf_dbcnx();

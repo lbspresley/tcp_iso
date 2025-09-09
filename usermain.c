@@ -1,7 +1,6 @@
 #include "tcp_iso.h"
 
 void tgmCallbackResiter();
-void UserInit();
 
 #if 1
   /* TGL Callback Function Register */

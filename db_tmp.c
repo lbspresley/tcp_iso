@@ -5,8 +5,7 @@ void cf_Disconnect() { return ; }
 int cf_GoImgLog(char *svc, char *dir, char *title, char* msg, int len) { return 0; }
 
 
-// 0 : BOK (국고)
-// 1 : FTP (신한은망)
+#ifndef _SHB_
 int dbGetIDPW( )
 {
   char tmp_id[32]="tmp-id";
@@ -27,6 +26,7 @@ int dbUpdateIDPW(char* pID, char* pPass)
 
   return 0;
 }
+#endif
 
 int getEncIdPw( )
 {
