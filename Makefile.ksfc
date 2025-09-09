@@ -33,7 +33,7 @@ SVC1	= TCP_ISO
 include $(ROME_HOME)/work/rome.mkrule
 
 # Include Path
-INISAFENET_HOME=$(CL_HOME)/initech/inisafenet
+INISAFENET_HOME=$(HOME)/initech/inisafenet
 INCS += -I$(CL_HOME)/src/inc
 INCS += -I$(INISAFENET_HOME)/include 
 
