@@ -30,19 +30,9 @@ PRCS1	= db_Get_BOK_Inf.pc
 DEST1	= tcp_iso
 SVC1	= TCP_ISO
 
-SRCS2	= test_iso.c iso_xml.c iso_utils.c 
-#DEST2	= test_iso
-
-SRCS3	= validate_xml.c parson.c
-#DEST3	= validate_xml
-
-SRCS4	= validate_xml_complex.c parson.c
-#DEST4	= validate_xml2
-
 include $(ROME_HOME)/work/rome.mkrule
 
 # Include Path
-#INISAFENET_HOME=$(HOME)/INITEC/INISAFE_HP
 INISAFENET_HOME=$(CL_HOME)/initech/inisafenet
 INCS += -I$(CL_HOME)/src/inc
 INCS += -I$(INISAFENET_HOME)/include 
@@ -53,7 +43,6 @@ PROC_INC += $(INCS:-I%=include=%)
 COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
 COMMON_LIB += -ltgl_s_nh -lsmt
 COMMON_LIB += -ltpucs -ltxnon
-#COMMON_LIB += -lxmlall
 COMMON_LIB += -liconv
 COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI
 COMMON_LIB += $(ORA_CLILIB) -L$(CL_HOME)/lib -ldbcmn 
@@ -61,9 +50,9 @@ COMMON_LIB += $(ORA_CLILIB) -L$(CL_HOME)/lib -ldbcmn
 
 # Compile Option
 #DEFINES	+= -D_DEBUG_
-#	암복호화
+# 암복호화
 DEFINES	+= -D_CRYPT_
-#	libxml2 사용 여부
+# libxml2 사용 여부
 #DEFINES	+= -D__USE_XML_PARSER__
 
 install: all bininstall

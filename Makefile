@@ -9,9 +9,9 @@ SRCS1	= tcp_iso.c \
 		CF_APortConnect.c \
 		CF_ACloseSession.c \
 		CF_DisCntSession.c \
+		CF_ReceiveMessage.c \
 		CF_UpdateSendCnt.c \
 		CF_UpdateRecvCnt.c \
-		CF_ReceiveMessage.c \
 		lf_SendMessage.c \
 		trs_req.c \
 		session_key_cli.c \
@@ -48,8 +48,8 @@ include $(ROME_HOME)/work/rome.mkrule
 
 # Include Path
 #INISAFENET_HOME=$(HOME)/INITEC/INISAFE_HP
-INCS	+= -I$(CL_HOME)/inc
-INCS  += -I$(INISAFENET_HOME)/include 
+INCS += -I$(CL_HOME)/inc
+INCS += -I$(INISAFENET_HOME)/include 
 
 PROC_INC += $(INCS:-I%=include=%)
 
