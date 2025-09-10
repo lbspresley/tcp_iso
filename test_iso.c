@@ -52,7 +52,7 @@ void test_parse_bokwire_envelope()
 	// XML escape test
 	char* test_escape = "XML Escape Test : & < > \" ' characters";
 	printf("\nOriginal text: %s\n", test_escape);
-	char* rst = make_escaped_value((char*)test_escape);
+	char* rst = (char*)make_escaped_value((char*)test_escape);
 	printf(" Escaped text: %s\n", (char*)rst);
 	printf(" Unescaped text: %s\n", (char*)make_unescaped_value((char*)rst));
 

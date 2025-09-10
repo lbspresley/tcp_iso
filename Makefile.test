@@ -23,8 +23,9 @@ INCS += -I.
 PROC_INC += $(INCS:-I%=include=%)
 
 # Library Link
-COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
-COMMON_LIB += -ltgl_s_nh -lsmt
+#COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
+#COMMON_LIB += -ltgl_s_nh -lsmt
+COMMON_LIB = -lc -lpthread
 COMMON_LIB += $(XMLLIB)
 
 
