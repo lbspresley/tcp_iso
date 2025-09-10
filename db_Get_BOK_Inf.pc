@@ -20,7 +20,6 @@ int dbGetIDPW( )
   return 0;
 #else
   EXEC SQL BEGIN DECLARE SECTION;
-  int rc =0;
   char dtl_cd  [128+1];
   char dtl_cd_cntn1  [128+1];
   char dtl_cd_cntn2  [128+1];
