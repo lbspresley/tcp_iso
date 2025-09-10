@@ -50,11 +50,11 @@ COMMON_LIB += $(ORA_CLILIB) -L$(CL_HOME)/lib -ldbcmn
 
 # Compile Option
 #DEFINES	+= -D_DEBUG_
-# 암복호화
+# Cryption
 DEFINES	+= -D_CRYPT_
 # KSFC
 DEFINES	+= -D_KSFC_
-# libxml2 사용 여부
+# libxml2 
 #DEFINES	+= -D__USE_XML_PARSER__
 
 PROC_INC += $(DEFINES:-D%=define=%)

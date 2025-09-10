@@ -42,7 +42,7 @@ int CF_APortConnect(int Type, long* pInfo)
   i = idx;
   for( ; i<SessCnt+idx; i++ )
   {
-#if _DEBUG_
+#ifdef _DEBUG_
     ulog(_ERROR_, "[로그정보] 회선연결정보\n" 
         "[로그상세] [%d] pNext : %x\n" 
         "ActType(%d), Count(%d), udValue(%d), stidx(%d)\n" 

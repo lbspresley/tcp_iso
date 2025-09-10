@@ -68,18 +68,18 @@ COMMON_LIB += $(XMLLIB)
 
 
 # Compile Option
-#DEFINES	+= -D_DEBUG_
-#	암복호화
+#DEFINES += -D_DEBUG_
+# Cryption
 DEFINES	+= -D_CRYPT_
 
-#	libxml2 사용 여부
+# libxml2 
 DEFINES	+= -D__USE_XML_PARSER__
 
 #	SHB : 수협중앙회버전
-DEFINES	+= -D_SHB_
+#DEFINES += -D_SHB_
 
 #	KSFC : 증권금융버전
-#DEFINES	+= -D_KSFC_
+#DEFINES += -D_KSFC_
 
 install: all bininstall
 clobber: clean binclobber
