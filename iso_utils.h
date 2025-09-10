@@ -15,7 +15,7 @@
             <RespCd>%s</RespCd>\
             <MsgTpCd>%s</MsgTpCd>\
             <BizSvc>%s</BizSvc>\
-            <BizMsgIdr>%s</MsgIdr>\
+            <BizMsgIdr>%s</BizMsgIdr>\
         </Response>\
     </bwh:BokwireHeader>\
 </bwh:BokwireEnvelope>"
