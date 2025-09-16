@@ -9,14 +9,32 @@
 int lf_SendMessage(char* pFrame, int len)
 {
   int		rc;
-
-  //1. FEP 헤더 처리
-  S_CL_HEADER		*pFepHdr=(S_CL_HEADER*)pFrame;
-  BOK_HEADER *pBokHdr = (BOK_HEADER *)pFepHdr + sizeof(S_CL_HEADER);
+  char* pData ;
+  int data_len;
 
   char bizmsgidr[35+1];
   char msgtpcd[35+1];
   char bizsvc[35+1];
+
+
+  if (memcmp(pFrame, "POLLREQ", 7) == 0) {
+    ulog(1, "POLLREQ 전문 송신 처리 !!");
+    pData = make_poll_request(0);
+    strcpy (bizmsgidr, make_poll_request(1) );
+    data_len = strlen(pData);
+
+    rc = send_message(bizmsgidr, pData, data_len);
+    if( rc < 0 ) {
+      ulog(_ERROR_, "[로그정보] POLLREQ 전문 송신 실패 !!");
+      return -1;
+    }
+
+    return 0;
+  }
+
+  //1. FEP 헤더 처리
+  S_CL_HEADER		*pFepHdr=(S_CL_HEADER*)pFrame;
+  BOK_HEADER *pBokHdr = (BOK_HEADER *)pFepHdr + sizeof(S_CL_HEADER);
 
   memset(bizmsgidr, 0, sizeof(bizmsgidr));
   memset(msgtpcd, 0, sizeof(msgtpcd));
@@ -28,8 +46,8 @@ int lf_SendMessage(char* pFrame, int len)
   ulog(_FLOW_, "[로그정보] BizMsgIdr: %s, MsgTpCd: %s, BizSvc: %s", bizmsgidr, msgtpcd, bizsvc);
 
   // check data length
-  char* pData = pFrame + sizeof(S_CL_HEADER) + sizeof(BOK_HEADER);
-  int data_len = len - sizeof(S_CL_HEADER) - sizeof(BOK_HEADER);
+  pData = pFrame + sizeof(S_CL_HEADER) + sizeof(BOK_HEADER);
+  data_len = len - sizeof(S_CL_HEADER) - sizeof(BOK_HEADER);
 
   // check data length
   char data_len_str[6+1];
