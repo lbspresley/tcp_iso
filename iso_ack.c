@@ -83,7 +83,7 @@ void remove_ack_info(int timer_id)
       break;
     }
   }
-  ulog( _ERROR_, "remove_ack_info(timer_id:%d) Fail. !!!!! ", timer_id );
+  ulog( _ERROR_, "No ACK info found. (timer_id:%d)", timer_id );
 }
 
 int process_ack_response(char* msg)
