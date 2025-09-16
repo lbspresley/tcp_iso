@@ -150,7 +150,7 @@ int send_message(char* msgidr, char* msg, int msg_len)
 
   // encrypt message
   rc = inl_encrypt(msg, msg_len, &_encrypt_msg, &encrypt_msg_len);
-  if( rc != 0 ) {
+  if( rc < 0 ) {
     ulog( _ERROR_, "Error in encrypting message. !!!!! " );
     return -1;
   }

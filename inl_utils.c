@@ -9,6 +9,14 @@ int inl_decrypt(char* in, int inlen, char** out, int* outlen)
   int _outlen = 0;
   int rc = 0;
 
+  if (g_Encrypt_Flag == 0) {
+    ulog(_WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen);
+    *out = in;
+    *outlen = inlen;
+    return 1;
+  }
+
+
   // alloc initial buffer
   if( _decrypt_buf == NULL ) {
     _decrypt_buf = (char*)malloc(_decrypt_buf_len);
@@ -51,6 +59,13 @@ int inl_encrypt(char* in, int inlen, char** out, int* outlen)
   unsigned char* _out = (unsigned char*)NULL;
   int _outlen = 0;
   int rc = 0;
+
+  if (g_Encrypt_Flag == 0) {
+    ulog(_WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen);
+    *out = in;
+    *outlen = inlen;
+    return 1;
+  }
 
   // Encrypt 안 할 경우
   if( g_Encrypt_Flag == 0 ) {
