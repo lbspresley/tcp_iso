@@ -165,12 +165,6 @@ int CF_APortConnect(int Type, long* pInfo)
       "Session Stat          : %d"
       , g_maxterm_cnt, SessCnt, RCntCount, g_SessStat);
 
-  // 20200408 : Encrypt 안 할 경우
-  if( g_Encrypt_Flag == 0 ) {
-    ulog(_ERROR_, "[로그정보] 암복호화 Flag : OFF ==> Handshake 안함 !!");
-    return RC_NEXT_ACTION;
-  }
-
   /* CHANGE SESSION KEY : START  */
   cli_send_1(strIP, PeerPort, LocalPort);
 
