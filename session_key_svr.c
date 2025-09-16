@@ -12,7 +12,6 @@ int svr_recv_1(char* msg, int len)
   unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut = NULL;
 
-
   ulog(_FLOW_, "[로그정보] Server 세션키 교환 요구(1) 수신(%d)\n%s", len, msg); 
 
   /*  Server  */
@@ -42,7 +41,6 @@ int svr_recv_1(char* msg, int len)
     return -3;
   }
 
-
   rc = INL_Handshake_Init( g_server_ctx, pKey, strlen((char*)pKey), &pSKeyOut, &out_len);
   if( rc != 0 )
   {
@@ -67,12 +65,12 @@ int svr_recv_1(char* msg, int len)
   strcpy(g_rmpSvcName, "SVR_SKEY");
   rc = rmp_MessageProc(g_rmpSvcName, 0, pMsg, msg_len, 0, 0 );
   if( rc < 0 ) {
-    ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
+    ulog( _ERROR_, "RMP error(%d) (SVR)Session Key Request(2) len(%d)", rc, msg_len );
+    return -1;
   }
 
   // set timer
   rdf_setTimer(TIMERID_KEY_SVR, 10000, -1, 0, 0, TF_Key_Timeout);
-
 
   return RC_NEXT_ACTION;
 }
@@ -92,7 +90,6 @@ int svr_recv_3(char* msg, int len)
 
   unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut;
-
 
   ulog(_FLOW_, "[로그정보] Server 세션키 교환 통보(3) 수신(%d)\n%s", len, msg);
 
@@ -126,7 +123,7 @@ int svr_recv_3(char* msg, int len)
   strcpy(g_rmpSvcName, "SVR_SKEY");
   rc = rmp_MessageProc(g_rmpSvcName, 0, pMsg, msg_len, &Info1, &Info2); 
   if(rc < 0) { 
-    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len ); 
+    ulog(_ERROR_, "RMP error(%d) (SVR)Session Key Request(4) len(%d)", rc, msg_len ); 
     return -3;
   }
 

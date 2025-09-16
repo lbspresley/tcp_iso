@@ -12,7 +12,6 @@ int cli_send_1(char* PeerIP, char* PeerPort, char* LocalPort)
   unsigned char*	pMsg = NULL;
   unsigned char*	pSKeyOut = NULL;
 
-
   ulog(_FLOW_, "[로그정보] Client 세션키 교환 요구(1) 송신 준비" 
       "[상세정보] %s->%s:%s"
       , LocalPort, PeerIP, PeerPort); 
@@ -46,6 +45,7 @@ int cli_send_1(char* PeerIP, char* PeerPort, char* LocalPort)
     if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
     return -3;
   }	
+
   ulog(_FLOW_, "[로그정보] MSG 000000001 DATA부\n" 
       "[상세정보] (len:%d)[%s]\n" 
       , strlen((char*)pSKeyOut), pSKeyOut); 
@@ -61,7 +61,8 @@ int cli_send_1(char* PeerIP, char* PeerPort, char* LocalPort)
   strcpy(g_rmpSvcName, "CLI_SKEY");
   rc = rmp_MessageProc(g_rmpSvcName, 0, pMsg, msg_len, 0, 0 );
   if( rc < 0 ) {
-    ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
+    ulog( _ERROR_, "RMP error(%d) Session Key Request(1) len(%d)", rc, g_rmpSvcName, msg_len );
+    return -1;
   }
 
   // set timer
@@ -118,7 +119,7 @@ int cli_recv_2(char* msg, int len)
   strcpy(g_rmpSvcName, "CLI_SKEY");
   rc = rmp_MessageProc(g_rmpSvcName, 0, pMsg, msg_len, &Info1, &Info2); 
   if(rc < 0) { 
-    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len ); 
+    ulog(_ERROR_, "RMP error(%d) Session Key Request(3) len(%d)", rc, msg_len ); 
     return -1;
   }
 
@@ -177,7 +178,7 @@ int cli_recv_4(char* msg, int len)
   strcpy(g_rmpSvcName, "CLI_SKEY");
   rc = rmp_MessageProc(g_rmpSvcName, 0, pMsg, msg_len, &Info1, &Info2); 
   if(rc < 0) { 
-    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len ); 
+    ulog(_ERROR_, "RMP error(%d) (CLI)Session Key Request(5) len(%d)", rc, msg_len ); 
     return -1;
   }
 
