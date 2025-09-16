@@ -64,27 +64,6 @@ int tpsvrinit(int argc, char* argv[])
     return -3;
   }
 
-  // 20200408 : Encrypt 안 할 경우
-  /* ctx 포인터 변수에 대한 메모리 할당 */
-  g_server_ctx = NULL;
-
-  if( g_Encrypt_Flag != 0 ) {
-    rc = INL_Initialize( SERVER_CTX, g_inisafe_conf, NULL );
-    if( rc != 0 )
-    {
-      ulog(_ABEND_, "Server INL_Initialize(%d:%s)", rc, INL_ErrorString(rc) );
-      return -4;
-    }
-
-    rc = INL_New_Ctx( SERVER_CTX, &g_server_ctx );
-    if( rc != 0 )
-    {
-      /* ret 가 0 이면 정상*/
-      ulog(_ERROR_, "INL_New_Ctx SERVER Failed. code=%d\n", rc);
-      return -5;
-    }
-  }
-
   rc = tpadvertise(g_ServiceName,  TCP_ISO);
   ulog(_FLOW_, "Svr.Svc: %s.%s tpadvertise(rc:%d)", g_ServiceName, "TCP_ISO", rc);
   if( rc < 0 ) {
