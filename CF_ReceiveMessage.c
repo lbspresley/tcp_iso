@@ -9,6 +9,10 @@ int CF_ReceiveMessage(int bufkind, unsigned char** ppFrame,
   char*	in	= (char*) *ppFrame;
   int inlen = *pFrameLen;
   int rc = 0;
+  
+  // remove length (5) field
+  in = in + 5;
+  inlen = inlen - 5;
 
   /*
     1. 암호화 여부 확인
