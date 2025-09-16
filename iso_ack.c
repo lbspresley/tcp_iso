@@ -31,7 +31,13 @@ ACK_INFO* add_ack_info(char* msgidr, char* msg, int msg_len)
     if( g_ack_info[i].use_flag == 0 ) {
       g_ack_info[i].use_flag = 1;
       strcpy(g_ack_info[i].msgidr, msgidr);
-      strcpy(g_ack_info[i].msg, msg);
+      g_ack_info[i].msg = (char*)malloc(msg_len+1);
+      if( g_ack_info[i].msg == NULL ) {
+        ulog( _ERROR_, "Failed to allocate memory for ack message" );
+        return NULL;
+      }
+      g_ack_info[i].msg[msg_len] = '\0';
+      memcpy(g_ack_info[i].msg, msg, msg_len);
       g_ack_info[i].msg_len = msg_len;
       g_ack_info[i].retry_count = ACK_RETRY_CNT;
       return &g_ack_info[i];
@@ -55,7 +61,7 @@ ACK_INFO* get_ack_info_with_msgidr(char msgidr[35])
 {
   int i;
   for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
-    if( g_ack_info[i].use_flag == 1 && memcmp(g_ack_info[i].msgidr, msgidr, 35) == 0 ) {
+    if( g_ack_info[i].use_flag == 1 && strcmp(g_ack_info[i].msgidr, msgidr) == 0 ) {
       return &g_ack_info[i];
     }
   }
@@ -68,6 +74,11 @@ void remove_ack_info(int timer_id)
   for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
     if( g_ack_info[i].use_flag == 1 && g_ack_info[i].retry_timer_id == timer_id ) {
       g_ack_info[i].use_flag = 0;
+      g_ack_info[i].msg_len = 0;
+      if( g_ack_info[i].msg != NULL ) {
+        free(g_ack_info[i].msg);
+      }
+      g_ack_info[i].msg = NULL;
       rdf_killTimer(timer_id);
       break;
     }
@@ -107,15 +118,11 @@ int ack_retry(ACK_INFO* ack_info)
 
   if( ack_info->retry_count > 0 ) {
     // re-send message
-    unsigned char *retry_msg = (unsigned char *)ack_info->msg;
-    int send_msg_len = ack_info->msg_len;
-
-    /* call rmp action */
     strcpy(g_rmpSvcName, "SNDMSG_ISO");
-    rc = rmp_MessageProc(g_rmpSvcName, 0, retry_msg, send_msg_len, 0, 0);
+    rc = rmp_MessageProc(g_rmpSvcName, 0, (unsigned char*)ack_info->msg, ack_info->msg_len, 0, 0);
     if (rc < 0)
     {
-      ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, send_msg_len);
+      ulog(_ERROR_, "ACK Retry : RMP error(%d) msgIdr(%s) len(%d)", rc, ack_info->msgidr, ack_info->msg_len);
       return -1;
     }
 
@@ -149,16 +156,16 @@ int send_message(char* msgidr, char* msg, int msg_len)
   }
 
   // make send message
-  sprintf((char*)_send_msg, "%05d%s", encrypt_msg_len, _encrypt_msg);
+  sprintf((char*)_send_msg, "%05d", encrypt_msg_len);
+  memcpy((char*)_send_msg + 5, _encrypt_msg, encrypt_msg_len);
   int send_msg_len = encrypt_msg_len + 5;
-
 
   /* call rmp action */
   strcpy(g_rmpSvcName, "SNDMSG_ISO");
   rc = rmp_MessageProc( g_rmpSvcName, 0, _send_msg, send_msg_len, 0, 0 );
   if( rc < 0 )
   {
-    ulog( _ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, msg_len );
+    ulog( _ERROR_, "Send message : RMP error(%d) msgIdr(%s) len(%d)", rc, msgidr==NULL ? "NULL" : msgidr, msg_len );
     return -1;
   }
 
@@ -170,7 +177,7 @@ int send_message(char* msgidr, char* msg, int msg_len)
   // save message
   ACK_INFO* ack_info = add_ack_info(msgidr, (char*)_send_msg, send_msg_len);
   if( ack_info == NULL ) {
-    ulog( _ERROR_, "Error in Getting ACK info. !!!!! " );
+    ulog( _ERROR_, "Error in Getting ACK info. msgIdr(%s) len(%d)", msgidr==NULL ? "NULL" : msgidr, msg_len );
     return -1;
   }
 
@@ -189,7 +196,7 @@ void TF_Ack_Timeout(int TimerID, int lParam, int rParam)
   // find ack_info
   ACK_INFO* ack_info = get_ack_info(TimerID);
   if( ack_info == NULL ) {
-    ulog( _ERROR_, "TIMEOUT : Waiting ACK-Response message. !!!!! " );
+    ulog( _ERROR_, "TIMEOUT : No TIMERID(%d) Waiting ACK-Response message. !!!!! ", TimerID );
     return;
   }
 
@@ -241,47 +248,7 @@ void close_all_sessions()
   int rc = rmp_MessageProc(g_rmpSvcName, 0, (unsigned char*)Msg, Len, 0, 0);
   if(rc < 0)
   {
-    ulog(_ERROR_, "rmp_MessageProc(%s) Fail. RMP 호출 실패 (rc:%d/len:%d)", g_rmpSvcName, rc, Len);
+    ulog(_ERROR_, "Close all sessions : RMP error(%d) len(%d)", rc, Len);
   }
   return;
 }
-
-/*
-rmp config
-
-[Rule6]
-RuleName=ACK_TIMEOUT
-DisableRule=false
-
-SrcCnt=1
-SrcSvc1=CLOSE_ALL
-
-FieldCount=0
-
-ProcCnt=1
-
-Proc1Disable=false
-Proc1Replace=no
-Proc1ActionCnt=2
-
-Proc1Action1Kind=TGLaction
-Proc1Action1DisableAc=false
-Proc1Action1TGLaction=CLS_CLI_SG1
-Proc1Action1TCPinfoInput=frame
-Proc1Action1TCPinfoOutput=succession
-Proc1Action1FailMethod=procnoreplace
-Proc1Action1SuccessJumpProc=-1
-Proc1Action1FailJumpProc=-1
-Proc1Action2Kind=TGLaction
-Proc1Action2DisableAc=false
-Proc1Action2TGLaction=CLS_SVR_SG1
-Proc1Action2TCPinfoInput=frame
-Proc1Action2TCPinfoOutput=succession
-Proc1Action2FailMethod=procnoreplace
-Proc1Action2SuccessJumpProc=-1
-Proc1Action2FailJumpProc=-1
-
-Proc1Comment=""
-
-Comment="ACK TIMEOUT 발생"
-*/

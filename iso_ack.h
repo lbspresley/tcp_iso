@@ -3,7 +3,7 @@
 #ifndef __ISO_ACK_H__
 #define __ISO_ACK_H__
 
-#define MAX_ACK_MSG_CNT 100
+#define MAX_ACK_MSG_CNT 500
 #define ACK_RETRY_CNT 3		// 3번 재전송
 #define ACK_RETRY_INTERVAL 30		// 30초 간격으로 재전송
 
@@ -13,7 +13,7 @@ typedef struct {
   int retry_count;
   int msg_len;
   char msgidr[35];
-  char msg[MAX_MSG_LEN];
+  char *msg;
 } ACK_INFO;
 
 ACK_INFO g_ack_info[MAX_ACK_MSG_CNT];
