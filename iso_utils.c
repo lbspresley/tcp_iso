@@ -62,13 +62,17 @@ unsigned char* make_poll_response(char* reqxml)
  * 2. CreDt (현재시간) : cre_dt
  * 3. BizPrcgDt (개시 시간 : 현재날짜+9시 고정) : biz_prcg_dt
 */
-unsigned char* make_poll_request()
+unsigned char* make_poll_request(int get_msg_idr_flag)
 {
   static unsigned char _poll_request[2048];
+  static unsigned char _static_msg_idr[36]={0};
+
+  if( get_msg_idr_flag == 1 ) {
+    return _static_msg_idr;
+  }
 
   // 1. get new BizMsgIdr
-  char new_biz_msg_idr [36] ;
-  get_msg_idr(new_biz_msg_idr);
+  get_msg_idr(_static_msg_idr);
 
   // 2. get date time
   char cre_dt[32];
@@ -81,7 +85,7 @@ unsigned char* make_poll_request()
   // 8개 항목
   sprintf((char*)_poll_request, POLL_REQ_TEMPLATE, 
       gc_plain_id, gc_plain_pw, gc_org_cd, 
-      new_biz_msg_idr, cre_dt, biz_prcg_dt, 
+      _static_msg_idr, cre_dt, biz_prcg_dt, 
       gc_org_cd, cre_dt);
   return _poll_request;
 }
@@ -271,7 +275,12 @@ unsigned char* make_sess_key_msg(int step, char* key)
 {
   static unsigned char _sess_key_msg[1024];
 
-  sprintf((char*)_sess_key_msg, SKEY_TEMPLATE, step, key);
+  memset((char*)_sess_key_msg, 0x20, 5);
+  sprintf((char*)_sess_key_msg + 5, SKEY_TEMPLATE, step, key);
+  char len_str[6];
+  sprintf(len_str, "%05d", strlen((char*)_sess_key_msg + 5));
+  memcpy((char*)_sess_key_msg, len_str, 5);
+
   return _sess_key_msg;
 }
 
