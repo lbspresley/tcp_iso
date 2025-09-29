@@ -33,7 +33,7 @@ void TF_SendPollReq(int TimerID, int lParam, int rParam)
   }
 
   // start poll timer again
-  rdf_setTimer(TimerID, g_ReqPollInterval, -1, 0, 0, TF_SendPollReq);
+  rdf_setTimer(TimerID, g_ReqPollInterval*1000, -1, 0, 0, TF_SendPollReq);
 
   return ;
 }
