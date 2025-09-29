@@ -68,7 +68,18 @@ ACK_INFO* get_ack_info_with_msgidr(char msgidr[35])
   return NULL;
 }
 
-void remove_ack_info(int timer_id)
+void remove_ack_info(ACK_INFO* pAck)
+{
+  pAck->use_flag = 0;
+  pAck->msg_len = 0;
+  if (pAck->msg != NULL) {
+    free(pAck->msg);
+  }
+  pAck->msg = NULL;
+  rdf_killTimer(pAck->retry_timer_id);
+}
+
+void remove_ack_info_with_timer(int timer_id)
 {
   int i;
   for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
@@ -94,6 +105,9 @@ int process_ack_response(char* msg)
   // 1. check msgidr
   value = (char *)get_tag_value(msg, "BizMsgIdr");
   if( value == NULL ) {
+    value = (char *)get_tag_value(msg, "h:BizMsgIdr");
+  }
+  if( value == NULL ) {
     ulog( _ERROR_, "BizMsgIdr 추출 실패 !!");
     return -1;
   }
@@ -107,7 +121,7 @@ int process_ack_response(char* msg)
   }
 
   // 3. remove ack_info
-  remove_ack_info(ack_info->retry_timer_id);
+  remove_ack_info(ack_info);
 
   return 0;
 }
