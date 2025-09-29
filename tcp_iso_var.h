@@ -122,6 +122,9 @@ int cf_dbcnx();
 void cf_Disconnect();
 int cf_GoImgLog(char *svc, char *dir, char *title, char* msg, int len);
 
+// lf_SendMessage.c
 int lf_SendMessage(char* pFrame, int len);
+int lf_SendPollMessage();
+void TF_SendPollReq(int TimerID, int lParam, int rParam);
 int send_to_core(char* outbuf, int outlen);
 #endif

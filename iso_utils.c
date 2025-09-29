@@ -72,7 +72,7 @@ unsigned char* make_poll_request(int get_msg_idr_flag)
   }
 
   // 1. get new BizMsgIdr
-  get_msg_idr(_static_msg_idr);
+  get_msg_idr((char*)_static_msg_idr);
 
   // 2. get date time
   char cre_dt[32];
@@ -278,7 +278,7 @@ unsigned char* make_sess_key_msg(int step, char* key)
   memset((char*)_sess_key_msg, 0x20, 5);
   sprintf((char*)_sess_key_msg + 5, SKEY_TEMPLATE, step, key);
   char len_str[6];
-  sprintf(len_str, "%05d", strlen((char*)_sess_key_msg + 5));
+  sprintf(len_str, "%05d", (int)(strlen((char*)_sess_key_msg + 5)));
   memcpy((char*)_sess_key_msg, len_str, 5);
 
   return _sess_key_msg;

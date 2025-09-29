@@ -1,11 +1,43 @@
 #include "tcp_iso.h"
 
-/*
-  pFrame : 전문
-  
+// Send Poll Messge
+int lf_SendPollMessage()
+{
+  int rc;
+  char* pData = (char*) make_poll_request(0);
+  int data_len = strlen(pData);
+  char bizmsgidr[35+1];
 
-  return : 0(성공), -1(실패)
-*/
+  strcpy (bizmsgidr, (char*)make_poll_request(1) );
+  
+  utrc (data_len, pData, "Send Poll Message : bizmsgidr(%s)", bizmsgidr);
+
+  rc = send_message(bizmsgidr, pData, data_len);
+  if( rc < 0 ) {
+    ulog(_ERROR_, "[로그정보] POLLREQ 전문 송신 실패 !!");
+    return -1;
+  }
+
+  ulog(_FLOW_, "[로그정보] POLLREQ 전문 송신 성공!!");
+
+  return 0;
+}
+
+// Polling callback function
+void TF_SendPollReq(int TimerID, int lParam, int rParam)
+{
+  int rc = lf_SendPollMessage();
+  if( rc < 0 ) {
+    ulog(_ERROR_, "[로그정보] POLLREQ 전문 송신 실패 !!");
+    //  do nothing
+  }
+
+  // start poll timer again
+  rdf_setTimer(TimerID, g_ReqPollInterval, -1, 0, 0, TF_SendPollReq);
+
+  return ;
+}
+
 int lf_SendMessage(char* pFrame, int len)
 {
   int		rc;
@@ -19,8 +51,8 @@ int lf_SendMessage(char* pFrame, int len)
 
   if (memcmp(pFrame, "POLLREQ", 7) == 0) {
     ulog(1, "POLLREQ 전문 송신 처리 !!");
-    pData = make_poll_request(0);
-    strcpy (bizmsgidr, make_poll_request(1) );
+    pData = (char*)make_poll_request(0);
+    strcpy (bizmsgidr, (char*)make_poll_request(1) );
     data_len = strlen(pData);
 
     rc = send_message(bizmsgidr, pData, data_len);
