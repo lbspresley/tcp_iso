@@ -7,3 +7,5 @@ test_regex
 validate_xml
 validate_xml2
 msg_seq_*.dat
+*.class
+pacs*/** 

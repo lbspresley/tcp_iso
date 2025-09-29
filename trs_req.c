@@ -1,40 +1,14 @@
 #include "tcp_iso.h"
 #include "trs_req.h"
+#ifdef USE_CURL
 #include <curl/curl.h>
+#endif
 
 char* g_trs_ip = "127.0.0.1";
 int g_trs_port = 10000;
 int g_tcp_fd = -1;
 struct trs_req_t *g_trs_req;
 struct trs_req_t *g_trs_rsp;
-
-#ifdef USE_CURL
-// HTTP 응답 데이터를 저장할 구조체
-struct http_response {
-    char *data;
-    size_t size;
-};
-
-// HTTP 응답 데이터를 저장하는 콜백 함수
-static size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp) 
-{
-    size_t realsize = size * nmemb;
-    struct http_response *resp = (struct http_response *)userp;
-
-    char *ptr = realloc(resp->data, resp->size + realsize + 1);
-    if (!ptr) {
-        ulog(_ERROR_, "Memory allocation failed");
-        return 0;
-    }
-
-    resp->data = ptr;
-    memcpy(&(resp->data[resp->size]), contents, realsize);
-    resp->size += realsize;
-    resp->data[resp->size] = 0;
-
-    return realsize;
-}
-#endif
 
 int init_trs_req(char *trs_ip, int trs_port) 
 {
@@ -184,6 +158,32 @@ int tcp_connect(const char* ip, int port)
 }
 
 #ifdef USE_CURL
+// HTTP 응답 데이터를 저장할 구조체
+struct http_response {
+    char *data;
+    size_t size;
+};
+
+// HTTP 응답 데이터를 저장하는 콜백 함수
+static size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp) 
+{
+    size_t realsize = size * nmemb;
+    struct http_response *resp = (struct http_response *)userp;
+
+    char *ptr = realloc(resp->data, resp->size + realsize + 1);
+    if (!ptr) {
+        ulog(_ERROR_, "Memory allocation failed");
+        return 0;
+    }
+
+    resp->data = ptr;
+    memcpy(&(resp->data[resp->size]), contents, realsize);
+    resp->size += realsize;
+    resp->data[resp->size] = 0;
+
+    return realsize;
+}
+
 int http_request(const char *url, const char *method, const char *headers[], 
                 const char *body, char *response, int response_size) 
 {
