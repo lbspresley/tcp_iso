@@ -32,14 +32,18 @@ int process_message(char* in, int inlen)
     }
   }
 
+  utrc(outlen, outbuf, "수신전문 복호화 len(%d)", outlen);
+
   // 2. ACK 응답 전문 여부 및 처리
   if( is_ack_response_msg(outbuf) ) {
-    ulog(_ERROR_, "[ACK] 응답메시지 수신 !!");
+    ulog(_FLOW_, "[ACK] 응답메시지 수신 !!");
     int rc = process_ack_response(outbuf);
     if( rc < 0 ) {
       ulog(_ERROR_, "[ACK] 응답메시지 처리 실패 !!");
       return -2;
     }
+
+    ulog(_FLOW_, "[ACK] 응답메시지 처리 성공!!");
 
     // ACK 응답 전문 처리 성공
     return 0;
@@ -65,12 +69,12 @@ int process_message(char* in, int inlen)
   }
 
   // 5. 코어 송신(E2B)
-
   rc = send_to_core(outbuf, outlen);
   if( rc < 0 ) {
     ulog(_ERROR_, "[코어 송신] 코어 송신 실패 !!");
     return -5;
   }
+
   return 0;
 }
 

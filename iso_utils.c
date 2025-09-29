@@ -723,6 +723,8 @@ unsigned char* make_ack_msg(char* reqxml)
     }
 #endif
 
+  ulog(_FLOW_, "ACK Message : MsgTpCd(%s) BizSvc(%s), BizMsgIdr(%s)", msgtpcd, bizsvc, bizmsgidr);
+
   sprintf((char*)_ack_msg, ACK_TEMPLATE, respcd, msgtpcd, bizsvc, bizmsgidr);
   return _ack_msg;
 }
@@ -762,6 +764,7 @@ int is_ack_response_msg(char* msg)
 #endif
 
   if( strcmp(respcd, "SUCCESS") == 0 || strcmp(respcd, "FAILURE") == 0 ) {
+    ulog(_FLOW_, "ACK response Message : bizmsgidr(%s), respcd(%s)", biz_msg_idr, respcd);
     return 1;
   }
 
@@ -815,12 +818,15 @@ int is_need_ack_msg(char* msg)
  */
 int is_poll_request_msg(char* msg)
 {
-  char* value = (char*)get_tag_value(msg, "EvtCd");
+  char* value = (char*)get_tag_value(msg, "MsgTpCd");
+  if( value == NULL ) {
+    value = (char*)get_tag_value(msg, "h:MsgTpCd");
+  }
   if( value == NULL ) {
     return 0;
   }
 
-  if( strcmp(value, "PING") == 0 ) {
+  if( strcmp(value, "admi.004.ConnectionCheck") == 0 ) {
     return 1;
   }
 
