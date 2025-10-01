@@ -112,27 +112,20 @@ int send_to_core(char* outbuf, int outlen)
     }
   }
 
-  // a. FEP 헤더 생성
-  S_CL_HEADER *pFepHdr = (S_CL_HEADER *)_tpalloc_msg;
-  memset((char*)pFepHdr, 0x20, sizeof(S_CL_HEADER));
-
-  // set FEP Header : c_Len
-  int msg_len = outlen + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
-  char msg_len_str[6+1];
-  sprintf(msg_len_str, "%06d", msg_len);
-  memcpy(pFepHdr->c_Len, msg_len_str, 6);
-
-  // TODO: set FEP Header : BeChanID, ExChanID, c_ExSeqNo, c_ApCode, c_RpstApCode 
-  //memcpy(pFepHdr->c_BeChanID, g_VANCode, strlen(g_VANCode));
-  //memcpy(pFepHdr->c_ExChanID, g_VANCode, strlen(g_VANCode));
-
-  // b. BOK 헤더 생성
   BOK_HEADER *pBokHdr = (BOK_HEADER *)_tpalloc_msg + sizeof(S_CL_HEADER);
   memset((char*)pBokHdr, 0x20, SIZE_BOK_HEADER);
 
   // Request/Response 구분
   int is_request = 0;
   char* value = NULL;
+
+	char RespCd   [7+1] = {0};   // REQ(O),RSP(O) (REQ:SPACE, RSP:SUCCESS/FAIL)
+	char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
+	char BizSvc   [35+1] = {0};  // REQ(X),RSP(O)
+	char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
+	char Id       [16+1] = {0};  // REQ(O),RSP(X)
+	char Password [16+1] = {0};  // REQ(O),RSP(X)
+
   if( strstr(outbuf, "<Request>") != NULL || strstr(outbuf, "<bwh:Request>") != NULL ) {
     is_request = 1;
   }
@@ -147,59 +140,83 @@ int send_to_core(char* outbuf, int outlen)
     ulog(_ERROR_, "[MsgTpCd] 메시지 유형 코드 체크 실패 !!(%s)", value);
     return -6;
   }
-  memcpy(pBokHdr->MsgTpCd, value, strlen(value));
+  strcpy(MsgTpCd, value);
 
   if (is_request == 0) {
     // Response
+    memcpy(pBokHdr->RespCd, "RSP", 3);
+
     value = (char *)get_tag_value(outbuf, "RespCd");
-    if (value == NULL)
-    {
+    if (value == NULL) {
       ulog(_ERROR_, "RespCd 추출 실패 !!");
       return -7;
     }
-    strcpy(pBokHdr->RespCd, value);
+    strcpy(RespCd, value);
 
     value = (char *)get_tag_value(outbuf, "BizSvc");
-    if (value == NULL)
-    {
+    if (value == NULL) {
       ulog(_ERROR_, "BizSvc 추출 실패 !!");
       return -8;
     }
-    strcpy(pBokHdr->BizSvc, value);
+    strcpy(BizSvc, value);
 
     value = (char *)get_tag_value(outbuf, "BizMsgIdr");
-    if (value == NULL)
-    {
+    if (value == NULL) {
       ulog(_ERROR_, "BizMsgIdr 추출 실패 !!");
       return -9;
     }
-    strcpy(pBokHdr->BizMsgIdr, value);
+    strcpy(BizMsgIdr, value);
   } else {
+    memcpy(pBokHdr->RespCd, "REQ", 3);
     // Request
     value = (char *)get_tag_value(outbuf, "Id");
-    if (value == NULL)
-    {
+    if (value == NULL) {
       ulog(_ERROR_, "Id 추출 실패 !!");
       return -10;
     }
-    strcpy(pBokHdr->Id, value);
+    strcpy(Id, value);
 
     value = (char *)get_tag_value(outbuf, "Password");
-    if (value == NULL)
-    {
+    if (value == NULL) {
       ulog(_ERROR_, "Password 추출 실패 !!");
       return -11;
     }
-    strcpy(pBokHdr->Password, value);
+    strcpy(Password, value);
   }
 
-  // c. Set Data 
-  memcpy(_tpalloc_msg + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER, outbuf, outlen);
+
+  if (strlen(MsgTpCd) > 0) {
+    memcpy(pBokHdr->MsgTpCd, MsgTpCd, strlen(MsgTpCd));
+  }
+  if (strlen(RespCd) > 0) {
+    memcpy(pBokHdr->RespCd, RespCd, strlen(RespCd));
+  }
+  if (strlen(BizSvc) > 0) {
+    memcpy(pBokHdr->BizSvc, BizSvc, strlen(BizSvc));
+  }
+  if (strlen(BizMsgIdr) > 0) {
+    memcpy(pBokHdr->BizMsgIdr, BizMsgIdr, strlen(BizMsgIdr));
+  }
+  if (strlen(Id) > 0) {
+    memcpy(pBokHdr->Id, Id, strlen(Id));
+  }
+  if (strlen(Password) > 0) {
+    memcpy(pBokHdr->Password, Password, strlen(Password));
+  }
+
+  ulog(_FLOW_, "[BOK 헤더] 생성 완료 !!");
+  ulog(_FLOW_, "[BOK 헤더] RespCd: %s, MsgTpCd: %s, BizSvc: %s, BizMsgIdr: %s, Id: %s, Password: %s", RespCd, MsgTpCd, BizSvc, BizMsgIdr, Id, Password);
 
 // TODO: 전문변환 및 인코딩 처리
-// TODO: config에서 변환요청(IP/PORT), 한글 인코딩 타입(UTF-8/EUC-KR/CP949) 설정 처리
 #if 0
   // d. 전문변환 처리
+  // 1) BokwireBody 추출
+  char* bokwire_body = (char*)get_tag_value(outbuf, "bwh:BokwireBody");
+  if( bokwire_body == NULL ) {
+    ulog(_ERROR_, "BokwireBody 추출 실패 !!");
+    return -12;
+  }
+
   if( g_transform_port != 0 ) {
     // TODO: 전문변환 처리
     // 변환 요청 / 응답
@@ -210,7 +227,7 @@ int send_to_core(char* outbuf, int outlen)
     }
   }
 
-  // e. 인코딩 변환 처리
+// TODO: config에서 변환요청(IP/PORT), 한글 인코딩 타입(UTF-8/EUC-KR/CP949) 설정 처리
   if( g_kr_encoding != NULL ) {
     // TODO: 인코딩 변환 처리
     // 변환 요청 / 응답
@@ -222,6 +239,30 @@ int send_to_core(char* outbuf, int outlen)
   }
 #endif
 
+  // c. Set Data 
+  memcpy(_tpalloc_msg + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER, outbuf, outlen);
+
+#ifdef _KSFC_
+  // a. FEP 헤더 생성
+  S_CL_HEADER *pFepHdr = (S_CL_HEADER *)_tpalloc_msg;
+  memset((char*)pFepHdr, 0x20, sizeof(S_CL_HEADER));
+
+  // set FEP Header : c_Len
+  int msg_len = outlen + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
+  char msg_len_str[6+1];
+  sprintf(msg_len_str, "%06d", msg_len);
+  memcpy(pFepHdr->c_Len, msg_len_str, 6);
+
+  memcpy(pFepHdr->c_ExChanID, g_ServiceName, sizeof(pFepHdr->c_ExChanID));
+  memcpy(pFepHdr->c_MsgDsc, "APMG", sizeof(pFepHdr->c_MsgDsc));
+
+  char interfaceID[100];
+  (void) replaceString(MsgTpCd, ".", "_");
+  sprintf(interfaceID, "%s_I1", MsgTpCd);
+  memcpy(pFepHdr->c_ApCode, interfaceID, strlen(interfaceID));
+
+  // TODO: set FEP Header : BeChanID, ExChanID, c_ExSeqNo, c_ApCode, c_RpstApCode 
+
   // 6. 코어 송신(E2B)
   rc = tpacall("CFR_E2B_MST", _tpalloc_msg, msg_len, TPNOREPLY | TPBLOCK);
   if( rc < 0 ) {
@@ -230,5 +271,18 @@ int send_to_core(char* outbuf, int outlen)
   }
 
   ulog(_FLOW_, "[코어 송신] 코어 송신 성공 !!");
+#endif
+
   return 0;
+}
+
+void replaceString(char* str, char* org, char* rep)
+{
+  char* ptr = str;
+  while( ptr != NULL ) {
+    ptr = strstr(ptr, org);
+    if( ptr != NULL ) {
+      *ptr = rep;
+    }
+  }
 }

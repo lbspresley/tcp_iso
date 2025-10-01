@@ -5,7 +5,7 @@
 #endif
 
 char* g_trs_ip = "127.0.0.1";
-int g_trs_port = 10000;
+int g_trs_port = 58110;
 int g_tcp_fd = -1;
 struct trs_req_t *g_trs_req;
 struct trs_req_t *g_trs_rsp;
@@ -44,7 +44,7 @@ int close_trs_req()
 
 int req_trs(char *trs_id, char *req, int len, char *resp, int resp_len) 
 {
-    char len_str[REQ_LEN_LEN*2];
+    char len_str[10];
     int req_len = 0;
 
     if (g_tcp_fd == -1) {
@@ -54,7 +54,7 @@ int req_trs(char *trs_id, char *req, int len, char *resp, int resp_len)
 
     // send request
     req_len = len + PRE_LEN;
-    snprintf(len_str, sizeof(len_str), "%08d", req_len);
+    snprintf(len_str, sizeof(len_str), "%05d", req_len);
     
     memset(g_trs_req, 0x20, PRE_LEN);
     memcpy(g_trs_req->req_len, len_str, REQ_LEN_LEN);
