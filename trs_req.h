@@ -11,7 +11,7 @@ int req_trs(int type, char *trs_id, char *req, int len, char *resp);
 #define REQ_LEN_LEN 5   // 5 bytes for request length. < 100MB
 #define TRS_ID_LEN 35   // 35 bytes for transaction ID
 #define RESULT_MSG_LEN 60   // 60 bytes for result message length
-#define MAX_TRS_DATA_LEN 1024*1024*100 // 100MB
+#define MAX_TRS_DATA_LEN 1024*100 // 100KB
 #define PRE_LEN (REQ_LEN_LEN+TRS_ID_LEN+RESULT_MSG_LEN)
 
 struct trs_req_t {
