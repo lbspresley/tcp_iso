@@ -197,6 +197,9 @@ int UserInit()
   // Poll off 상태
   //	g_OnPolling = 0; 
 
+  // Auto Disconnect off 상태
+  g_AutoDisCnt = 0;
+
   // DOWN:0  UP:1
   g_SessStat = 0;
 
