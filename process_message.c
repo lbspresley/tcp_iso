@@ -257,7 +257,7 @@ int send_to_core(char* outbuf, int outlen)
   // TODO: set FEP Header : BeChanID, ExChanID, c_ExSeqNo, c_ApCode, c_RpstApCode 
 
   // 6. 코어 송신(E2B)
-  rc = tpacall("CFR_E2B_MST", _tpalloc_msg, msg_len, TPNOREPLY | TPBLOCK);
+  int rc = tpacall("CFR_E2B_MST", _tpalloc_msg, msg_len, TPNOREPLY | TPBLOCK);
   if( rc < 0 ) {
     ulog(_ERROR_, "[코어 송신] 코어 송신 실패 !!");
     return -14;
