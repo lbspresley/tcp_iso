@@ -1,16 +1,8 @@
 #include "tcp_iso.h"
-#include "trs_req.h"
 #ifdef USE_CURL
 #include <curl/curl.h>
 #endif
 
-char* g_trs_ip = "127.0.0.1";
-int g_trs_port = 58110;
-int g_tcp_fd = -1;
-char gc_REQ[MAX_TRS_DATA_LEN];
-char gc_RSP[MAX_TRS_DATA_LEN];
-struct trs_req_t *g_trs_req = (struct trs_req_t*) gc_REQ;
-struct trs_req_t *g_trs_rsp = (struct trs_req_t*) gc_RSP;
 
 int tcp_connect(const char* ip, int port)
 {
@@ -70,17 +62,12 @@ int tcp_connect(const char* ip, int port)
 
 int init_trs_req(char *trs_ip, int trs_port) 
 {
-    g_trs_ip = trs_ip;
-    g_trs_port = trs_port;
-    int fd = tcp_connect(g_trs_ip, g_trs_port);
+    int fd = tcp_connect(trs_ip, trs_port);
     if (fd == -1) {
-        printf("Failed to connect to TRS: %s:%d\n", g_trs_ip, g_trs_port);
+        printf("Failed to connect to TRS: %s:%d\n", trs_ip, trs_port);
         return -1;
     }
-    printf("Connected to TRS: %s:%d\n", g_trs_ip, g_trs_port);
-
-    memset(gc_REQ, 0, MAX_TRS_DATA_LEN);
-    memset(gc_RSP, 0, MAX_TRS_DATA_LEN);
+    printf("Connected to TRS: %s:%d\n", trs_ip, trs_port);
 
     return fd;
 }
@@ -93,62 +80,91 @@ int close_trs_req(int fd)
     return 0;
 }
 
-int req_trs(char *trs_id, char *req, int len, char *resp, int resp_len) 
+int req_trs_xml(char *trs_id, char *req, int len, char *resp ) 
 {
+    return req_trs(0, trs_id, req, len, resp );
+}
+
+int req_trs_fixed(char *trs_id, char *req, int len, char *resp ) 
+{
+    return req_trs(1, trs_id, req, len, resp );
+}
+
+int req_trs(int type, char *trs_id, char *req, int len, char *resp ) 
+{
+    static char _trs_req[MAX_TRS_DATA_LEN];
+    static char _trs_rsp[MAX_TRS_DATA_LEN];
+    struct trs_req_t *trs_req = (struct trs_req_t *)_trs_req;
+    struct trs_req_t *trs_rsp = (struct trs_req_t *)_trs_rsp;
+
     char len_str[10];
     int req_len = 0;
-    int fd = init_trs_req(g_trs_ip, g_trs_port);
+
+    int port = 0;
+    if (type == 0) {
+        port = g_trs_xml_port;
+    } else {
+        port = g_trs_fixed_port;
+    }
+
+    int fd = -1;
+    fd = init_trs_req(g_trs_ip, port);
     if (fd < 0) {
-        printf("TRS is not connected\n");
+        ulog( _ERROR_, "TRS connect failed (type:%s)-(%s:%d)", (type == 0) ? "XML" : "FIXED", g_trs_ip, port);
         return -1;
     }
+
+    memset(_trs_req, 0, PRE_LEN);
+    memset(_trs_rsp, 0, PRE_LEN);
 
     // send request
     req_len = len + PRE_LEN;
     snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)req_len);
     
-    memset(g_trs_req, 0x20, PRE_LEN);
-    memcpy(g_trs_req->len, len_str, REQ_LEN_LEN);
-    memcpy(g_trs_req->trs_id, trs_id, TRS_ID_LEN);
-    memcpy(g_trs_req->data, req, len);
+    memset(trs_req, 0x20, PRE_LEN);
+    memcpy(trs_req->len, len_str, REQ_LEN_LEN);
+    memcpy(trs_req->trs_id, trs_id, TRS_ID_LEN);
+    memcpy(trs_req->data, req, len);
     
     // send request
-    int nRc = send(fd, (char*) g_trs_req, req_len, 0);
+    int nRc = send(fd, (char*) trs_req, req_len, 0);
     if (nRc != req_len) {
-        printf("Failed to send request to TRS: %s:%d\n", g_trs_ip, g_trs_port);
+        ulog( _ERROR_, "Failed to send request to TRS: %s:%d\n", g_trs_ip, port);
         close_trs_req(fd);
         return -2;
     }
 
-    memset(g_trs_rsp, 0x20, PRE_LEN);
+    memset(trs_rsp, 0x20, PRE_LEN);
 
     // receive response
-    nRc = recv(fd, (char*) g_trs_rsp, PRE_LEN, 0);
+    nRc = recv(fd, (char*) trs_rsp, PRE_LEN, 0);
     if (nRc != PRE_LEN) {
-        printf("Failed to receive response from TRS: %s:%d\n", g_trs_ip, g_trs_port);
+        ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
         close_trs_req(fd);
         return -3;
     }
 
     // parse response
-    memcpy(len_str, g_trs_rsp->len, REQ_LEN_LEN);
+    memcpy(len_str, trs_rsp->len, REQ_LEN_LEN);
     int rsp_len = atoi(len_str);
     if (rsp_len <= 0) {
-        printf("Response length is invalid: (%s) --> %d\n", len_str, rsp_len);
+        ulog( _ERROR_, "Response length is invalid: (%s) --> %d\n", len_str, rsp_len);
         close_trs_req(fd);
         return -4;
     }
 
     // receive response
-    nRc = recv(fd, (char*) g_trs_rsp->data, rsp_len, 0);
+    nRc = recv(fd, (char*) trs_rsp->data, rsp_len, 0);
     if (nRc != rsp_len) {
-        printf("Failed to receive response from TRS: %s:%d\n", g_trs_ip, g_trs_port);
+        ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
         close_trs_req(fd);
         return -5;
     }
 
+    memcpy(resp, trs_rsp->data, rsp_len);
+
     close_trs_req(fd);
-    return 0;
+    return rsp_len;
 }
 
 

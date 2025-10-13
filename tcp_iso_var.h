@@ -68,6 +68,11 @@ char    gc_bok_cd[32]; // 신-한은망용 한국은행 코드(1016)
 
 int 	g_poll_started; // polling start flag
 
+// Transform Agent
+char g_trs_ip[32] ;
+int g_trs_xml_port ;
+int g_trs_fixed_port ;
+
 int	func_NacfGetMaxSessC(char *strAdtName);
 int UserInit();
 

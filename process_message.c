@@ -209,7 +209,7 @@ int send_to_core(char* outbuf, int outlen)
 
 // TODO: 전문변환 및 인코딩 처리
 
-#if 0
+#if 1
   // d. 전문변환 처리
   // 1) BokwireBody 추출
   char* bokwire_body = (char*)get_tag_value(outbuf, "bwh:BokwireBody");
@@ -218,36 +218,23 @@ int send_to_core(char* outbuf, int outlen)
     return -12;
   }
 
-rc = req_trs(g_transform_ip, g_transform_port, outbuf, outlen, &outbuf, &outlen);
-if( rc < 0 ) {
-  ulog(_ERROR_, "[전문변호환] 전문변호환 실패 !!");
-  return -12;
-}
-
-  if( g_transform_port != 0 ) {
-    // TODO: 전문변환 처리
-    // 변환 요청 / 응답
-    rc = 0;
-    if( rc < 0 ) {
-      ulog(_ERROR_, "[전문변환] 전문변환 실패 !!");
-      return -12;
-    }
-  }
-
-// TODO: config에서 변환요청(IP/PORT), 한글 인코딩 타입(UTF-8/EUC-KR/CP949) 설정 처리
-  if( g_kr_encoding != NULL ) {
-    // TODO: 인코딩 변환 처리
-    // 변환 요청 / 응답
-    rc = 0;
-    if( rc < 0 ) {
-      ulog(_ERROR_, "[인코딩] 인코딩 실패 !!");
-      return -13;
-    }
-  }
-#endif
+  // TODO: root tag 확인 필요
 
   // c. Set Data 
+  char* data = (char*)(_tpalloc_msg + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER);
+
+  // 전문변환 요청/응답
+  outlen = req_trs(0, MsgTpCd, bokwire_body, strlen(bokwire_body), data);
+  if (outlen < 0)
+  {
+    ulog(_ERROR_, "[전문변환] 전문변환 실패 !!");
+    return -12;
+  }
+
+#else
+  // c. Set Data 
   memcpy(_tpalloc_msg + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER, outbuf, outlen);
+#endif
 
 #ifdef _KSFC_
   // a. FEP 헤더 생성

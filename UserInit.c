@@ -188,6 +188,28 @@ int UserInit()
   memset(g_DecryptBuf, 0x00, gi_ApDataBufAllocSize);
 
 
+  rc = roReadConfigString(NULL, "Transform", "AgentIP", g_trs_ip);
+  if(rc < 0)
+  {
+    ulog(_WARNING_, "Transform Agent IP 취득 실패 : [Transform] AgentIP -> default 127.0.0.1");
+    strcpy(g_trs_ip, "127.0.0.1");
+  }
+  ulog(_FLOW_, "Transform Agent IP : %s", g_trs_ip);
+  rc = roReadConfigInt(NULL, "Transform", "AgentPortXml", &g_trs_xml_port);
+  if(rc < 0)
+  {
+    ulog(_WARNING_, "Transform Agent Port for XML to FIXED 취득 실패 : [Transform] AgentPortXml -> default 58110");
+    g_trs_xml_port = 58110;
+  }
+  ulog(_FLOW_, "Transform Agent Port for XML to FIXED : %d", g_trs_xml_port);
+  rc = roReadConfigInt(NULL, "Transform", "AgentPortFixed", &g_trs_fixed_port);
+  if(rc < 0)
+  {
+    ulog(_WARNING_, "Transform Agent Port for FIXED to XML 취득 실패 : [Transform] AgentPortFixed -> default 58111");
+    g_trs_fixed_port = 58111;
+  }
+  ulog(_FLOW_, "Transform Agent Port for FIXED to XML : %d", g_trs_fixed_port);
+
   // 실제 연결된 세션수
   g_RCntCount = 0;
 
