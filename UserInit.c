@@ -84,37 +84,6 @@ int UserInit()
   }
 
 
-  // Get SessionInfo - AutoDisCnt
-  rc = roReadConfigInt(  NULL, "SessionInfo", "AutoDisCnt", &g_AutoDisCnt);
-  if ( rc < 0 )
-  {
-    // default 미사용 : 0
-    g_AutoDisCnt = 0;
-  }
-  ulog(_FLOW_, "세션 종료 사용여부(0:미사용, 1:사용) => [%d]", g_AutoDisCnt);
-
-  if( g_AutoDisCnt == 1)
-  {
-    // Get SessionInfo - DisCntInterval
-    rc = roReadConfigInt(	NULL, "SessionInfo", "DisCntInterval", &g_DisCntInterval);
-    if ( rc < 0 ) 
-    {
-      ulog(_WARNING_, "Config 취득 실패 : [SessionInfo] DisCntInterval -> default 60 sec로 설정");
-
-      // TimerInterval의 기본값 - 10분
-      g_DisCntInterval = 600; 
-    }
-    if(g_DisCntInterval < 1) 
-    {
-      ulog(_WARNING_, "Config 설정 오류(value:%d) : [SessionInfo] DisCntInterval -> default 10분으로 설정", g_DisCntInterval);
-
-      // TimerInterval의 기본값 - 10분
-      g_DisCntInterval = 600; 
-    }
-    ulog(_FLOW_, "자동 세션 종료 주기 => [%d]", g_DisCntInterval);
-  }
-
-
   // Poll 정보 취득 : PollInfo - UsePoll
   g_UsePoll = 0; 	// default 미사용 : 0
   rc = roReadConfigInt(	NULL, "PollInfo", "UsePoll", &g_UsePoll);
@@ -218,12 +187,6 @@ int UserInit()
   }
   memset(g_DecryptBuf, 0x00, gi_ApDataBufAllocSize);
 
-
-  if((g_UsePoll==1) && (g_AutoDisCnt==1) )
-  {
-    g_UsePoll = 0;
-    ulog(_FLOW_, "Poll과 자동세션Close는 함께 사용할수 없음 --> 자동세션Close 사용으로 강제설정" );
-  }
 
   // 실제 연결된 세션수
   g_RCntCount = 0;
