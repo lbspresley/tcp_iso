@@ -90,7 +90,6 @@ int send_to_core(char* outbuf, int outlen)
 {
   static char* _tpalloc_msg = (char*)NULL;
   static int _tpalloc_msg_len = MAX_MSG_LEN + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
-  int rc;
 
   // alloc initial buffer
   if( _tpalloc_msg == NULL ) {
@@ -270,13 +269,14 @@ int send_to_core(char* outbuf, int outlen)
   return 0;
 }
 
+// CAUTION: org, rep 둘다 문자열(length=1)
 void replaceString(char* str, char* org, char* rep)
 {
   char* ptr = str;
   while( ptr != NULL ) {
     ptr = strstr(ptr, org);
     if( ptr != NULL ) {
-      *ptr = rep;
+      *ptr = *rep;
     }
   }
 }
