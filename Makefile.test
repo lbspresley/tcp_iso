@@ -10,7 +10,7 @@ SRCS3	= validate_xml.c parson.c
 DEST3	= validate_xml
 
 SRCS4	= validate_xml_complex.c parson.c
-DEST4	= validate_xml2
+DEST4	= validate_xml_complex
 
 include $(ROME_HOME)/work/rome.mkrule
 

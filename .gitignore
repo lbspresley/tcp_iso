@@ -7,7 +7,7 @@ tcp_iso
 test_iso
 test_regex
 validate_xml
-validate_xml2
+validate_xml_complex
 msg_seq_*.dat
 *.class
 pacs*/** 
