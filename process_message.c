@@ -208,6 +208,7 @@ int send_to_core(char* outbuf, int outlen)
   ulog(_FLOW_, "[BOK 헤더] RespCd: %s, MsgTpCd: %s, BizSvc: %s, BizMsgIdr: %s, Id: %s, Password: %s", RespCd, MsgTpCd, BizSvc, BizMsgIdr, Id, Password);
 
 // TODO: 전문변환 및 인코딩 처리
+
 #if 0
   // d. 전문변환 처리
   // 1) BokwireBody 추출
@@ -216,6 +217,12 @@ int send_to_core(char* outbuf, int outlen)
     ulog(_ERROR_, "BokwireBody 추출 실패 !!");
     return -12;
   }
+
+rc = req_trs(g_transform_ip, g_transform_port, outbuf, outlen, &outbuf, &outlen);
+if( rc < 0 ) {
+  ulog(_ERROR_, "[전문변호환] 전문변호환 실패 !!");
+  return -12;
+}
 
   if( g_transform_port != 0 ) {
     // TODO: 전문변환 처리

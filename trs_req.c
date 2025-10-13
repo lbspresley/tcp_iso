@@ -7,99 +7,10 @@
 char* g_trs_ip = "127.0.0.1";
 int g_trs_port = 58110;
 int g_tcp_fd = -1;
-struct trs_req_t *g_trs_req;
-struct trs_req_t *g_trs_rsp;
-
-int init_trs_req(char *trs_ip, int trs_port) 
-{
-    g_trs_ip = trs_ip;
-    g_trs_port = trs_port;
-    g_tcp_fd = tcp_connect(g_trs_ip, g_trs_port);
-    if (g_tcp_fd == -1) {
-        printf("Failed to connect to TRS: %s:%d\n", g_trs_ip, g_trs_port);
-        return -1;
-    }
-    printf("Connected to TRS: %s:%d\n", g_trs_ip, g_trs_port);
-
-    g_trs_req = (struct trs_req_t*) malloc(MAX_TRS_DATA_LEN);
-    g_trs_rsp = (struct trs_req_t*) malloc(MAX_TRS_DATA_LEN);
-    if (g_trs_req == NULL || g_trs_rsp == NULL) {
-        printf("Failed to allocate memory for TRS request\n");
-        return -1;
-    }
-    memset(g_trs_req, 0, MAX_TRS_DATA_LEN);
-    memset(g_trs_rsp, 0, MAX_TRS_DATA_LEN);
-
-    return 0;
-}
-
-int close_trs_req() 
-{
-    if (g_tcp_fd != -1) {
-        close(g_tcp_fd);
-        g_tcp_fd = -1;
-    }
-    return 0;
-}
-
-int req_trs(char *trs_id, char *req, int len, char *resp, int resp_len) 
-{
-    char len_str[10];
-    int req_len = 0;
-
-    if (g_tcp_fd == -1) {
-        printf("TRS is not connected\n");
-        return -1;
-    }
-
-    // send request
-    req_len = len + PRE_LEN;
-    snprintf(len_str, sizeof(len_str), "%05d", req_len);
-    
-    memset(g_trs_req, 0x20, PRE_LEN);
-    memcpy(g_trs_req->req_len, len_str, REQ_LEN_LEN);
-    memcpy(g_trs_req->req_id, trs_id, TRS_ID_LEN);
-    memcpy(g_trs_req->master_id, trs_id, TRS_ID_LEN);
-    memcpy(g_trs_req->req_data, req, len);
-    
-    // 000 : transform request
-    // 001 : data field display
-    // 100 : transform response
-    memcpy(g_trs_req->req_type, "000", REQ_TYPE_LEN);
-
-    // send request
-    int nRc = send(g_tcp_fd, (char*) g_trs_req, req_len, 0);
-    if (nRc != req_len) {
-        printf("Failed to send request to TRS: %s:%d\n", g_trs_ip, g_trs_port);
-        return -1;
-    }
-
-    memset(g_trs_rsp, 0x20, PRE_LEN);
-
-    // receive response
-    nRc = recv(g_tcp_fd, (char*) g_trs_rsp, PRE_LEN, 0);
-    if (nRc != PRE_LEN) {
-        printf("Failed to receive response from TRS: %s:%d\n", g_trs_ip, g_trs_port);
-        return -1;
-    }
-
-    // parse response
-    memcpy(len_str, g_trs_rsp->req_len, REQ_LEN_LEN);
-    int rsp_len = atoi(len_str);
-    if (rsp_len <= 0) {
-        printf("Response length is invalid: (%s) --> %d\n", len_str, rsp_len);
-        return -1;
-    }
-
-    // receive response
-    nRc = recv(g_tcp_fd, (char*) g_trs_rsp->req_data, rsp_len, 0);
-    if (nRc != rsp_len) {
-        printf("Failed to receive response from TRS: %s:%d\n", g_trs_ip, g_trs_port);
-        return -1;
-    }
-
-    return 0;
-}
+char gc_REQ[MAX_TRS_DATA_LEN];
+char gc_RSP[MAX_TRS_DATA_LEN];
+struct trs_req_t *g_trs_req = (struct trs_req_t*) gc_REQ;
+struct trs_req_t *g_trs_rsp = (struct trs_req_t*) gc_RSP;
 
 int tcp_connect(const char* ip, int port)
 {
@@ -135,14 +46,14 @@ int tcp_connect(const char* ip, int port)
     if (setsockopt(sock_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
         ulog( _ERROR_, "Set send timeout failed");
         close(sock_fd);
-        return -1;
+        return -2;
     }
     
     // 수신 타임아웃 설정
     if (setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         ulog( _ERROR_, "Set receive timeout failed");
         close(sock_fd);
-        return -1;
+        return -3;
     }
 
     // 서버에 연결
@@ -150,12 +61,96 @@ int tcp_connect(const char* ip, int port)
     if (ret < 0) {
         ulog( _ERROR_, "Connection failed");
         close(sock_fd);
-        return -1;
+        return -4;
     }
 
     ulog( _FLOW_, "Connected to server %s:%d", ip, port);
     return sock_fd;
 }
+
+int init_trs_req(char *trs_ip, int trs_port) 
+{
+    g_trs_ip = trs_ip;
+    g_trs_port = trs_port;
+    int fd = tcp_connect(g_trs_ip, g_trs_port);
+    if (fd == -1) {
+        printf("Failed to connect to TRS: %s:%d\n", g_trs_ip, g_trs_port);
+        return -1;
+    }
+    printf("Connected to TRS: %s:%d\n", g_trs_ip, g_trs_port);
+
+    memset(gc_REQ, 0, MAX_TRS_DATA_LEN);
+    memset(gc_RSP, 0, MAX_TRS_DATA_LEN);
+
+    return fd;
+}
+
+int close_trs_req(int fd) 
+{
+    if (fd != -1) {
+        close(fd);
+    }
+    return 0;
+}
+
+int req_trs(char *trs_id, char *req, int len, char *resp, int resp_len) 
+{
+    char len_str[10];
+    int req_len = 0;
+    int fd = init_trs_req(g_trs_ip, g_trs_port);
+    if (fd < 0) {
+        printf("TRS is not connected\n");
+        return -1;
+    }
+
+    // send request
+    req_len = len + PRE_LEN;
+    snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)req_len);
+    
+    memset(g_trs_req, 0x20, PRE_LEN);
+    memcpy(g_trs_req->len, len_str, REQ_LEN_LEN);
+    memcpy(g_trs_req->trs_id, trs_id, TRS_ID_LEN);
+    memcpy(g_trs_req->data, req, len);
+    
+    // send request
+    int nRc = send(fd, (char*) g_trs_req, req_len, 0);
+    if (nRc != req_len) {
+        printf("Failed to send request to TRS: %s:%d\n", g_trs_ip, g_trs_port);
+        close_trs_req(fd);
+        return -2;
+    }
+
+    memset(g_trs_rsp, 0x20, PRE_LEN);
+
+    // receive response
+    nRc = recv(fd, (char*) g_trs_rsp, PRE_LEN, 0);
+    if (nRc != PRE_LEN) {
+        printf("Failed to receive response from TRS: %s:%d\n", g_trs_ip, g_trs_port);
+        close_trs_req(fd);
+        return -3;
+    }
+
+    // parse response
+    memcpy(len_str, g_trs_rsp->len, REQ_LEN_LEN);
+    int rsp_len = atoi(len_str);
+    if (rsp_len <= 0) {
+        printf("Response length is invalid: (%s) --> %d\n", len_str, rsp_len);
+        close_trs_req(fd);
+        return -4;
+    }
+
+    // receive response
+    nRc = recv(fd, (char*) g_trs_rsp->data, rsp_len, 0);
+    if (nRc != rsp_len) {
+        printf("Failed to receive response from TRS: %s:%d\n", g_trs_ip, g_trs_port);
+        close_trs_req(fd);
+        return -5;
+    }
+
+    close_trs_req(fd);
+    return 0;
+}
+
 
 #ifdef USE_CURL
 // HTTP 응답 데이터를 저장할 구조체
