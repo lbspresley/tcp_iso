@@ -162,11 +162,15 @@ int send_message(char* msgidr, char* msg, int msg_len)
   char* _encrypt_msg = (char*)NULL;
   int encrypt_msg_len = 0;
 
-  // encrypt message
-  rc = inl_encrypt(msg, msg_len, &_encrypt_msg, &encrypt_msg_len);
-  if( rc < 0 ) {
-    ulog( _ERROR_, "Error in encrypting message. !!!!! " );
-    return -1;
+  if( g_Encrypt_Flag == 0 ) {
+    _encrypt_msg = msg;
+    encrypt_msg_len = msg_len;
+  } else {
+    rc = inl_encrypt(msg, msg_len, &_encrypt_msg, &encrypt_msg_len);
+    if( rc < 0 ) {
+      ulog( _ERROR_, "Error in encrypting message. !!!!! " );
+      return -1;
+    }
   }
 
   // make send message
