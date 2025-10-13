@@ -76,7 +76,7 @@
             </To>\
             <BizMsgIdr>%s</BizMsgIdr>\
             <MsgDefIdr>admi.011.001.01</MsgDefIdr>\
-            <BizSvc>bok.rtgs.01</BizSvc>\
+            <BizSvc>bok.rtgs.ping.01</BizSvc>\
             <CreDt>%s</CreDt>\
             <BizPrcgDt>%s</BizPrcgDt>\
         </AppHdr>\
@@ -130,7 +130,7 @@
             </To>\
             <BizMsgIdr>%s</BizMsgIdr>\
             <MsgDefIdr>admi.004.001.01</MsgDefIdr>\
-            <BizSvc>bok.rtgs.01</BizSvc>\
+            <BizSvc>bok.rtgs.ping.01</BizSvc>\
             <CreDt>%s</CreDt>\
             <BizPrcgDt>%s</BizPrcgDt>\
         </AppHdr>\
