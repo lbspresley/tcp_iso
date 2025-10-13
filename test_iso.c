@@ -388,7 +388,7 @@ void remove_empty_child_node(xmlNodePtr child)
     }
 }
 
-char* trim_xml(char* xml)
+char* trim_xml(char* xml, int compressed)
 {
    // load xml
    xmlDocPtr doc = xmlParseMemory(xml, strlen(xml));
@@ -407,8 +407,7 @@ char* trim_xml(char* xml)
    remove_empty_child_node(root);
 
    // build xml
-   char* trimmed_xml = build_xml(doc);
-   //printf("trimmed_xml: %s\n", trimmed_xml);
+   char* trimmed_xml = build_xml_opt(doc, compressed);
 
    xmlFreeDoc(doc);
    return trimmed_xml;
@@ -586,11 +585,17 @@ int test_trim_xml()
 {
     const char* xmlfile = "xml/pacs.009_GTR_trim_test.xml";
     char* request_xml = read_file(xmlfile);
+    char* trimmed_xml;
+
     printf("request_xml: %s\n", request_xml);
-    char* trimmed_xml = trim_xml(request_xml);
-    printf("trimmed_xml: %s\n", trimmed_xml);
+    trimmed_xml = trim_xml(request_xml, 0);
+    printf("COMPRESSED trimmed_xml: %s\n", trimmed_xml);
+
+    trimmed_xml = trim_xml(request_xml, 1);
+    printf("UNCOMPRESSED trimmed_xml: %s\n", trimmed_xml);
+
     free(request_xml);
-    free(trimmed_xml);
+    xmlFree(trimmed_xml);
     return 0;
 }
 
@@ -629,7 +634,8 @@ int main() {
     // libxml2 √ ±‚»≠
     xmlInitParser();
     
-    test_compress_xml();
+    test_trim_xml();
+    // test_compress_xml();
     return 0;
 
     test_parse_bokwire_envelope();
