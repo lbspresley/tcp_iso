@@ -1,5 +1,7 @@
 tags
 *.o
+db_Get_BOK_Inf.c
+link.out
 svctab_tcp_iso.c
 tcp_iso
 test_iso
