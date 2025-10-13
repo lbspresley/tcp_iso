@@ -89,16 +89,59 @@ int lf_SendMessage(char* pFrame, int len)
     return -1;
   }
 
+
   // 2. 전문변환 호출
-  // TODO: 전문변환 결과 확인
+  // 2.1 전문변환 호출
+  char xml_data[1024*100];
+  memset(xml_data, 0, sizeof(xml_data));
+
+  int xml_len = req_trs(1, msgtpcd, pData, data_len, xml_data);
+  if( xml_len < 0 ) {
+    ulog(_ERROR_, "[로그정보] 전문변환 실패 !!");
+    return -1;
+  }
+  utrc(xml_len, xml_data, "전문변환 결과 : %s", xml_data);
+
+  utrc(xml_len, xml_data, "change root tag 결과 : %s", xml_data);
+
+  // 2.2 BokwireHeader 생성
+  char* bokwire_header = (char*)make_header(msgtpcd, xml_data);
+  data_len = strlen(bokwire_header);
+  utrc(data_len, bokwire_header, "BokwireHeader : %s", bokwire_header);
+
+  char* encoded_data  = bokwire_header;
 
   // 3. 인코딩 변환 호출
-  // TODO: 인코딩 변환 결과 확인
+  #if 0
+  encoded_data = (char*)convert_to_utf8("EUC-KR", bokwire_header, data_len, &data_len);
+  if( encoded_data == NULL ) {
+    ulog(_ERROR_, "[로그정보] 인코딩 변환 실패 !!");
+    return -1;
+  }
+  utrc(data_len, encoded_data, "인코딩 변환 결과 : %s", encoded_data);
+  #endif
+
+  data_len = strlen(encoded_data);
+
+  char* outbuf;
+  int outlen;
+  if( g_Encrypt_Flag == 0 ) {
+    outbuf = encoded_data;
+    outlen = data_len;
+  } else {
+    rc = inl_encrypt(encoded_data, data_len, &outbuf, &outlen);
+    if( rc < 0 ) {
+      ulog(_ERROR_, "[Encrypt] 데이터 전문 암호화 실패. rc(%d)", rc);
+      return -1;
+    }
+  }
+
+  ulog(_FLOW_, "[Encrypt] 데이터 전문 암호화 성공. len(%d)", outlen);
 
   // 4. 전문 송신
-  rc = send_message(bizmsgidr, pData, data_len);
+  rc = send_message(bizmsgidr, outbuf, outlen);
   if( rc < 0 ) {
-    ulog(_ERROR_, "[로그정보] 업무 전문 송신 실패 !!");
+    ulog(_ERROR_, "[Send] 업무 전문 송신 실패 !!");
     return -3;
   }
 

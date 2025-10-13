@@ -4,9 +4,10 @@
 int init_trs_req(char *trs_ip, int trs_port);
 int close_trs_req();
 int tcp_connect(const char* ip, int port);
-int req_trs_xml(char *trs_id, char *req, int len, char *resp);
-int req_trs_fixed(char *trs_id, char *req, int len, char *resp);
-int req_trs(int type, char *trs_id, char *req, int len, char *resp);
+void msgtpidr_to_trsid(char* msgtpidr ); // MsgTpIdr를 TRSID로 변환
+int req_trs_xml(char *msgtpcd, char *req, int len, char *resp);
+int req_trs_fixed(char *msgtpcd, char *req, int len, char *resp);
+int req_trs(int type, char *msgtpcd, char *req, int len, char *resp);
 
 #define REQ_LEN_LEN 5   // 5 bytes for request length. < 100MB
 #define TRS_ID_LEN 35   // 35 bytes for transaction ID

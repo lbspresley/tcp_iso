@@ -80,17 +80,26 @@ int close_trs_req(int fd)
     return 0;
 }
 
-int req_trs_xml(char *trs_id, char *req, int len, char *resp ) 
+void msgtpidr_to_trsid(char* msgtpidr )
 {
-    return req_trs(0, trs_id, req, len, resp );
+  char tpidr[36];
+  strcpy(tpidr, msgtpidr);
+  replaceString(tpidr, ".", "_" );
+  strcat(tpidr, "_I");
+  strcpy(msgtpidr, tpidr);
 }
 
-int req_trs_fixed(char *trs_id, char *req, int len, char *resp ) 
+int req_trs_xml(char *msg_tp_cd, char *req, int len, char *resp ) 
 {
-    return req_trs(1, trs_id, req, len, resp );
+    return req_trs(0, msg_tp_cd, req, len, resp );
 }
 
-int req_trs(int type, char *trs_id, char *req, int len, char *resp ) 
+int req_trs_fixed(char *msg_tp_cd, char *req, int len, char *resp ) 
+{
+    return req_trs(1, msg_tp_cd, req, len, resp );
+}
+
+int req_trs(int type, char *msg_tp_cd, char *req, int len, char *resp ) 
 {
     static char _trs_req[MAX_TRS_DATA_LEN];
     static char _trs_rsp[MAX_TRS_DATA_LEN];
@@ -113,6 +122,11 @@ int req_trs(int type, char *trs_id, char *req, int len, char *resp )
         ulog( _ERROR_, "TRS connect failed (type:%s)-(%s:%d)", (type == 0) ? "XML" : "FIXED", g_trs_ip, port);
         return -1;
     }
+
+    // MsgTpCd를 TRSID로 변환
+    char trs_id[36];
+    strcpy(trs_id, msg_tp_cd);
+    msgtpidr_to_trsid(trs_id);
 
     memset(_trs_req, 0, PRE_LEN);
     memset(_trs_rsp, 0, PRE_LEN);
