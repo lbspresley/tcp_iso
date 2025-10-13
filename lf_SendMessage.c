@@ -110,22 +110,25 @@ int lf_SendMessage(char* pFrame, int len)
   utrc(data_len, bokwire_header, "BokwireHeader : %s", bokwire_header);
 
   char* encoded_data  = bokwire_header;
+  data_len = strlen(encoded_data);
 
   // 3. 인코딩 변환 호출
-  #if 0
+#if 0
   encoded_data = (char*)convert_to_utf8("EUC-KR", bokwire_header, data_len, &data_len);
   if( encoded_data == NULL ) {
     ulog(_ERROR_, "[로그정보] 인코딩 변환 실패 !!");
     return -1;
   }
   utrc(data_len, encoded_data, "인코딩 변환 결과 : %s", encoded_data);
-  #endif
+#endif
 
   // compress xml
+#ifdef __USE_XML_PARSER__
   encoded_data = trim_xml(encoded_data, 0);
   data_len = strlen(encoded_data);
 
   utrc(data_len, encoded_data, "compress xml 결과 : %s", encoded_data);
+#endif
 
 
   char* outbuf;

@@ -55,6 +55,7 @@ DEFINES	+= -D_CRYPT_
 # KSFC
 DEFINES	+= -D_KSFC_
 # libxml2 
+#COMMON_LIB += -lxml2
 #DEFINES	+= -D__USE_XML_PARSER__
 
 PROC_INC += $(DEFINES:-D%=define=%)
