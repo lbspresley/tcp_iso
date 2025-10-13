@@ -121,7 +121,12 @@ int lf_SendMessage(char* pFrame, int len)
   utrc(data_len, encoded_data, "인코딩 변환 결과 : %s", encoded_data);
   #endif
 
+  // compress xml
+  encoded_data = trim_xml(encoded_data, 0);
   data_len = strlen(encoded_data);
+
+  utrc(data_len, encoded_data, "compress xml 결과 : %s", encoded_data);
+
 
   char* outbuf;
   int outlen;

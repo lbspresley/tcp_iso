@@ -10,6 +10,9 @@
 int parse_xml(char* xml, char* tag, char* value);
 int parse_xml_xpath(char* xml, const char* xpath, char* value);
 char* build_xml(xmlDocPtr doc);
+char* build_xml_opt(xmlDocPtr doc, int format);
+char* trim_xml(char* xml, int compressed);
+void remove_empty_child_node(xmlNodePtr child);
 xmlDocPtr add_root_node(xmlDocPtr doc, const char* root_name, const char* namespace, const char* namespace_prefix);
 xmlDocPtr add_namespace(xmlDocPtr doc, char* namespace, char* namespace_prefix);
 xmlDocPtr add_node(xmlDocPtr doc, char* node, char* value, char* namespace, char* namespace_prefix);

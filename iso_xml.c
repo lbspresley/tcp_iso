@@ -58,11 +58,11 @@ Security Handshake
 </bwh:BokwireEnvelope>
 */
 
-char* build_xml(xmlDocPtr doc)
+char* build_xml_opt(xmlDocPtr doc, int format)
 {
     unsigned char* xml = NULL;
     int size = 0;
-    xmlDocDumpFormatMemory(doc, &xml, &size, 1);
+    xmlDocDumpFormatMemory(doc, &xml, &size, format);
 
      // XML 선언 제거
     if (xml != NULL) {
@@ -77,6 +77,105 @@ char* build_xml(xmlDocPtr doc)
     }
     return (char*)xml;
 }
+
+char* build_xml(xmlDocPtr doc)
+{
+    return build_xml_opt(doc, 1);
+}
+
+void remove_empty_child_node(xmlNodePtr child)
+{
+    if (child == NULL) {
+        return;
+    }
+
+    // 자식 노드들을 먼저 재귀적으로 처리
+    xmlNodePtr grandChild = child->xmlChildrenNode;
+    while (grandChild != NULL) {
+        xmlNodePtr next = grandChild->next; // 다음 노드를 미리 저장 (삭제될 수 있으므로)
+        remove_empty_child_node(grandChild);
+        grandChild = next;
+    }
+
+    // 현재 노드가 삭제되었는지 확인
+    if (child->parent == NULL) {
+        return; // 이미 삭제된 노드
+    }
+
+    // 현재 노드의 content 확인
+    xmlChar* content = xmlNodeGetContent(child);
+    int has_content = 0;
+    
+    if (content != NULL) {
+        // 공백이 아닌 실제 내용이 있는지 확인
+        char* trimmed = (char*)content;
+        while (*trimmed && (*trimmed == ' ' || *trimmed == '\t' || *trimmed == '\n' || *trimmed == '\r')) {
+            trimmed++;
+        }
+        if (*trimmed != '\0') {
+            has_content = 1;
+        }
+        xmlFree(content);
+    }
+
+    // 자식 노드가 있는지 확인
+    xmlNodePtr firstChild = child->xmlChildrenNode;
+    int has_children = (firstChild != NULL);
+
+    // content가 없고 자식 노드도 없는 경우 삭제
+    if (!has_content && !has_children) {
+        xmlUnlinkNode(child);
+        xmlFreeNode(child);
+        return;
+    }
+
+    // content가 없지만 자식 노드가 있는 경우, 모든 자식이 삭제되었는지 확인
+    if (!has_content && has_children) {
+        xmlNodePtr remainingChild = child->xmlChildrenNode;
+        int all_children_removed = 1;
+        
+        while (remainingChild != NULL) {
+            if (remainingChild->parent != NULL) { // 아직 삭제되지 않은 자식이 있음
+                all_children_removed = 0;
+                break;
+            }
+            remainingChild = remainingChild->next;
+        }
+        
+        // 모든 자식이 삭제된 경우 현재 노드도 삭제
+        if (all_children_removed) {
+            xmlUnlinkNode(child);
+            xmlFreeNode(child);
+            return;
+        }
+    }
+}
+
+char* trim_xml(char* xml, int compressed)
+{
+   // load xml
+   xmlDocPtr doc = xmlParseMemory(xml, strlen(xml));
+   if (doc == NULL) {
+    return NULL;
+   }
+
+   // read root node
+   xmlNodePtr root = xmlDocGetRootElement(doc);
+   if (root == NULL) {
+    xmlFreeDoc(doc);
+    return NULL;
+   }
+
+   // 루트 노드부터 시작하여 모든 자식 노드들을 재귀적으로 처리
+   remove_empty_child_node(root);
+
+   // build xml
+   char* trimmed_xml = build_xml_opt(doc, compressed);
+
+   xmlFreeDoc(doc);
+   return trimmed_xml;
+}
+
 
 // add root node to xml
 xmlDocPtr add_root_node(xmlDocPtr doc, const char* root_name, const char* namespace, const char* namespace_prefix) {
