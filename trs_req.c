@@ -80,26 +80,30 @@ int close_trs_req(int fd)
     return 0;
 }
 
-void msgtpidr_to_trsid(char* msgtpidr )
+void msgtpcd_to_trsid(int type, char* msgtpcd )
 {
   char tpidr[36];
-  strcpy(tpidr, msgtpidr);
+  strcpy(tpidr, msgtpcd);
   replaceString(tpidr, ".", "_" );
-  strcat(tpidr, "_I");
-  strcpy(msgtpidr, tpidr);
+  if (type == 0) {
+  strcat(tpidr, "_I1");
+  } else {
+    strcat(tpidr, "_I3");
+  }
+  strcpy(msgtpcd, tpidr);
 }
 
-int req_trs_xml(char *msg_tp_cd, char *req, int len, char *resp ) 
+int req_trs_xml(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
 {
-    return req_trs(0, msg_tp_cd, req, len, resp );
+    return req_trs(0, msg_tp_cd, msg_idr, req, len, resp );
 }
 
-int req_trs_fixed(char *msg_tp_cd, char *req, int len, char *resp ) 
+int req_trs_fixed(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
 {
-    return req_trs(1, msg_tp_cd, req, len, resp );
+    return req_trs(1, msg_tp_cd, msg_idr, req, len, resp );
 }
 
-int req_trs(int type, char *msg_tp_cd, char *req, int len, char *resp ) 
+int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
 {
     static char _trs_req[MAX_TRS_DATA_LEN];
     static char _trs_rsp[MAX_TRS_DATA_LEN];
@@ -126,7 +130,7 @@ int req_trs(int type, char *msg_tp_cd, char *req, int len, char *resp )
     // MsgTpCd를 TRSID로 변환
     char trs_id[36];
     strcpy(trs_id, msg_tp_cd);
-    msgtpidr_to_trsid(trs_id);
+    msgtpcd_to_trsid(type, trs_id);
 
     memset(_trs_req, 0, PRE_LEN);
     memset(_trs_rsp, 0, PRE_LEN);
@@ -138,6 +142,7 @@ int req_trs(int type, char *msg_tp_cd, char *req, int len, char *resp )
     memset(trs_req, 0x20, PRE_LEN);
     memcpy(trs_req->len, len_str, REQ_LEN_LEN);
     memcpy(trs_req->trs_id, trs_id, TRS_ID_LEN);
+    memcpy(trs_req->msg_id, msg_idr, TRS_ID_LEN);
     memcpy(trs_req->data, req, len);
     
     // send request
