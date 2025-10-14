@@ -86,9 +86,9 @@ void msgtpcd_to_trsid(int type, char* msgtpcd )
   strcpy(tpidr, msgtpcd);
   replaceString(tpidr, ".", "_" );
   if (type == 0) {
-  strcat(tpidr, "_I1");
+  strcat(msgtpcd, "I1");
   } else {
-    strcat(tpidr, "_I3");
+    strcat(msgtpcd, "I3");
   }
   strcpy(msgtpcd, tpidr);
 }
