@@ -223,7 +223,7 @@ int send_to_core(char* outbuf, int outlen)
   char* data = (char*)(_tpalloc_msg + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER);
 
   // 전문변환 요청/응답
-  outlen = req_trs(0, MsgTpCd, bokwire_body, strlen(bokwire_body), data);
+  outlen = req_trs_xml(MsgTpCd, BizMsgIdr, bokwire_body, strlen(bokwire_body), data);
   if (outlen < 0)
   {
     ulog(_ERROR_, "[전문변환] 전문변환 실패 !!");

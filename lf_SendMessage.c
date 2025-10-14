@@ -95,7 +95,7 @@ int lf_SendMessage(char* pFrame, int len)
   char xml_data[1024*100];
   memset(xml_data, 0, sizeof(xml_data));
 
-  int xml_len = req_trs(1, msgtpcd, pData, data_len, xml_data);
+  int xml_len = req_trs_fixed(msgtpcd, bizmsgidr, pData, data_len, xml_data);
   if( xml_len < 0 ) {
     ulog(_ERROR_, "[로그정보] 전문변환 실패 !!");
     return -1;
