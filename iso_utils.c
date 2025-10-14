@@ -575,6 +575,104 @@ int save_send_msg(char* msgidr, unsigned char* msg, int msg_len)
 }
 
 // 문자셋 변환
+#ifdef KNB
+size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
+{
+  char from_charset[32];
+  char to_charset[32];
+
+  if (encode_type == 0) {
+    // 0: IBM-1363 -> UTF-8
+    strcpy(from_charset, "IBM-1363");
+    strcpy(to_charset, "UTF-8");
+  } else if (encode_type == 1) {
+    // 1: UTF-8 -> IBM-1363
+    strcpy(from_charset, "UTF-8");
+    strcpy(to_charset, "IBM-1363");
+  } else {
+    ulog(_ERROR_, "Invalid encode type");
+    return -1;
+  }
+
+  char command[512];
+  char path[512];
+  char in_filename[512]="/tmp/iconv.in.txt";
+  char out_filename[512];
+  char *pResult = out_filename;
+
+  // 1. write file to in_file
+  FILE* fp;
+  fp = fopen(in_filename, "w");
+  if( fp == NULL ){
+	  perror("fopen");
+	  return -1;
+  }
+  fwrite(msg, 1, msg_len, fp);
+  fclose(fp);
+
+
+  // 2. make command string
+  sprintf(path, "%s/shell", getenv("CL_HOME"));
+  sprintf(command, "%s/iconv.sh %d %s", path, encode_type, in_filename );
+  fp = popen(command, "r");
+  if (fp == NULL){
+    perror("popen");
+    return -1;
+  }
+
+  // 2. read file from out_file
+  memset (out_filename, 0, sizeof(out_filename));
+  
+  pResult = fgets(pResult, sizeof(out_filename)-1, fp);
+  if( pResult == (char*)NULL){
+	  perror("fgets");
+	  return -1;
+  }
+
+  ulog (_FLOW_, "Result : %s\n", out_filename);
+  if( strncmp(out_filename, "FAIL", 4) == 0 ){
+	  printf("Failed to convert\n");
+	  pclose(fp);
+	  return -1;
+  }
+
+  int status = pclose(fp);
+  if (status == -1) {
+	  perror("Error closing pipe");
+	  return -1;
+  }
+
+  fp = fopen(out_filename, "r");
+  if( fp == NULL ){
+	  perror("fopen");
+	  return -1;
+  }
+
+  int len;
+  int total_len=0;
+  char buffer[1024+1];
+  char* pOut = (char*)out_msg;
+
+  while(1) {
+	  len=fread(buffer, 1, 1024, fp);
+	  if( len == 0 ) break;
+	  memcpy(pOut, buffer, len);
+	  total_len += len;
+	  pOut += len;
+  }
+
+  printf ("Total length : %d\n", (int)total_len);
+  printf ("Result : %s\n", out_msg);
+
+  fclose(fp);
+  unlink(in_filename);
+  unlink(out_filename);
+
+  *out_msg_len = total_len;
+
+  return 0;
+}
+#else
 size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
 {
   char from_charset[32];
@@ -623,6 +721,7 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char
 
   return 0;
 }
+#endif
 
 // 0: EUC-KR -> UTF-8, 2: CP949 -> UTF-8
 unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len )

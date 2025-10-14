@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <memory.h>
+
+int main()
+{
+  // 1. write file to in_file
+  FILE* fp;
+  char path[512]=".";
+  int encode_type=1;    // UTF-8 -> IBM-1363
+  char in_filename[512]="input.txt";
+  char command[512];
+  char out_msg[1024*60];
+
+  sprintf(command, "%s/iconv.sh %d %s", path, encode_type, in_filename );
+  fp = popen(command, "r");
+  if (fp == NULL){
+    perror("popen");
+    return -1;
+  }
+
+  // 2. read file from out_file
+  char* pOut = (char*)out_msg;
+  char buffer[1024+1];
+  size_t len=0;
+  size_t total_len=0;
+  char result[64];
+  char *pResult = result;
+  memset(result, 0, sizeof(result));
+
+  pResult = fgets(result, sizeof(result)-1, fp);
+  if( pResult == (char*)NULL){
+          perror("fgets");
+          return -1;
+  }
+  printf ("Result : %s\n", result);
+  if( strncmp(result, "FAIL", 4) == 0 ){
+          printf("Failed to convert\n");
+          pclose(fp);
+          return -1;
+  }
+
+
+  while(1) {
+          len=fread(pOut, 1, 1024, fp);
+          if( len == 0 ) break;
+          memcpy(pOut, buffer, len);
+          total_len += len;
+          pOut += len;
+  }
+
+  printf ("Total length : %d\n", (int)total_len);
+  printf ("Result : %s\n", out_msg);
+
+  int status = pclose(fp);
+  if (status == -1) {
+          perror("Error closing pipe");
+          return -1;
+  }
+
+  return 0;
+}
+
