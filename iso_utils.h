@@ -1,5 +1,12 @@
 #include "tcp_iso.h"
 
+#if 1
+#define SKEY_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\"><bwh:BokwireHeader><SecurityHandshake><TrCd>%09d</TrCd><Key>%s</Key></SecurityHandshake></bwh:BokwireHeader></bwh:BokwireEnvelope>"
+
+#define ACK_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\"><bwh:BokwireHeader><Response><RespCd>%s</RespCd><MsgTpCd>%s</MsgTpCd><BizSvc>%s</BizSvc><BizMsgIdr>%s</BizMsgIdr></Response></bwh:BokwireHeader></bwh:BokwireEnvelope>"
+
+#define BOKWIRE_HEADER_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\"><bwh:BokwireHeader><Request><MsgTpCd>%s</MsgTpCd><Id>%s</Id><Password>%s</Password></Request></bwh:BokwireHeader><bwh:BokwireBody>%s</bwh:BokwireBody></bwh:BokwireEnvelope>"
+#else
 #define SKEY_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
      <bwh:BokwireHeader>\
          <SecurityHandshake>\
@@ -30,6 +37,7 @@
     </bwh:BokwireHeader>\
     <bwh:BokwireBody>%s</bwh:BokwireBody>\
 </bwh:BokwireEnvelope>"
+#endif
 
 // Setting variables
 // 1. BizMsgIdr(request 복사)
@@ -40,6 +48,13 @@
 // 6. MsgId (3번항목 동일)
 // 7. OrgtrRef (1번항목 동일)
 // 8. EvtTm (request 복사)
+#if 1
+#define POLL_RSP_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\"><bwh:BokwireHeader><Request><MsgTpCd>admi.011</MsgTpCd><Id>%s</Id><Password>%s</Password></Request></bwh:BokwireHeader><bwh:BokwireBody><AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.03\"><Fr><FIId><FinInstnId><ClrSysMmbId><ClrSysId><Cd>KRBOK</Cd></ClrSysId><MmbId>%s</MmbId></ClrSysMmbId></FinInstnId></FIId></Fr><To><FIId><FinInstnId><ClrSysMmbId><ClrSysId><Cd>KRBOK</Cd></ClrSysId><MmbId>1016</MmbId></ClrSysMmbId></FinInstnId></FIId></To><BizMsgIdr>%s</BizMsgIdr><MsgDefIdr>admi.011.001.01</MsgDefIdr><BizSvc>bok.rtgs.ping.01</BizSvc><CreDt>%s</CreDt><BizPrcgDt>%s</BizPrcgDt></AppHdr><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:admi.011.001.01\"><SysEvtAck><MsgId>%s</MsgId><OrgtrRef>%s</OrgtrRef><AckDtls><EvtCd>PING</EvtCd><EvtParam>1016</EvtParam><EvtTm>%s</EvtTm></AckDtls></SysEvtAck></Document></bwh:BokwireBody></bwh:BokwireEnvelope>"
+
+#define POLL_REQ_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\"><bwh:BokwireHeader><Request><MsgTpCd>admi.004.ConnectionCheck</MsgTpCd><Id>%s</Id><Password>%s</Password></Request></bwh:BokwireHeader><bwh:BokwireBody><AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.03\"><Fr><FIId><FinInstnId><ClrSysMmbId><ClrSysId><Cd>KRBOK</Cd></ClrSysId><MmbId>%s</MmbId></ClrSysMmbId></FinInstnId></FIId></Fr><To><FIId><FinInstnId><ClrSysMmbId><ClrSysId><Cd>KRBOK</Cd></ClrSysId><MmbId>1016</MmbId></ClrSysMmbId></FinInstnId></FIId></To><BizMsgIdr>%s</BizMsgIdr><MsgDefIdr>admi.004.001.01</MsgDefIdr><BizSvc>bok.rtgs.ping.01</BizSvc><CreDt>%s</CreDt><BizPrcgDt>%s</BizPrcgDt></AppHdr><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:admi.004.001.01\"><admi.004.001.01><EvtInf><EvtCd>PING</EvtCd><EvtParam>%s</EvtParam><EvtTm>%s</EvtTm></EvtInf></admi.004.001.01></Document></bwh:BokwireBody></bwh:BokwireEnvelope>"
+
+#else
+
 #define POLL_RSP_TEMPLATE "<bwh:BokwireEnvelope xmlns:bwh=\"urn:bok:std:iso:20022:xsd:001\">\
     <bwh:BokwireHeader>\
         <Request>\
@@ -146,8 +161,9 @@
     </bwh:BokwireBody>\
 </bwh:BokwireEnvelope>"
 
+#endif
 
-#define MAX_MSG_LEN 200*1024
+#define MAX_MSG_LEN 100*1024
 
 void get_iso_datetime(char timestr[32]);
 void get_iso_date(char datestr[32], char timestr[9]);
@@ -166,7 +182,7 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
 
 unsigned char* make_network_msg(); // 네트워크 체크 메시지 생성
 unsigned char* make_ack_msg(char* reqxml); // ACK 메시지 생성
-int is_poll_request_msg(char* msg); // POLL 요청메시지 여부 체크
+int is_poll_msg(char* msg); // POLL 요청메시지 여부 체크
 int is_ack_response_msg(char* msg); // ACK 응답메시지 여부 체크
 int is_need_ack_msg(char* msg); // ACK 필요 여부 체크
 int send_standard_msg(char* msg, int msg_len); // 표준 메시지 전송
@@ -205,22 +221,8 @@ int lf_Client_SessionKey(char* msg, int len, char* tr_cd);
 // Server Session Key
 int lf_Server_SessionKey(char* msg, int len, char* tr_cd);
 
-#if 0
-int CF_ProcessMessage(int bufkind, unsigned char** ppFrame,
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
-
-int CF_ProcessSessionKey(int bufkind, unsigned char** ppFrame,
-    int* pBufLen, int* pFrameLen,
-    char SrcSvc[64],int Srcpidx,
-    char* callback_name,
-    long* info1, long* info2);
-#else
 int process_message(char* in, int inlen);
 int process_session_key(char* SrcSvc, char* in, int inlen);
-#endif
 
 // iso_header.c
 int check_msg_tp_cd(char* msg_tp_cd);

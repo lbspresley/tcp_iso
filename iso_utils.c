@@ -25,7 +25,10 @@ unsigned char* make_poll_response(char* reqxml)
 
   char* value = (char*)get_tag_value(reqxml, "BizMsgIdr");
   if( value == NULL ) {
-    return NULL;
+  	value = (char*)get_tag_value(reqxml, "h:BizMsgIdr");
+  	if( value == NULL ) {
+      return NULL;
+    }
   }
   strcpy(biz_msg_idr, value);
 
@@ -38,13 +41,17 @@ unsigned char* make_poll_response(char* reqxml)
 
   // 4. get BizPrcgDt
   char biz_prcg_dt[32];
-  get_iso_date(biz_prcg_dt, NULL);
+  //get_iso_date(biz_prcg_dt, NULL);
+  strcpy(biz_prcg_dt, gc_biz_prcg_dt);
 
   // 5. get EvtTm from request
   char evt_tm[32];
   value = (char*)get_tag_value(reqxml, "EvtTm");
   if( value == NULL ) {
-    return NULL;
+  	value = (char*)get_tag_value(reqxml, "h:EvtTm");
+  	if( value == NULL ) {
+      return NULL;
+    }
   }
   strcpy(evt_tm, value);
 
@@ -80,7 +87,8 @@ unsigned char* make_poll_request(int get_msg_idr_flag)
 
   // 3. get BizPrcgDt
   char biz_prcg_dt[32];
-  get_iso_date(biz_prcg_dt, NULL);
+  //get_iso_date(biz_prcg_dt, NULL);
+  strcpy(biz_prcg_dt, gc_biz_prcg_dt);
 
   // 8개 항목
   sprintf((char*)_poll_request, POLL_REQ_TEMPLATE, 
@@ -93,6 +101,17 @@ unsigned char* make_poll_request(int get_msg_idr_flag)
 unsigned char* make_header(char* msg_tp_cd, char* body)
 {
   static unsigned char _iso_full_message [1024*60];
+
+  // clean trailing space
+  char* p = msg_tp_cd;
+  for(;*p !=0;p++){
+	if(*p == 0x20) *p = 0;
+  }
+
+  // clean body : 0x0a
+  replaceChar(body, 0x0a, 0x20);
+
+  body = (char*) strip_xml_message(body);
 
   sprintf((char*)_iso_full_message, BOKWIRE_HEADER_TEMPLATE, 
         msg_tp_cd, gc_plain_id, gc_plain_pw, body);
@@ -131,8 +150,9 @@ unsigned char* strip_xml_message(char* msg)
   // remove whitespace between tags with regex
   regex_t regex;
   regmatch_t match;
-  if( regcomp(&regex, ">\\s+<", REG_EXTENDED) == 0 ) {
+  if( regcomp(&regex, "> +<", REG_EXTENDED) == 0 ) {
     while( regexec(&regex, (char*)_stripped_message, 1, &match, 0) == 0 ) {
+      match.rm_eo--; match.rm_so++;
       int match_len = match.rm_eo - match.rm_so;
       if( match_len > 0 ) {
         memmove((char*)_stripped_message + match.rm_so, (char*)_stripped_message + match.rm_eo, strlen((char*)_stripped_message + match.rm_eo) + 1);
@@ -141,6 +161,7 @@ unsigned char* strip_xml_message(char* msg)
     regfree(&regex);
   }
 
+#if 0
   // remove empty tags with regex
   if( regcomp(&regex, "<[^/>][^>]*/>", REG_EXTENDED) == 0 ) {
     while( regexec(&regex, (char*)_stripped_message, 1, &match, 0) == 0 ) {
@@ -151,7 +172,7 @@ unsigned char* strip_xml_message(char* msg)
     }
     regfree(&regex);
   }
-
+#endif
 
   return _stripped_message;
 }
@@ -289,7 +310,7 @@ unsigned char* make_sess_key_msg(int step, char* key)
  */
 unsigned char* get_tag_value(char* msg, char* tag)
 {
-  static unsigned char _tag_value[1024];
+  static unsigned char _tag_value[MAX_MSG_LEN];
 
   char startTag[512];
   char endTag[512];
@@ -915,19 +936,51 @@ int is_need_ack_msg(char* msg)
 /*
  * POLL 요청메시지 여부 체크
  */
-int is_poll_request_msg(char* msg)
+int is_poll_msg(char* msg)
 {
-  char* value = (char*)get_tag_value(msg, "MsgTpCd");
+  char msgtpcd[64];
+  char bizsvc[64];
+  char* value ;
+
+  value = (char*)get_tag_value(msg, "MsgTpCd");
   if( value == NULL ) {
     value = (char*)get_tag_value(msg, "h:MsgTpCd");
   }
   if( value == NULL ) {
+	ulog(_ERROR_, "No MsgTpCd : msg(%.30s)", msg);
+    return -1;
+  }
+  strcpy(msgtpcd, value);
+
+  value = (char*)get_tag_value(msg, "BizSvc");
+  if( value == NULL ) {
+    value = (char*)get_tag_value(msg, "h:BizSvc");
+  }
+  if( value == NULL ) {
+	ulog(_ERROR_, "No BizSvc : msg(%.30s)", msg);
+    return -2;
+  }
+  strcpy(bizsvc, value);
+
+  ulog(_WARNING_, "[로그정보] msgtpcd(%s), bizsvc(%s)", msgtpcd, bizsvc);
+
+  // POLL 전문
+  if( strcmp(bizsvc, "bok.rtgs.ping.01") != 0 ) {
+	// NOT POLL
     return 0;
   }
 
-  if( strcmp(value, "admi.004.ConnectionCheck") == 0 ) {
+  // 요청전문
+  if( strcmp(msgtpcd, "admi.004.ConnectionCheck") == 0 ) {
     return 1;
   }
 
+  // 응답전문
+  if( strcmp(msgtpcd, "admi.011") == 0 ) {
+    return 2;
+  }
+
+  // NOT POLL
   return 0;
 }
+
