@@ -202,7 +202,7 @@ int UserInit()
     g_trs_xml_port = 58110;
   }
   ulog(_FLOW_, "Transform Agent Port for XML to FIXED : %d", g_trs_xml_port);
-  rc = roReadConfigInt(NULL, "Transform", "AgentPortFixed", &g_trs_fixed_port);
+  rc = roReadConfigInt(NULL, "Transform", "AgentPortFix", &g_trs_fixed_port);
   if(rc < 0)
   {
     ulog(_WARNING_, "Transform Agent Port for FIXED to XML Ãëµæ ½ÇÆÐ : [Transform] AgentPortFixed -> default 58111");
@@ -227,3 +227,4 @@ int UserInit()
 
   return 0;
 }
+
