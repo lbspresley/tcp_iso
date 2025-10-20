@@ -28,3 +28,4 @@ int CF_ImgLogSend(int bufkind, unsigned char** ppFrame,
 
   return RC_NEXT_ACTION;
 }
+

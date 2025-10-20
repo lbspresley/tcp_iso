@@ -728,3 +728,4 @@ int extract_namespaces_from_xml(const char* xml, xmlXPathContextPtr xpathCtx) {
     return count;
 }
 #endif
+

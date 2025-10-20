@@ -128,3 +128,4 @@ int	lf_SetErrStr(S_CL_HEADER* pHdr, S_CL_ERR_MSG* pErrMsg)
 
   return 0;	
 }
+

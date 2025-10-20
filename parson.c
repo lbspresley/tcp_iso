@@ -2484,3 +2484,4 @@ void json_set_float_serialization_format(const char *format) {
 void json_set_number_serialization_function(JSON_Number_Serialization_Function func) {
     parson_number_serialization_function = func;
 }
+

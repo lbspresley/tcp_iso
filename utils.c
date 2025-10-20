@@ -44,3 +44,4 @@ int set_client_status(int val) {
 int set_server_status(int val) {
   return manage_exchange_key(1, 0, val);
 }
+

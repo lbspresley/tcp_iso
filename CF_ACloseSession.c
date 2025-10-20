@@ -182,3 +182,4 @@ int  func_NacfGetMaxSessC(char *strAdtName)
 
   return nPortCount;
 }
+
