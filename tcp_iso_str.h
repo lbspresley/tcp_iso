@@ -22,6 +22,14 @@ typedef struct {
 } ISO_FEP_HEADER;
 #define SIZE_ISO_FEP_HEADER (sizeof(ISO_FEP_HEADER))
 
+#if 1
+typedef struct {
+	char ApCode   [32];  // CORE -> BOK  : OAL2_ISOMSG_O
+	                     // BOK  -> CORE : OAL2_ISOMSG_I
+	char MsgTpCd  [35];  // MsgTpCd
+	char BizMsgIdr[35];  // BizMsgIdr
+} BOK_HEADER;
+#else
 typedef struct {
 	char RespCd   [7];   // REQ(O),RSP(O) (REQ:SPACE, RSP:SUCCESS/FAIL)
 	char MsgTpCd  [35];  // REQ(O),RSP(O) (Max 27)
@@ -30,6 +38,7 @@ typedef struct {
 	char Id       [16];  // REQ(O),RSP(X)
 	char Password [16];  // REQ(O),RSP(X)
 } BOK_HEADER;
+#endif
 #define SIZE_BOK_HEADER (sizeof(BOK_HEADER))
 
 #endif
