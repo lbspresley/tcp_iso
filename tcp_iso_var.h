@@ -50,6 +50,7 @@ int             gi_ApDataBufAllocSize;      /* ap data tpalloc size */
 char            gc_LogYn[1+1];             /* config file */
 
 
+char			gc_biz_prcg_dt[32];		
 char			gc_plain_id[32];		
 char			gc_plain_pw[32];	
 char			gc_enc_id[32];		
@@ -105,5 +106,6 @@ int send_to_core(char* outbuf, int outlen);
 // process_message.c
 int process_message(char* in, int inlen);
 void replaceString(char* str, char* org, char* rep);
+void replaceChar(char* str, char org, char rep);
 
 #endif
