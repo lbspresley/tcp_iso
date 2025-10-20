@@ -162,6 +162,8 @@ int send_message(char* msgidr, char* msg, int msg_len)
   char* _encrypt_msg = (char*)NULL;
   int encrypt_msg_len = 0;
 
+  utrc(msg_len, msg, "Sending Message : bizMsgIdr(%s)", msgidr==NULL?"ACK":msgidr);
+
   if( g_Encrypt_Flag == 0 ) {
     _encrypt_msg = msg;
     encrypt_msg_len = msg_len;
@@ -191,6 +193,8 @@ int send_message(char* msgidr, char* msg, int msg_len)
   if( msgidr == NULL ) {
     return 0;
   }
+
+  ulog(0, "save ack_info : msgidr(%s)", msgidr);
 
   // save message
   ACK_INFO* ack_info = add_ack_info(msgidr, (char*)_send_msg, send_msg_len);
@@ -270,3 +274,4 @@ void close_all_sessions()
   }
   return;
 }
+
