@@ -4,7 +4,6 @@ int inl_decrypt(char* in, int inlen, char** out, int* outlen)
 {
   static int _decrypt_buf_len = MAX_MSG_LEN;
   static char *_decrypt_buf = (char*)NULL;
-  net_ctx* _ctx = (net_ctx*)g_server_ctx;
   unsigned char* _out = (unsigned char*)NULL;
   int _outlen = 0;
   int rc = 0;
@@ -26,7 +25,7 @@ int inl_decrypt(char* in, int inlen, char** out, int* outlen)
   }
 
   // decrypt
-  rc = INL_Decrypt(_ctx, (unsigned char*)in, inlen, &_out, &_outlen);
+  rc = INL_Decrypt(g_server_ctx, (unsigned char*)in, inlen, &_out, &_outlen);
   if( rc < 0 ) {
     ulog(_ERROR_, "Failed to decrypt message");
     if( _out != NULL ) { INL_Free_Buf(_out); }
@@ -54,12 +53,10 @@ int inl_encrypt(char* in, int inlen, char** out, int* outlen)
 {
   static int _encrypt_buf_len = MAX_MSG_LEN;
   static char *_encrypt_buf = (char*)NULL;
-  net_ctx* _ctx = (net_ctx*)g_client_ctx;
   unsigned char* _out = (unsigned char*)NULL;
   int _outlen = 0;
   int rc = 0;
 
-  // Encrypt 안 할 경우
   if (g_Encrypt_Flag == 0) {
     ulog(_WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen);
     *out = in;
@@ -77,7 +74,7 @@ int inl_encrypt(char* in, int inlen, char** out, int* outlen)
   }
 
   // encrypt
-  rc = INL_Encrypt(_ctx, (unsigned char*)in, inlen, &_out, &_outlen);
+  rc = INL_Encrypt(g_client_ctx, (unsigned char*)in, inlen, &_out, &_outlen);
   if( rc < 0 ) {
     ulog(_ERROR_, "Failed to encrypt message");
     if( _out != NULL ) { INL_Free_Buf(_out); }
@@ -100,3 +97,4 @@ int inl_encrypt(char* in, int inlen, char** out, int* outlen)
 
   return 0;
 }
+
