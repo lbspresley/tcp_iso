@@ -33,3 +33,4 @@ int send_message(char* msgidr, char* msg, int msg_len);
 void TF_Ack_Timeout(int TimerID, int lParam, int rParam);
 
 #endif
+
