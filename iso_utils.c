@@ -69,17 +69,29 @@ unsigned char* make_poll_response(char* reqxml)
  * 2. CreDt (현재시간) : cre_dt
  * 3. BizPrcgDt (개시 시간 : 현재날짜+9시 고정) : biz_prcg_dt
 */
-unsigned char* make_poll_request(int get_msg_idr_flag)
+unsigned char* make_poll_request(int flag, char* biz_msg_idr)
 {
-  static unsigned char _poll_request[2048];
   static unsigned char _static_msg_idr[36]={0};
+  char msg_idr[36]={0};
 
-  if( get_msg_idr_flag == 1 ) {
+  if( flag == 1 ) {
     return _static_msg_idr;
   }
 
-  // 1. get new BizMsgIdr
-  get_msg_idr((char*)_static_msg_idr);
+  if( biz_msg_idr == NULL ) {
+    // 1. get new BizMsgIdr
+    get_msg_idr((char*)_static_msg_idr);
+    strcpy(msg_idr, (char*)_static_msg_idr);
+  } else {
+    strcpy(msg_idr, biz_msg_idr);
+  }
+
+  return _make_poll_request(biz_msg_idr);
+}
+
+unsigned char* _make_poll_request(char* biz_msg_idr)
+{
+  static unsigned char _poll_request[2048];
 
   // 2. get date time
   char cre_dt[32];
@@ -93,7 +105,7 @@ unsigned char* make_poll_request(int get_msg_idr_flag)
   // 8개 항목
   sprintf((char*)_poll_request, POLL_REQ_TEMPLATE, 
       gc_plain_id, gc_plain_pw, gc_org_cd, 
-      _static_msg_idr, cre_dt, biz_prcg_dt, 
+      biz_msg_idr, cre_dt, biz_prcg_dt, 
       gc_org_cd, cre_dt);
   return _poll_request;
 }

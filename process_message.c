@@ -160,8 +160,8 @@ int send_poll_rsp_to_core(char* msgtpcd, char* bizmsgidr)
   BOK_HEADER *pBokHdr = (BOK_HEADER *)(snd_msg + sizeof(S_CL_HEADER));
   memset((char*)pBokHdr, 0x20, SIZE_BOK_HEADER);
 
-  char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
-  char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
+  // char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
+  // char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
 
   memcpy(pBokHdr->ApCode, ISO_APCODE, strlen(ISO_APCODE));
   memcpy(pBokHdr->MsgTpCd, msgtpcd, strlen(msgtpcd));
@@ -220,15 +220,15 @@ int send_to_core(char* outbuf, int outlen)
   memset((char*)pBokHdr, 0x20, SIZE_BOK_HEADER);
 
   // Request/Response ±¸ºÐ
-  int is_request = 0;
+  // int is_request = 0;
   char* value = NULL;
 
-  char RespCd   [7+1] = {0};   // REQ(O),RSP(O) (REQ:SPACE, RSP:SUCCESS/FAIL)
+  // char RespCd   [7+1] = {0};   // REQ(O),RSP(O) (REQ:SPACE, RSP:SUCCESS/FAIL)
   char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
-  char BizSvc   [35+1] = {0};  // REQ(X),RSP(O)
+  // char BizSvc   [35+1] = {0};  // REQ(X),RSP(O)
   char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
-  char Id       [16+1] = {0};  // REQ(O),RSP(X)
-  char Password [16+1] = {0};  // REQ(O),RSP(X)
+  // char Id       [16+1] = {0};  // REQ(O),RSP(X)
+  // char Password [16+1] = {0};  // REQ(O),RSP(X)
 
   value = (char *)get_tag_value(outbuf, "MsgTpCd");
   if( value == NULL ) {

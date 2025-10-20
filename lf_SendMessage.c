@@ -1,18 +1,16 @@
 #include "tcp_iso.h"
 
 // Send Poll Messge
-int lf_SendPollMessage()
+int lf_SendPollMessage(char* biz_msg_idr)
 {
   int rc;
-  char* pData = (char*) make_poll_request(0);
+  char* pData = (char*) make_poll_request(0, biz_msg_idr);
   int data_len = strlen(pData);
-  char bizmsgidr[35+1];
-
-  strcpy (bizmsgidr, (char*)make_poll_request(1) );
+  char* msg_idr = (char*)make_poll_request(1, biz_msg_idr);
   
-  utrc (data_len, pData, "Send Poll Message : bizmsgidr(%s)", bizmsgidr);
+  utrc (data_len, pData, "Send Poll Message : bizmsgidr(%s)", msg_idr);
 
-  rc = send_message(bizmsgidr, pData, data_len);
+  rc = send_message(msg_idr, pData, data_len);
   if( rc < 0 ) {
     ulog(_ERROR_, "[로그정보] POLLREQ 전문 송신 실패 !!");
     return -1;
@@ -26,7 +24,7 @@ int lf_SendPollMessage()
 // Polling callback function
 void TF_SendPollReq(int TimerID, int lParam, int rParam)
 {
-  int rc = lf_SendPollMessage();
+  int rc = lf_SendPollMessage(NULL);
   if( rc < 0 ) {
     //  do nothing
     ulog(_ERROR_, "POLLREQ 전문 송신 실패 !!");
@@ -42,29 +40,6 @@ void TF_SendPollReq(int TimerID, int lParam, int rParam)
 
   return ;
 }
-
-#if 0 // 중복 삭제
-int lf_SendPollRequest()
-{
-  char* pData ;
-  int data_len;
-  int rc;
-  char bizmsgidr[35+1];
-
-  ulog(1, "POLLREQ 전문 송신 처리 !!");
-  pData = (char*)make_poll_request(0);
-  strcpy (bizmsgidr, (char*)make_poll_request(1) );
-  data_len = strlen(pData);
-
-  rc = send_message(bizmsgidr, pData, data_len);
-  if( rc < 0 ) {
-    ulog(_ERROR_, "[로그정보] POLLREQ 전문 송신 실패 !!");
-    return -1;
-  }
-
-  return 0;
-}
-#endif
 
 int lf_GetLoginInfo()
 {
@@ -88,7 +63,7 @@ int lf_SendMessage(char* pFrame, int len)
 
   char bizmsgidr[35+1];
   char msgtpcd[35+1];
-  char bizsvc[35+1];
+  // char bizsvc[35+1];
 
   //1. FEP 헤더 처리
   S_CL_HEADER		*pFepHdr=(S_CL_HEADER*)pFrame;
@@ -108,7 +83,7 @@ int lf_SendMessage(char* pFrame, int len)
 
   // POLL TEST
   if (memcmp(pFrame, "POLLREQ", 7) == 0) {
-    rc = lf_SendPollMessage();
+    rc = lf_SendPollMessage(NULL);
     if( rc < 0 ) {
       ulog(_ERROR_, "lf_SendPollMessage error rc(%d)", rc);
       return -1;
@@ -149,9 +124,9 @@ int lf_SendMessage(char* pFrame, int len)
   // POLLING : OAL2_POLLREQ
   if (memcmp(pBokHdr->MsgTpCd, "admi.004.ConnectionCheck", 25) == 0 ) {
       ulog(_FLOW_, "POLL 수신 : %.32s", msgtpcd );
-      rc = lf_SendPollMessage();
+      rc = lf_SendPollMessage(bizmsgidr);
       if( rc < 0 ) {
-        ulog(_ERROR_, "lf_SendPollMessage() error rc(%d)", rc);
+        ulog(_ERROR_, "lf_SendPollMessage(bizmsgidr(%s)) error rc(%d)", bizmsgidr, rc);
         return -4;
       }
 

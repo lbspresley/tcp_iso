@@ -99,7 +99,7 @@ int cf_GoImgLog(char *svc, char *dir, char *title, char* msg, int len);
 
 // lf_SendMessage.c
 int lf_SendMessage(char* pFrame, int len);
-int lf_SendPollMessage();
+int lf_SendPollMessage(char* biz_msg_idr);
 void TF_SendPollReq(int TimerID, int lParam, int rParam);
 int send_to_core(char* outbuf, int outlen);
 
@@ -107,5 +107,6 @@ int send_to_core(char* outbuf, int outlen);
 int process_message(char* in, int inlen);
 void replaceString(char* str, char* org, char* rep);
 void replaceChar(char* str, char org, char rep);
+int send_poll_rsp_to_core(char* msgtpcd, char* bizmsgidr);
 
 #endif
