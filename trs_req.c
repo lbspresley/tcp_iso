@@ -56,18 +56,17 @@ int tcp_connect(const char* ip, int port)
         return -4;
     }
 
-    ulog( _FLOW_, "Connected to server %s:%d", ip, port);
     return sock_fd;
 }
 
 int init_trs_req(char *trs_ip, int trs_port) 
 {
     int fd = tcp_connect(trs_ip, trs_port);
-    if (fd == -1) {
-        printf("Failed to connect to TRS: %s:%d\n", trs_ip, trs_port);
+    if (fd < 0) {
+        ulog(_ERROR_, "Failed to connect to TRS: %s:%d", trs_ip, trs_port);
         return -1;
     }
-    printf("Connected to TRS: %s:%d\n", trs_ip, trs_port);
+    ulog(_FLOW_, "Connected to TRS: %s:%d fd(%d)", trs_ip, trs_port, fd);
 
     return fd;
 }
@@ -83,14 +82,18 @@ int close_trs_req(int fd)
 void msgtpcd_to_trsid(int type, char* msgtpcd )
 {
   char tpidr[36];
+
   strcpy(tpidr, msgtpcd);
   replaceString(tpidr, ".", "_" );
+
   if (type == 0) {
-  strcat(msgtpcd, "I1");
+  	strcpy(msgtpcd, "I1");
   } else {
-    strcat(msgtpcd, "I3");
+    strcpy(msgtpcd, "I3");
   }
-  strcpy(msgtpcd, tpidr);
+  strcat(msgtpcd, tpidr);
+
+  return;
 }
 
 int req_trs_xml(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
@@ -132,18 +135,24 @@ int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *
     strcpy(trs_id, msg_tp_cd);
     msgtpcd_to_trsid(type, trs_id);
 
+	ulog(0, "msgtp(%s) trsid(%s)", msg_tp_cd, trs_id);
+
     memset(_trs_req, 0, PRE_LEN);
     memset(_trs_rsp, 0, PRE_LEN);
 
     // send request
     req_len = len + PRE_LEN;
-    snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)req_len);
+    snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)(req_len-REQ_LEN_LEN) );
     
-    memset(trs_req, 0x20, PRE_LEN);
+    memset((char*)trs_req, 0x20, PRE_LEN);
     memcpy(trs_req->len, len_str, REQ_LEN_LEN);
-    memcpy(trs_req->trs_id, trs_id, TRS_ID_LEN);
-    memcpy(trs_req->msg_id, msg_idr, TRS_ID_LEN);
+    //memcpy(trs_req->trs_id, trs_id, TRS_ID_LEN);
+    //memcpy(trs_req->msg_id, msg_idr, TRS_ID_LEN);
+    memcpy(trs_req->trs_id, trs_id, strlen(trs_id));
+    memcpy(trs_req->msg_id, msg_idr, strlen(msg_idr));
     memcpy(trs_req->data, req, len);
+
+	utrc( req_len, _trs_req, "REQ DATA");
     
     // send request
     int nRc = send(fd, (char*) trs_req, req_len, 0);
@@ -152,19 +161,20 @@ int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *
         close_trs_req(fd);
         return -2;
     }
+	ulog( 0, "TT send ok (%d)", nRc );
 
     memset(trs_rsp, 0x20, PRE_LEN);
 
     // receive response
-    nRc = recv(fd, (char*) trs_rsp, PRE_LEN, 0);
-    if (nRc != PRE_LEN) {
+	memset( len_str, 0, sizeof(len_str));
+
+    nRc = recv(fd, (char*) len_str, REQ_LEN_LEN, 0);
+    if (nRc != REQ_LEN_LEN) {
         ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
         close_trs_req(fd);
         return -3;
     }
 
-    // parse response
-    memcpy(len_str, trs_rsp->len, REQ_LEN_LEN);
     int rsp_len = atoi(len_str);
     if (rsp_len <= 0) {
         ulog( _ERROR_, "Response length is invalid: (%s) --> %d\n", len_str, rsp_len);
@@ -173,14 +183,22 @@ int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *
     }
 
     // receive response
-    nRc = recv(fd, (char*) trs_rsp->data, rsp_len, 0);
-    if (nRc != rsp_len) {
-        ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
-        close_trs_req(fd);
-        return -5;
+    int total_len = 0;
+    int recv_len = rsp_len;
+    while (total_len < rsp_len) {
+        int nRc = recv(fd, (char*) _trs_rsp + total_len, recv_len, 0);
+        if (nRc < 0) {
+            ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
+            close_trs_req(fd);
+            return -5;
+        }
+        total_len += nRc;
+        recv_len -= nRc;
     }
 
-    memcpy(resp, trs_rsp->data, rsp_len);
+    memcpy(resp, _trs_rsp, rsp_len);
+
+	ulog( 0, "TT recv ok (%d) data_len :%d", nRc, rsp_len );
 
     close_trs_req(fd);
     return rsp_len;
@@ -331,3 +349,4 @@ void cleanup_http_request()
     curl_global_cleanup();
 }
 #endif
+
