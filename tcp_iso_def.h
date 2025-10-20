@@ -2,6 +2,11 @@
 #define __TCP_BOK_DEF_H__
 
 
+#if defined(_KSFC_)
+#define 	ISO_APCODE 		"OAL2_ISOMSG_I"
+#else
+#define 	ISO_APCODE 		"ISO_INBOUND_MSG"
+#endif
 #define 	MAX_READ_SIZE	4096
 
 
