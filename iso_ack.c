@@ -123,6 +123,24 @@ int process_ack_response(char* msg)
   // 3. remove ack_info
   remove_ack_info(ack_info);
 
+#ifdef _SHB_
+	// FEP에서 보낸 POLL응답인지 확인(msgidr) : sequence(last 6-digit)
+	char *pCh = msgidr + strlen(msgidr) - 6;
+	ulog(0, "msgidr : %s, Sequence : %s", msgidr, pCh);
+	if (*pCh == '9' ){
+	  // send from FEP 
+	  return 0;
+	}
+
+  ulog(_FLOW_, "[ACK] 코어 송신 : msgidr(%s)", msgidr);
+	int rc = send_header_only_to_core("ACK", msgidr);
+  if (rc < 0)
+  {
+    ulog(_ERROR_, "[ACK] 코어 송신 실패. rc(%d) msgidr(%s)", rc, msgidr);
+    return -5;
+  }
+#endif
+
   return 0;
 }
 
