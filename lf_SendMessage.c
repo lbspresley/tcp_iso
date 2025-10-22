@@ -65,10 +65,9 @@ int lf_SendMessage(char* pFrame, int len)
 
   char bizmsgidr[35+1];
   char msgtpcd[35+1];
-  char bizsvc[35+1];
+  // char bizsvc[35+1];
 
   //1. FEP 헤더 처리
-  S_CL_HEADER		*pFepHdr=(S_CL_HEADER*)pFrame;
   BOK_HEADER *pBokHdr = (BOK_HEADER *)(pFrame + sizeof(S_CL_HEADER));
 
 #if 1 // TEST
@@ -96,6 +95,8 @@ int lf_SendMessage(char* pFrame, int len)
 #endif
 
 #ifdef _KSFC_
+  S_CL_HEADER		*pFepHdr=(S_CL_HEADER*)pFrame;
+
   if (memcmp(pFepHdr->c_MsgDsc, "APMG", 4) != 0 ) {
     ulog(_ERROR_, "미정의 전문 수신 : MsgDsc(%.4s) --> NOT APMG", pFepHdr->c_MsgDsc );
     ulog(_FLOW_, "미정의 전문 수신 : 폐기 (%.15s)", pFrame );

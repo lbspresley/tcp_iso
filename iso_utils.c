@@ -71,17 +71,17 @@ unsigned char* make_poll_response(char* reqxml)
 */
 unsigned char* make_poll_request(int flag, char* msgidr)
 {
-  static unsigned char _static_msg_idr[36]={0};
-  unsigned char gen_msgidr[36]={0}; 
+  static char _static_msg_idr[36]={0};
+  char gen_msgidr[36]={0}; 
 
   if( flag == 1 ) {
-    return _static_msg_idr;
+    return (unsigned char*)_static_msg_idr;
   }
 
   // 1. get BizMsgIdr
   if( msgidr == (char*)NULL) { 
     // get new BizMsgIdr
-    get_msg_idr((char*)_static_msg_idr); 
+    get_msg_idr(_static_msg_idr); 
     strcpy (gen_msgidr, _static_msg_idr); 
   } else {
     // use msgidr from argument : msgidr 
