@@ -610,8 +610,8 @@ int save_send_msg(char* msgidr, unsigned char* msg, int msg_len)
 }
 
 // 문자셋 변환
-#ifdef KNB
-size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
+#if 0 // command shell을 통한 변환
+int charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
 {
   char from_charset[32];
   char to_charset[32];
@@ -708,7 +708,7 @@ size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char
   return 0;
 }
 #else
-size_t charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
+int charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
 {
   char from_charset[32];
   char to_charset[32];
@@ -782,13 +782,13 @@ unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, siz
     return (unsigned char*)NULL;
   }
 
-  size_t out_len = charset_convert(kr_encoding_type, msg, msg_len, _utf8_converted_msg, out_msg_len);
-  if( out_len < 0 ) {
+  int rc = charset_convert(kr_encoding_type, msg, msg_len, _utf8_converted_msg, out_msg_len);
+  if( rc < 0 ) {
     ulog(_ERROR_, "Failed to convert message to utf8");
     return (unsigned char*)NULL;  
   }
 
-  *out_msg_len = out_len;  
+  *out_msg_len = *out_msg_len;  
   return _utf8_converted_msg;
 }
 
@@ -816,13 +816,13 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
     return (unsigned char*)NULL;
   }
 
-  size_t out_len = charset_convert(kr_encoding_type, msg, msg_len, _kr_converted_msg, out_msg_len);
-  if( out_len < 0 ) {
+  int rc = charset_convert(kr_encoding_type, msg, msg_len, _kr_converted_msg, out_msg_len);
+  if( rc < 0 ) {
     ulog(_ERROR_, "Failed to convert message to kr");
     return (unsigned char*)NULL;
   }
 
-  *out_msg_len = out_len;
+  *out_msg_len = *out_msg_len;
   return _kr_converted_msg;
 }
 
