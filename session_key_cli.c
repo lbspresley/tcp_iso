@@ -184,14 +184,16 @@ int cli_recv_4(char* msg, int len)
 
   ulog(_ERROR_, "[로그정보] 세션키 교환 완료 CLIENT (Client Session to BOK)\n" );
 
+#if 0 // move to server session completion
   // Start POLL-REQ with Timer
   if (g_UsePoll == 1)
   {
-    ulog(_ERROR_, "[로그정보] POLL-REQ 시작 : %d", g_ReqPollInterval);
+    ulog(_ERROR_, "POLL-REQ Timer Start : %d", g_ReqPollInterval);
     (void) TF_SendPollReq(TIMERID_REQ_POLL, 0, 0);
   } else {
-    ulog(_ERROR_, "[로그정보] POLL-REQ 미사용");
+    ulog(_ERROR_, "[POLL-REQ] Not Use Poll-Request");
   }
+#endif
 
   return 0;
 }

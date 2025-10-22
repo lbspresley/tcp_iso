@@ -163,7 +163,18 @@ int svr_recv_5(char* msg, int len)
 
   if(pSKeyOut != NULL) INL_Free_Buf(pSKeyOut);
 
-  ulog(_ERROR_, "[로그정보] 세션키 교환 완료 SERVER (Server Session from BOK)\n" );
+  ulog(_ERROR_, "[로그정보] 세션키 교환 완료 SERVER (Server Session from BOK)" );
+
+#if 1 // move to server session completion
+  // Start POLL-REQ with Timer
+  if (g_UsePoll == 1)
+  {
+	ulog(_ERROR_, "POLL-REQ Timer Start : %d", g_ReqPollInterval);
+    (void) TF_SendPollReq(TIMERID_REQ_POLL, 0, 0);
+  } else { 
+    ulog(_ERROR_, "[POLL-REQ] Not Use Poll-Request");
+  }
+#endif
 
   return RC_NEXT_ACTION;
 }
