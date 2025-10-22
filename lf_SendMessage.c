@@ -1,16 +1,18 @@
 #include "tcp_iso.h"
 
 // Send Poll Messge
-int lf_SendPollMessage(char* biz_msg_idr)
+int lf_SendPollMessage(char *msgidr)
 {
   int rc;
-  char* pData = (char*) make_poll_request(0, biz_msg_idr);
+  char* pData = (char*) make_poll_request(0, msgidr);
   int data_len = strlen(pData);
-  char* msg_idr = (char*)make_poll_request(1, biz_msg_idr);
-  
-  utrc (data_len, pData, "Send Poll Message : bizmsgidr(%s)", msg_idr);
+  char bizmsgidr[35+1];
 
-  rc = send_message(msg_idr, pData, data_len);
+  strcpy (bizmsgidr, (char*)make_poll_request(1, msgidr) );
+  
+  utrc (data_len, pData, "Send Poll Message : bizmsgidr(%s)", bizmsgidr);
+
+  rc = send_message(bizmsgidr, pData, data_len);
   if( rc < 0 ) {
     ulog(_ERROR_, "[로그정보] POLLREQ 전문 송신 실패 !!");
     return -1;
@@ -63,7 +65,7 @@ int lf_SendMessage(char* pFrame, int len)
 
   char bizmsgidr[35+1];
   char msgtpcd[35+1];
-  // char bizsvc[35+1];
+  char bizsvc[35+1];
 
   //1. FEP 헤더 처리
   S_CL_HEADER		*pFepHdr=(S_CL_HEADER*)pFrame;
@@ -93,10 +95,18 @@ int lf_SendMessage(char* pFrame, int len)
   }
 #endif
 
+#ifdef _KSFC_
   if (memcmp(pFepHdr->c_MsgDsc, "APMG", 4) != 0 ) {
-    ulog(_ERROR_, "미정의 전문 수신 : MsgDsc(%.4s) --> 폐기 (%.15s)", pFepHdr->c_MsgDsc, pFrame );
+    ulog(_ERROR_, "미정의 전문 수신 : MsgDsc(%.4s) --> NOT APMG", pFepHdr->c_MsgDsc );
     ulog(_FLOW_, "미정의 전문 수신 : 폐기 (%.15s)", pFrame );
 	return -2;
+  }
+
+  // APCODE : OAL2_ISOMSG_O
+  if (memcmp(pFepHdr->c_ApCode, APCODE_OUTBOUND, strlen(APCODE_OUTBOUND)) != 0 ) {
+    ulog(_ERROR_, "미정의 전문 수신 : ApCode(%.4s) --> NOT %s", pFepHdr->c_ApCode, APCODE_OUTBOUND );
+    ulog(_FLOW_, "미정의 전문 수신 : 폐기 (%.25s)", pFrame );
+	return -3;
   }
 
   // 개시전문 : OAL1_081BKS20F010
@@ -110,6 +120,7 @@ int lf_SendMessage(char* pFrame, int len)
 
   	return 0;
   }
+#endif
 
 
   memset(msgtpcd, 0, sizeof(msgtpcd));
@@ -118,17 +129,22 @@ int lf_SendMessage(char* pFrame, int len)
   memcpy(msgtpcd, pBokHdr->MsgTpCd, sizeof(pBokHdr->MsgTpCd));
   memcpy(bizmsgidr, pBokHdr->BizMsgIdr, sizeof(pBokHdr->BizMsgIdr));
   ulog(_FLOW_, "[로그정보] MsgTpCd: %s, BizMsgIdr: %s", msgtpcd, bizmsgidr);
+
+  // remove trailing space
   //memset(bizsvc, 0, sizeof(bizsvc));
   //memcpy(bizsvc, pBokHdr->BizSvc, sizeof(pBokHdr->BizSvc));
+  //ulog(_FLOW_, "[로그정보] BizMsgIdr: %s, MsgTpCd: %s, BizSvc: %s", bizmsgidr, msgtpcd, bizsvc);
 
-  // POLLING : OAL2_POLLREQ
-  if (memcmp(pBokHdr->MsgTpCd, "admi.004.ConnectionCheck", 25) == 0 ) {
-      ulog(_FLOW_, "POLL 수신 : %.32s", msgtpcd );
-      rc = lf_SendPollMessage(bizmsgidr);
-      if( rc < 0 ) {
-        ulog(_ERROR_, "lf_SendPollMessage(bizmsgidr(%s)) error rc(%d)", bizmsgidr, rc);
-        return -4;
-      }
+  // POLLING : OAL2_ISOMSG_O
+  if (memcmp(msgtpcd, "POLLREQ", 7) == 0 ) {
+    ulog(_FLOW_, "POLL 요청 수신 ");
+    rc = lf_SendPollMessage(bizmsgidr);
+    if( rc < 0 ) {
+      ulog(_ERROR_, "lf_SendPollMessage(msgidr:%s) error rc(%d)", bizmsgidr , rc);
+      return -4;
+    }
+
+    ulog(_FLOW_, "POLL 요청 송신 성공 : msgidr(%s)", bizmsgidr);
 
   	return 0;
   }
@@ -141,6 +157,7 @@ int lf_SendMessage(char* pFrame, int len)
   // 2.1 전문변환 호출
   char trs_data[1024*100];
   memset(trs_data, 0, sizeof(trs_data));
+  ulog(0, "TRS FIX Data:len(%d)\n%s", data_len, pData); 
 
   // req_trs
   int trs_len = req_trs_fixed(msgtpcd, bizmsgidr, pData, data_len, trs_data);
@@ -177,24 +194,9 @@ int lf_SendMessage(char* pFrame, int len)
 #endif
 
 
-#if 0
-  char* outbuf;
-  int outlen;
-  if( g_Encrypt_Flag == 0 ) {
-    outbuf = encoded_data;
-    outlen = data_len;
-  } else {
-    rc = inl_encrypt(encoded_data, data_len, &outbuf, &outlen);
-    if( rc < 0 ) {
-      ulog(_ERROR_, "[Encrypt] 데이터 전문 암호화 실패. rc(%d)", rc);
-      return -1;
-    }
-  }
-
-  ulog(_FLOW_, "[Encrypt] 데이터 전문 암호화 성공. len(%d)", outlen);
-#endif
-
   utrc(data_len, xml_data, "Send XML Data");
+  ulog(0, "Send XML Data:len(%d)\n%s", data_len, xml_data); 
+
 
   // 4. 전문 송신
   rc = send_message(bizmsgidr, xml_data, data_len);
