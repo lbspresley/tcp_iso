@@ -86,10 +86,10 @@ int process_message(char* in, int inlen)
 	  return 0;
 	}
 
-	ulog(_FLOW_, "send POLL RSP to CORE");
-	rc = send_poll_rsp_to_core("admi.011", bizmsgidr);
+  ulog(_FLOW_, "[POLLRSP] 코어 송신 : msgidr(%s)", bizmsgidr);
+	rc = send_header_only_to_core("POLLRSP", bizmsgidr);
     if( rc < 0 ) {
-      ulog(_ERROR_, "[코어 송신] 코어 송신 실패 !!");
+      ulog(_ERROR_, "[POLLRSP] 코어 송신 실패. rc(%d) msgidr(%s)", rc, bizmsgidr);
       return -5;
     }
 
@@ -128,9 +128,7 @@ int call_backend (char* snd_msg, int snd_len)
 
   //(void) replaceString(MsgTpCd, ".", "_");
 
-  char interfaceID[100];
-  strcpy(interfaceID, ISO_APCODE);
-  memcpy(pFepHdr->c_ApCode, interfaceID, strlen(interfaceID));
+  memcpy(pFepHdr->c_ApCode, APCODE_INBOUND, strlen(APCODE_INBOUND));
 
   utrc(msg_len, snd_msg, "tpacall to CFR_E2B_MSG len(%d)", msg_len);
 
@@ -146,7 +144,7 @@ int call_backend (char* snd_msg, int snd_len)
   return 0;
 }
 
-int send_poll_rsp_to_core(char* msgtpcd, char* bizmsgidr)
+int send_header_only_to_core(char* msgtpcd, char* bizmsgidr)
 {
   int rc;
   int msg_len = sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
@@ -160,10 +158,10 @@ int send_poll_rsp_to_core(char* msgtpcd, char* bizmsgidr)
   BOK_HEADER *pBokHdr = (BOK_HEADER *)(snd_msg + sizeof(S_CL_HEADER));
   memset((char*)pBokHdr, 0x20, SIZE_BOK_HEADER);
 
-  // char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
-  // char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
+  //char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
+  //char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
 
-  memcpy(pBokHdr->ApCode, ISO_APCODE, strlen(ISO_APCODE));
+  memcpy(pBokHdr->ApCode, APCODE_INBOUND, strlen(APCODE_INBOUND));
   memcpy(pBokHdr->MsgTpCd, msgtpcd, strlen(msgtpcd));
   memcpy(pBokHdr->BizMsgIdr, bizmsgidr, strlen(bizmsgidr));
 
@@ -223,12 +221,12 @@ int send_to_core(char* outbuf, int outlen)
   // int is_request = 0;
   char* value = NULL;
 
-  // char RespCd   [7+1] = {0};   // REQ(O),RSP(O) (REQ:SPACE, RSP:SUCCESS/FAIL)
+  //char RespCd   [7+1] = {0};   // REQ(O),RSP(O) (REQ:SPACE, RSP:SUCCESS/FAIL)
   char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
-  // char BizSvc   [35+1] = {0};  // REQ(X),RSP(O)
   char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
-  // char Id       [16+1] = {0};  // REQ(O),RSP(X)
-  // char Password [16+1] = {0};  // REQ(O),RSP(X)
+  //char BizSvc   [35+1] = {0};  // REQ(X),RSP(O)
+  //char Id       [16+1] = {0};  // REQ(O),RSP(X)
+  //char Password [16+1] = {0};  // REQ(O),RSP(X)
 
   value = (char *)get_tag_value(outbuf, "MsgTpCd");
   if( value == NULL ) {
@@ -257,7 +255,7 @@ int send_to_core(char* outbuf, int outlen)
 
   ulog(_FLOW_, "MsgTpCd: %s, BizMsgIdr: %s, MSG(%.30s)", MsgTpCd, BizMsgIdr, outbuf );
 
-  memcpy(pBokHdr->ApCode, ISO_APCODE, strlen(ISO_APCODE));
+  memcpy(pBokHdr->ApCode, APCODE_INBOUND, strlen(APCODE_INBOUND));
   if (strlen(MsgTpCd) > 0) {
     memcpy(pBokHdr->MsgTpCd, MsgTpCd, strlen(MsgTpCd));
   }
@@ -324,5 +322,19 @@ void replaceChar(char* str, char org, char rep)
       *ptr = rep;
     }
   }
+}
+
+void removeTrailingSpace( char* str)
+{
+  // clean trailing space
+  char* p = str;
+  for(;*p !=0; p++){
+    if(*p == 0x20){ 
+		*p = 0;
+		return;
+	}
+  }
+
+  return;
 }
 
