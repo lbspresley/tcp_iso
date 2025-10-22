@@ -162,6 +162,8 @@ int send_message(char* msgidr, char* msg, int msg_len)
   char* _encrypt_msg = (char*)NULL;
   int encrypt_msg_len = 0;
 
+  (void) removeTrailingSpace (msgidr);
+
   utrc(msg_len, msg, "Sending Message : bizMsgIdr(%s)", msgidr==NULL?"ACK":msgidr);
 
   if( g_Encrypt_Flag == 0 ) {
