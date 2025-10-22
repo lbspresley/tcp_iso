@@ -228,8 +228,9 @@ int process_session_key(char* SrcSvc, char* in, int inlen);
 int check_msg_tp_cd(char* msg_tp_cd);
 
 unsigned char* make_poll_response(char* reqxml);
-unsigned char* make_poll_request(int flag, char* biz_msg_idr);
-unsigned char* _make_poll_request(char* biz_msg_idr);
+//unsigned char* make_poll_request(int get_msg_idr_flag);
+unsigned char* make_poll_request(int flag, char* msgidr);
+unsigned char* _make_poll_request(char* msgidr);
 unsigned char* make_header(char* msg_tp_cd, char* body);
 unsigned char* get_body(char* msg);
 unsigned char* strip_xml_message(char* msg);
