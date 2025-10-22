@@ -17,12 +17,13 @@ int req_trs(int type, char *msgtpcd, char* msg_idr, char *req, int len, char *re
 
 struct trs_req_t {
     char len[REQ_LEN_LEN]; // 요청 길이
-    char trs_id[TRS_ID_LEN]; // 전문 ID : admi.004.001.01 ==> admi_004_001_01_I1 / admi_004_001_01_I3 
+    char trs_id[TRS_ID_LEN]; // 전문 ID : admi.004.001.01 ==> I1admi_004_001_01 / I3admi_004_001_01
     char msg_id[TRS_ID_LEN]; // 메시지 ID
     char result_msg[RESULT_MSG_LEN]; // 결과 메시지
     char data[1]; // 요청 데이터
 };
-#define PRE_LEN (sizeof(struct trs_req_t) - 1)
+//#define PRE_LEN (sizeof(struct trs_req_t) - 1)
+#define PRE_LEN (REQ_LEN_LEN+TRS_ID_LEN+TRS_ID_LEN+RESULT_MSG_LEN)
 
 // error
 // 00130[TRSID   ][MSGID   ][ERRMSG     ]

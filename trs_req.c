@@ -155,21 +155,21 @@ int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *
 	utrc( req_len, _trs_req, "REQ DATA");
     
     // send request
-    int nRc = send(fd, (char*) trs_req, req_len, 0);
-    if (nRc != req_len) {
+    int rc = send(fd, (char*) trs_req, req_len, 0);
+    if (rc != req_len) {
         ulog( _ERROR_, "Failed to send request to TRS: %s:%d\n", g_trs_ip, port);
         close_trs_req(fd);
         return -2;
     }
-	ulog( 0, "TT send ok (%d)", nRc );
+	ulog( 0, "TRS send ok (%d)", rc );
 
     memset(trs_rsp, 0x20, PRE_LEN);
 
     // receive response
 	memset( len_str, 0, sizeof(len_str));
 
-    nRc = recv(fd, (char*) len_str, REQ_LEN_LEN, 0);
-    if (nRc != REQ_LEN_LEN) {
+    rc = recv(fd, (char*) len_str, REQ_LEN_LEN, 0);
+    if (rc != REQ_LEN_LEN) {
         ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
         close_trs_req(fd);
         return -3;
@@ -183,22 +183,24 @@ int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *
     }
 
     // receive response
-    int total_len = 0;
-    int recv_len = rsp_len;
-    while (total_len < rsp_len) {
-        int nRc = recv(fd, (char*) _trs_rsp + total_len, recv_len, 0);
-        if (nRc < 0) {
-            ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
-            close_trs_req(fd);
-            return -5;
-        }
-        total_len += nRc;
-        recv_len -= nRc;
-    }
+	int total_len = 0;
+	int rcv_len = rsp_len;
+	char *pRcv = (char*)_trs_rsp;
+
+	while(total_len<rsp_len){
+      rc = recv(fd, (char*) (pRcv+total_len), rcv_len, 0);
+      if (rc < 0){
+          ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
+          close_trs_req(fd);
+          return -5;
+      }
+	  total_len += rc;
+	  rcv_len -= rc;
+	}
 
     memcpy(resp, _trs_rsp, rsp_len);
 
-	ulog( 0, "TT recv ok (%d) data_len :%d", nRc, rsp_len );
+	ulog( 0, "TRS recv ok (%d) data_len :%d", rc, rsp_len );
 
     close_trs_req(fd);
     return rsp_len;
