@@ -3,9 +3,14 @@
 
 
 #if defined(_KSFC_)
-#define 	ISO_APCODE 		"OAL2_ISOMSG_I"
+#define 	APCODE_INBOUND 		"OAL2_ISOMSG_I"
+#define 	APCODE_OUTBOUND 	"OAL2_ISOMSG_O"
+#elif defined(_SHB_)
+#define 	APCODE_INBOUND 		"RCD9_INBOUND"
+#define 	APCODE_OUTBOUND 	"RCD9_OUTBOUND"
 #else
-#define 	ISO_APCODE 		"ISO_INBOUND_MSG"
+#define 	APCODE_INBOUND 		"ISO_INBOUND"
+#define 	APCODE_OUTBOUND 	"ISO_OUTBOUND"
 #endif
 #define 	MAX_READ_SIZE	4096
 

@@ -26,7 +26,7 @@ typedef struct {
 typedef struct {
 	char ApCode   [32];  // CORE -> BOK  : OAL2_ISOMSG_O
 	                     // BOK  -> CORE : OAL2_ISOMSG_I
-	char MsgTpCd  [35];  // MsgTpCd
+	char MsgTpCd  [35];  // MsgTpCd : pacs.009.CORE ==> pacs_009_CORE 
 	char BizMsgIdr[35];  // BizMsgIdr
 } BOK_HEADER;
 #else
