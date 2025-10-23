@@ -36,8 +36,8 @@ void TF_SendPollReq(int TimerID, int lParam, int rParam)
 
   if(g_UsePoll == 1) {
     // start poll timer again
-    rdf_setTimer(TimerID, g_ReqPollInterval*1000, -1, 0, 0, TF_SendPollReq);
-    ulog(_ERROR_, "[로그정보] Send Next POLLREQ after %d seconds.", g_ReqPollInterval);
+    rdf_setTimer(TimerID, g_Poll_Interval*1000, -1, 0, 0, TF_SendPollReq);
+    ulog(_ERROR_, "[로그정보] Send Next POLLREQ after %d seconds.", g_Poll_Interval);
   }
 
   return ;

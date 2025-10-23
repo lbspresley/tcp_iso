@@ -74,7 +74,7 @@ int CF_UpdateSendCnt(int Type, long* pInfo)
       // On Timer
       lParam = g_TermTable[idx].stidx;
       timerID = TIMERID_REQ_POLL + lParam;
-      rdf_setTimer(   timerID, g_ReqPollInterval*1000, -1,
+      rdf_setTimer(   timerID, g_Poll_Interval*1000, -1,
           lParam, rParam,
           CF_SendPollReq);
     }

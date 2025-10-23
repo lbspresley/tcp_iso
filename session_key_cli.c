@@ -184,12 +184,12 @@ int cli_recv_4(char* msg, int len)
 
   ulog(_ERROR_, "[로그정보] 세션키 교환 완료 CLIENT (Client Session to BOK)\n" );
 
-#if 0 // move to server session completion
+#if 1 // start poll request timer
   // Start POLL-REQ with Timer
   if (g_UsePoll == 1)
   {
-    ulog(_ERROR_, "POLL-REQ Timer Start : %d", g_ReqPollInterval);
-    (void) TF_SendPollReq(TIMERID_REQ_POLL, 0, 0);
+    ulog(_ERROR_, "POLL-REQ after %d seconds.", g_Poll_RampUp);
+    rdf_setTimer(TIMERID_REQ_POLL, g_Poll_RampUp*1000, -1, 0, 0, TF_SendPollReq);
   } else {
     ulog(_ERROR_, "[POLL-REQ] Not Use Poll-Request");
   }

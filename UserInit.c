@@ -98,30 +98,36 @@ int UserInit()
   if(g_UsePoll == 1)
   {
     // Get PollInfo - PollInterval
-    g_ReqPollInterval = 0;
-    rc = roReadConfigInt(  NULL, "PollInfo", "PollInterval", &g_ReqPollInterval    );
-    if ( rc < 0 ||  g_ReqPollInterval < 1)
+    rc = roReadConfigInt(  NULL, "PollInfo", "PollInterval", &g_Poll_Interval );
+    if ( rc < 0 ||  g_Poll_Interval < 1)
     { 
       ulog(_WARNING_, "Config 취득 실패 : [PollInfo] PollInterval -> default 30분으로 설정", rc);
 
       // PollSInterval의 기본값 - 30분
-      g_ReqPollInterval = 30*60;
+      g_Poll_Interval = 30*60;
     }
 
-    ulog(_FLOW_, "POLL 주기 : %d", g_ReqPollInterval);
-
-
     // Get PollInfo - PollTimeOut 
-    rc = roReadConfigInt(  NULL, "PollInfo", "PollTimeOut", &g_RspPollInterval    );
-    if ( rc < 0 || g_RspPollInterval < 1)
+    rc = roReadConfigInt(  NULL, "PollInfo", "PollTimeOut", &g_Poll_Timeout );
+    if ( rc < 0 || g_Poll_Timeout < 1)
     {
       ulog(_WARNING_, "Config 취득 실패 : [PollInfo] PollTimeOut -> default 30 sec로 설정");
 
       // Poll 응답 타이머 기본값 - 30초
-      g_RspPollInterval = 30;
+      g_Poll_Timeout = 30;
     }
 
-    ulog(_FLOW_, "POLL 응답 대기 IMMER : %d", g_RspPollInterval);
+    // Get PollInfo - PollTimeOut 
+    rc = roReadConfigInt(  NULL, "PollInfo", "PollRampUp", &g_Poll_RampUp );
+    if ( rc < 0 || g_Poll_RampUp < 1)
+    {
+      ulog(_WARNING_, "Config 취득 실패 : [PollInfo] PollRampUp -> default 30 sec로 설정");
+
+      // Poll 응답 타이머 기본값 - 30초
+      g_Poll_RampUp = 30;
+    }
+
+    ulog(_FLOW_, "[POLL INFO] interval(%d), timeout(%d), rampup(%d)", g_Poll_Interval, g_Poll_Timeout, g_Poll_RampUp );
   }
 
 

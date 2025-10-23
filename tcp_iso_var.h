@@ -15,8 +15,9 @@ char            g_path_mycfg[128];
 int				g_TimerInterval;			/* 기본적인 타이머 주기 */
 int				g_DisCntInterval;			/* 기본적인 타이머 주기 */
 
-int				g_ReqPollInterval;			/* Poll 보내는 주기 */
-int				g_RspPollInterval;			/* Poll 응답대기 시간 */
+int				g_Poll_Interval;		/* Poll 보내는 주기 */
+int				g_Poll_Timeout;			/* Poll 응답대기 시간 */
+int				g_Poll_RampUp;			/* Poll 시작 대기 시간 */
 
 int             g_Encrypt_Flag;             // (20200408) Encrypttion Flag
 
