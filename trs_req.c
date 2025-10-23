@@ -150,7 +150,15 @@ int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *
     //memcpy(trs_req->msg_id, msg_idr, TRS_ID_LEN);
     memcpy(trs_req->trs_id, trs_id, strlen(trs_id));
     memcpy(trs_req->msg_id, msg_idr, strlen(msg_idr));
+
+#if 0
     memcpy(trs_req->data, req, len);
+#else
+    char* non_header = (char*)remove_header_ns(req);
+    int   non_header_len = strlen (non_header);
+    ulog(_FLOW_, "remove namespace(h:) len %d -> %d data(%.30s)", len, non_header_len, non_header);
+    memcpy(trs_req->data, non_header, non_header_len);
+#endif
 
 	utrc( req_len, _trs_req, "REQ DATA");
     

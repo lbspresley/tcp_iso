@@ -145,6 +145,41 @@ unsigned char* get_body(char* msg)
   return _body;
 }
 
+unsigned char* remove_header_ns(char* msg)
+{
+  static unsigned char _non_header_ns [1024*60];
+
+  strcpy((char*)_non_header_ns, (char*)msg);
+
+  // remove whitespace between tags with regex
+  regex_t regex;
+  regmatch_t match;
+  if( regcomp(&regex, "<h:", REG_EXTENDED) == 0 ) {
+    while( regexec(&regex, (char*)_non_header_ns, 1, &match, 0) == 0 ) {
+      match.rm_so++;
+      int match_len = match.rm_eo - match.rm_so;
+      if( match_len > 0 ) {
+        memmove((char*)_non_header_ns + match.rm_so, (char*)_non_header_ns + match.rm_eo, strlen((char*)_non_header_ns + match.rm_eo) + 1);
+      }
+    }
+    regfree(&regex);
+  }
+
+  if( regcomp(&regex, "</h:", REG_EXTENDED) == 0 ) {
+    while( regexec(&regex, (char*)_non_header_ns, 1, &match, 0) == 0 ) {
+      match.rm_so++;
+      match.rm_so++;
+      int match_len = match.rm_eo - match.rm_so;
+      if( match_len > 0 ) {
+        memmove((char*)_non_header_ns + match.rm_so, (char*)_non_header_ns + match.rm_eo, strlen((char*)_non_header_ns + match.rm_eo) + 1);
+      }
+    }
+    regfree(&regex);
+  }
+
+  return _non_header_ns;
+}
+
 unsigned char* strip_xml_message(char* msg)
 {
   static unsigned char _stripped_message [1024*60];
