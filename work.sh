@@ -45,7 +45,7 @@ realdata()
 xcut()
 {
 	awk '{
-		gsub("><", ">\n<")
+		gsub(">[ \t\r]*<", ">\n<")
 		print
 	} ' $@
 }
@@ -56,7 +56,7 @@ xformat()
 	function dprint(n, str) {
 		s=""
 		for (i=0;i<n;i++) {s=sprintf("  %s", s) }
-		printf "\n%s\n", s, str
+		printf "%s%s\n", s, str
 	}
 
 	BEGIN{

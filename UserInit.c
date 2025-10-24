@@ -117,7 +117,7 @@ int UserInit()
       g_Poll_Timeout = 30;
     }
 
-    // Get PollInfo - PollTimeOut 
+    // Get PollInfo - PollRampUp 
     rc = roReadConfigInt(  NULL, "PollInfo", "PollRampUp", &g_Poll_RampUp );
     if ( rc < 0 || g_Poll_RampUp < 1)
     {
