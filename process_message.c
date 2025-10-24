@@ -69,7 +69,7 @@ int process_message(char* in, int inlen)
   if( rc == 2 ) {
     ulog(_FLOW_, "[POLL] 응답 수신 !!");
 
-	// TODO: 업무에서 송신한 POLL 응답은 CORE로 송신
+	// 업무에서 송신한 POLL 응답은 CORE로 송신
 
 	// a. get original BizMsgIdr from request
 	char* bizmsgidr = (char*)get_tag_value(outbuf, "OrgtrRef");
@@ -86,14 +86,17 @@ int process_message(char* in, int inlen)
 	  return 0;
 	}
 
+#ifndef _SHB_
   ulog(_FLOW_, "[POLLRSP] 코어 송신 : msgidr(%s)", bizmsgidr);
 	rc = send_header_only_to_core("POLLRSP", bizmsgidr);
-    if( rc < 0 ) {
-      ulog(_ERROR_, "[POLLRSP] 코어 송신 실패. rc(%d) msgidr(%s)", rc, bizmsgidr);
-      return -5;
-    }
+  if( rc < 0 ) {
+    ulog(_ERROR_, "[POLLRSP] 코어 송신 실패. rc(%d) msgidr(%s)", rc, bizmsgidr);
+    return -6;
+  }
 
+  ulog(_FLOW_, "[POLLRSP] 코어 송신 성공 : msgidr(%s)", bizmsgidr);
 	return 0;
+#endif
   }
 
   ulog(_FLOW_, "업무 표준 전문 수신 !!");
