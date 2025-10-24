@@ -187,31 +187,8 @@ int lf_SendMessage(char* pFrame, int len)
   char* xml_data = (char*)make_header(msgtpcd, trs_data);
   data_len = strlen(xml_data);
 
-#if 0
-  char* encoded_data  = bokwire_header;
-  data_len = strlen(encoded_data);
-
-  // 3. 인코딩 변환 호출
-  encoded_data = (char*)convert_to_utf8("EUC-KR", bokwire_header, data_len, &data_len);
-  if( encoded_data == NULL ) {
-    ulog(_ERROR_, "[로그정보] 인코딩 변환 실패 !!");
-    return -1;
-  }
-  utrc(data_len, encoded_data, "인코딩 변환 결과 : %s", encoded_data);
-
-  // compress xml
-#ifdef __USE_XML_PARSER__
-  encoded_data = trim_xml(bokwire_header, 0);
-  data_len = strlen(encoded_data);
-
-  utrc(data_len, encoded_data, "compress xml 결과 : %s", encoded_data);
-#endif
-#endif
-
-
   utrc(data_len, xml_data, "Send XML Data");
   ulog(0, "Send XML Data:len(%d)\n%s", data_len, xml_data); 
-
 
   // 4. 전문 송신
   rc = send_message(bizmsgidr, xml_data, data_len);
