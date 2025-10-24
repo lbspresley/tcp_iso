@@ -75,7 +75,10 @@ unsigned char* make_poll_request(int flag, char* msgidr)
   char gen_msgidr[36]={0}; 
 
   if( flag == 1 ) {
-    return (unsigned char*)_static_msg_idr;
+    if( msgidr == (char*)NULL ) {
+      return (unsigned char*)_static_msg_idr;
+    }
+    return (unsigned char*)msgidr;
   }
 
   // 1. get BizMsgIdr

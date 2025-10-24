@@ -8,18 +8,29 @@ int lf_SendPollMessage(char *msgidr)
   int data_len = strlen(pData);
   char bizmsgidr[35+1];
 
-  strcpy (bizmsgidr, (char*)make_poll_request(1, msgidr) );
-  
-  utrc (data_len, pData, "Send Poll Message : bizmsgidr(%s)", bizmsgidr);
-
-  rc = send_message(bizmsgidr, pData, data_len);
-  if( rc < 0 ) {
-    ulog(_ERROR_, "[로그정보] POLLREQ 전문 송신 실패 !!");
-    return -1;
+  // blocking poll request timer
+  if (msgidr != (char*)NULL && g_UsePoll == 1) {
+    rdf_killTimer(TIMERID_REQ_POLL);
+    ulog(_FLOW_, "Stop Poll Request Timer");
   }
 
-  ulog(_FLOW_, "[로그정보] POLLREQ 전문 송신 성공!!");
+  strcpy (bizmsgidr, (char*)make_poll_request(1, msgidr) );
+    
+  utrc (data_len, pData, "Send Poll Message : bizmsgidr(%s)", bizmsgidr);
 
+  ulog(_FLOW_, "Send Poll Message : bizmsgidr(%s)", bizmsgidr);
+  rc = send_message(bizmsgidr, pData, data_len);
+
+  // restart poll request timer
+  if (msgidr != (char*)NULL && g_UsePoll == 1) {
+    rdf_setTimer(TIMERID_REQ_POLL, g_Poll_Interval*1000, -1, 0, 0, TF_SendPollReq);
+    ulog(_FLOW_, "Restart Poll Request Timer after %d seconds.", g_Poll_Interval);
+  }
+
+  if (rc < 0) {
+    ulog(_ERROR_, "Send Poll Message : bizmsgidr(%s) failed", bizmsgidr);
+    return -1;
+  }
   return 0;
 }
 
@@ -132,11 +143,15 @@ int lf_SendMessage(char* pFrame, int len)
   ulog(_FLOW_, "[로그정보] MsgTpCd: %s, BizMsgIdr: %s", msgtpcd, bizmsgidr);
 
   // remove trailing space
+  removeTrailingSpace(msgtpcd);
+  removeTrailingSpace(bizmsgidr);
+  ulog(_FLOW_, "[로그정보] removeTrailingSpace MsgTpCd: %s, BizMsgIdr: %s", msgtpcd, bizmsgidr);
+
   //memset(bizsvc, 0, sizeof(bizsvc));
   //memcpy(bizsvc, pBokHdr->BizSvc, sizeof(pBokHdr->BizSvc));
   //ulog(_FLOW_, "[로그정보] BizMsgIdr: %s, MsgTpCd: %s, BizSvc: %s", bizmsgidr, msgtpcd, bizsvc);
 
-  // POLLING : OAL2_ISOMSG_O
+  // POLLING REQUEST
   if (memcmp(msgtpcd, "POLLREQ", 7) == 0 ) {
     ulog(_FLOW_, "POLL 요청 수신 ");
     rc = lf_SendPollMessage(bizmsgidr);
@@ -146,7 +161,6 @@ int lf_SendMessage(char* pFrame, int len)
     }
 
     ulog(_FLOW_, "POLL 요청 송신 성공 : msgidr(%s)", bizmsgidr);
-
   	return 0;
   }
 
