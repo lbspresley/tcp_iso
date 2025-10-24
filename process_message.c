@@ -128,7 +128,18 @@ int call_backend (char* snd_msg, int snd_len)
 
   //(void) replaceString(MsgTpCd, ".", "_");
 
-  memcpy(pFepHdr->c_ApCode, APCODE_INBOUND, strlen(APCODE_INBOUND));
+  // memcpy(pFepHdr->c_ApCode, APCODE_INBOUND, strlen(APCODE_INBOUND));
+
+  #ifdef _SHB_
+  BOK_HEADER *pBokHdr = (BOK_HEADER *)(snd_msg + sizeof(S_CL_HEADER));
+  int MsgTpCd_len = sizeof(pBokHdr->MsgTpCd);
+  char MsgTpCd[MsgTpCd_len+1] = {0};
+  memset(MsgTpCd, 0, MsgTpCd_len+1);
+  memcpy(MsgTpCd, pBokHdr->MsgTpCd, MsgTpCd_len);
+  replaceUpper(MsgTpCd);
+  memcpy(pBokHdr->MsgTpCd, MsgTpCd, MsgTpCd_len);
+  ulog(_FLOW_, "UPPER MsgTpCd: %s", MsgTpCd);
+  #endif
 
   utrc(msg_len, snd_msg, "tpacall to CFR_E2B_MSG len(%d)", msg_len);
 
@@ -323,6 +334,20 @@ void replaceChar(char* str, char org, char rep)
     }
   }
 }
+
+void replaceUpper( char* str)
+{
+  // replace lowercase to upper case 
+  char* p = str;
+  for(;*p !=0; p++){
+    if(islower((int)*p)) {
+		  *p = toupper((int)*p);
+	  }
+  }
+
+  return;
+}
+
 
 void removeTrailingSpace( char* str)
 {

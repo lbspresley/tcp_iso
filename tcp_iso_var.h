@@ -109,6 +109,7 @@ int process_message(char* in, int inlen);
 void replaceString(char* str, char* org, char* rep);
 void replaceChar(char* str, char org, char rep);
 void removeTrailingSpace( char* str);
+void replaceUpper( char* str);
 int send_header_only_to_core(char* msgtpcd, char* bizmsgidr);
 
 #endif

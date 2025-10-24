@@ -133,7 +133,7 @@ int process_ack_response(char* msg)
 	}
 
   ulog(_FLOW_, "[ACK] 코어 송신 : msgidr(%s)", msgidr);
-	int rc = send_header_only_to_core("ACK", msgidr);
+	int rc = send_header_only_to_core("ADMI.011", msgidr);
   if (rc < 0)
   {
     ulog(_ERROR_, "[ACK] 코어 송신 실패. rc(%d) msgidr(%s)", rc, msgidr);
