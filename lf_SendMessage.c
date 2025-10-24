@@ -151,6 +151,7 @@ int lf_SendMessage(char* pFrame, int len)
   //memcpy(bizsvc, pBokHdr->BizSvc, sizeof(pBokHdr->BizSvc));
   //ulog(_FLOW_, "[로그정보] BizMsgIdr: %s, MsgTpCd: %s, BizSvc: %s", bizmsgidr, msgtpcd, bizsvc);
 
+#ifndef _SHB_
   // POLLING REQUEST
   if (memcmp(msgtpcd, "POLLREQ", 7) == 0 ) {
     ulog(_FLOW_, "POLL 요청 수신 ");
@@ -163,6 +164,7 @@ int lf_SendMessage(char* pFrame, int len)
     ulog(_FLOW_, "POLL 요청 송신 성공 : msgidr(%s)", bizmsgidr);
   	return 0;
   }
+#endif
 
   // check data length
   pData = pFrame + sizeof(S_CL_HEADER) + sizeof(BOK_HEADER);
