@@ -74,6 +74,7 @@ int 	g_poll_started; // polling start flag
 char g_trs_ip[32] ;
 int g_trs_xml_port ;
 int g_trs_fixed_port ;
+int g_trs_request_timeout ;
 
 int	func_NacfGetMaxSessC(char *strAdtName);
 int UserInit();

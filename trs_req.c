@@ -30,8 +30,8 @@ int tcp_connect(const char* ip, int port)
         return -1;
     }
 
-    // 연결 타임아웃 설정 (5초)
-    timeout.tv_sec = 5;
+    // 연결 타임아웃 설정 (g_trs_request_timeout 초)
+    timeout.tv_sec = g_trs_request_timeout;
     timeout.tv_usec = 0;
     
     // 송신 타임아웃 설정
