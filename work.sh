@@ -80,3 +80,68 @@ xformat()
 	} ' $@
 }
 
+fixcut()
+{
+	awk 'BEGIN{
+		found=0
+		FS="="
+	}
+	{
+		if (length($0) > 100) {data=$0}
+		if ($1 == "[field]") {found=1}
+		if ($1 == "[desc]") {found=0}
+		if (NF !=2 || found == 0) {next}
+		if ($1 == "fieldcount") {fcount=$2}
+
+		idx=$1
+		split($2, arr, ",")
+		name[idx]=arr[1]
+		parent[idx]=arr[2]
+		flen[idx]=arr[3]
+		ftype[idx]=arr[4]
+		fmin[idx]=arr[5]
+	}
+
+    # todo : fix this function
+    # 1. check parentIdx
+	# 2. check grid's min occur which is const value or variable value
+	########################################################
+	# ini sample
+	#[field]
+	# fieldcount=15
+	# 1=Flex_grid_1_count     , 0, 10 , C  , 1
+	# 2=Flex_grid_1           , 0, 4  , G  , %1 , 2
+	# 3=Flex_grid_ele1        , 2, 10 , A  , 1
+	########################################################
+	function print_GridField(i, pos, parentIdx) {
+		minOccur=fmin[i]
+		printf "%3d:%-15s:G[%3d]\n", i, name[i], minOccur
+		for (j=i+1;j<=fcount;j++) {
+			if (parent[j] == parentIdx) {
+				print_field(j, pos)
+			}
+		}
+	}
+	function print_field(i, pos) {
+		if (ftype[i] != "G") {
+			value=substr(data, pos, flen[i])
+			if (ftype[i] == "C") { gridCount[i]=value }
+			printf "%3d:%-15s:%c[%3d]:\033[5;35m%s\033[0m\n", i, name[i], ftype[i], flen[i], value)
+			pos+=flen[i]
+		} else {
+			minOccur=fmin[i]
+			if (substr(minOccur, 1, 1) == "%") {
+				countRef=substr(minOccur, 2)
+				minOccur=gridCount[countRef]
+			}
+			printf "%3d:%-15s:G[%3d]\n", i, name[i], minOccur
+			#print_GridField(i, pos, parent[i], minOccur)
+		}
+	}
+	END{
+		pos=1
+		for (i=1;i<=fcount;i++) {
+			print_field(i, pos)
+		}
+	}' $@
+}
