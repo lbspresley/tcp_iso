@@ -245,7 +245,8 @@ void TF_Ack_Timeout(int TimerID, int lParam, int rParam)
   int rc = ack_retry(ack_info);
   if( rc < 0 ) {
     // timeout
-    ulog( _ERROR_, "TIMEOUT : End-of-Retry for msgIdr(%s). !!!!! ", ack_info->msgidr );
+    ulog( _ERROR_, "[ACK-TIMEOUT] : End-of-Retry for msgIdr(%s). rc(%d)", ack_info->msgidr, rc );
+    ulog( _ERROR_, "[ACK-TIMEOUT] Close all sessions. !!!!! ");
 
     // Close all sessions
     close_all_sessions();
@@ -255,16 +256,19 @@ void TF_Ack_Timeout(int TimerID, int lParam, int rParam)
   return;
 }
 
-void kill_all_timers()
+void remove_all_ack_info()
 {
-  // Kill all ACK timers
   int i;
   for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
     if( g_ack_info[i].use_flag == 1 ) {
-      rdf_killTimer(g_ack_info[i].retry_timer_id);
+      remove_ack_info(&g_ack_info[i]);
     }
   }
+  return;
+}
 
+void kill_all_timers()
+{
   // Kill POLL timers
   rdf_killTimer(TIMERID_REQ_POLL);
 
@@ -277,7 +281,10 @@ void close_all_sessions()
 {
   ulog(_ERROR_, "Close all sessions. !!!!! ");
 
-  // Kill all ACK timers
+  // Remove all ACK info
+  remove_all_ack_info();
+
+  // Kill all timers
   kill_all_timers();
 
   // kill all sessions
