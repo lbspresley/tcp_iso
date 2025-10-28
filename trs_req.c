@@ -140,24 +140,30 @@ int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *
     memset(_trs_req, 0, PRE_LEN);
     memset(_trs_rsp, 0, PRE_LEN);
 
+#if 0
     // send request
     req_len = len + PRE_LEN;
     snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)(req_len-REQ_LEN_LEN) );
     
     memset((char*)trs_req, 0x20, PRE_LEN);
     memcpy(trs_req->len, len_str, REQ_LEN_LEN);
-    //memcpy(trs_req->trs_id, trs_id, TRS_ID_LEN);
-    //memcpy(trs_req->msg_id, msg_idr, TRS_ID_LEN);
     memcpy(trs_req->trs_id, trs_id, strlen(trs_id));
     memcpy(trs_req->msg_id, msg_idr, strlen(msg_idr));
-
-#if 0
     memcpy(trs_req->data, req, len);
 #else
     char* non_header = (char*)remove_header_ns(req);
     int   non_header_len = strlen (non_header);
     ulog(_FLOW_, "remove namespace(h:) len %d -> %d data(%.30s)", len, non_header_len, non_header);
     memcpy(trs_req->data, non_header, non_header_len);
+
+    memset((char*)trs_req, 0x20, PRE_LEN);
+
+    req_len = non_header_len + PRE_LEN;
+    snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)(req_len-REQ_LEN_LEN) );
+    memcpy(trs_req->len, len_str, REQ_LEN_LEN);
+
+    memcpy(trs_req->trs_id, trs_id, strlen(trs_id));
+    memcpy(trs_req->msg_id, msg_idr, strlen(msg_idr));
 #endif
 
 	utrc( req_len, _trs_req, "REQ DATA");
