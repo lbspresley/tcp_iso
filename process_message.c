@@ -154,6 +154,8 @@ int call_backend (char* snd_msg, int snd_len)
   BOK_HEADER *pBokHdr = (BOK_HEADER *)(snd_msg + sizeof(S_CL_HEADER));
   int MsgTpCd_len = sizeof(pBokHdr->MsgTpCd);
   char MsgTpCd[MsgTpCd_len+1] = {0};
+  char ApCode[32+1] = {0};
+
   memset(MsgTpCd, 0, MsgTpCd_len+1);
   memcpy(MsgTpCd, pBokHdr->MsgTpCd, MsgTpCd_len);
   replaceUpper(MsgTpCd);
@@ -252,12 +254,8 @@ int send_to_core(char* outbuf, int outlen)
   // int is_request = 0;
   char* value = NULL;
 
-  //char RespCd   [7+1] = {0};   // REQ(O),RSP(O) (REQ:SPACE, RSP:SUCCESS/FAIL)
   char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
   char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
-  //char BizSvc   [35+1] = {0};  // REQ(X),RSP(O)
-  //char Id       [16+1] = {0};  // REQ(O),RSP(X)
-  //char Password [16+1] = {0};  // REQ(O),RSP(X)
 
   value = (char *)get_tag_value(outbuf, "MsgTpCd");
   if( value == NULL ) {
@@ -286,7 +284,18 @@ int send_to_core(char* outbuf, int outlen)
 
   ulog(_FLOW_, "MsgTpCd: %s, BizMsgIdr: %s, MSG(%.30s)", MsgTpCd, BizMsgIdr, outbuf );
 
-  memcpy(pBokHdr->ApCode, APCODE_INBOUND, strlen(APCODE_INBOUND));
+#ifdef _SHB_
+  char ApCode[100] = {0};
+
+  replaceString(MsgTpCd, ".", "_");
+  sprintf(ApCode, "I%s", MsgTpCd);
+  replaceUpper(ApCode);
+
+  memcpy(pBokHdr->ApCode, ApCode, strlen(ApCode));
+#else
+  memcpy(pBokHdr->ApCode, APCODE_OUTBOUND, strlen(APCODE_OUTBOUND));
+#endif
+
   if (strlen(MsgTpCd) > 0) {
     memcpy(pBokHdr->MsgTpCd, MsgTpCd, strlen(MsgTpCd));
   }
