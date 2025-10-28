@@ -67,34 +67,51 @@ int process_message(char* in, int inlen)
 
   // 4.2 POLL 응답전문 
   if( rc == 2 ) {
+    char reqMsgIdr[35+1] = {0};
+    char orgMsgIdr[35+1] = {0};
+
     ulog(_FLOW_, "[POLL] 응답 수신 !!");
+
+    char* value = (char*)get_tag_value(outbuf, "BizMsgIdr");
+    if( value == NULL ) {
+      value = (char*)get_tag_value(outbuf, "h:BizMsgIdr");
+    }
+    if( value == NULL ) {
+      ulog(_ERROR_, "BizMsgIdr 추출 실패 !!");
+      return 0;
+    }
+    strcpy(reqMsgIdr, value);
 
 	// 업무에서 송신한 POLL 응답은 CORE로 송신
 
 	// a. get original BizMsgIdr from request
-	char* bizmsgidr = (char*)get_tag_value(outbuf, "OrgtrRef");
-	if( bizmsgidr == NULL ) {
-	  ulog(_ERROR_, "OrgtrRef 추출 오류 : No action");
+	value = (char*)get_tag_value(outbuf, "OrgtrRef");
+	if( value == NULL ) {
+	  ulog(_ERROR_, "OrgtrRef 추출 실패 !!");
 	  return 0;
 	}
+	strcpy(orgMsgIdr, value);
+
+	ulog(0, "[POLLRSP] BizMsgIdr(%s), OrgtrRef(%s)", reqMsgIdr, orgMsgIdr);
 
 	// b. FEP에서 보낸 POLL응답인지 확인(msgidr) : sequence(last 6-digit)
-	char *pCh = bizmsgidr + strlen(bizmsgidr) - 6;
-	ulog(0, "bizmsgidr : %s, Sequence : %s", bizmsgidr, pCh);
+	char *pCh = orgMsgIdr + strlen(orgMsgIdr) - 6;
 	if (*pCh == '9' ){
 	  // send from FEP 
+	  ulog(_FLOW_, "[POLLRSP] FEP에서 보낸 POLL응답. msgidr(%s)", orgMsgIdr);
 	  return 0;
 	}
 
+  ulog(_FLOW_, "[POLLRSP] 코어 송신 : msgidr(%s)", orgMsgIdr);
+
 #ifndef _SHB_
-  ulog(_FLOW_, "[POLLRSP] 코어 송신 : msgidr(%s)", bizmsgidr);
-	rc = send_header_only_to_core("POLLRSP", bizmsgidr);
+	rc = send_header_only_to_core("POLLRSP", orgMsgIdr);
   if( rc < 0 ) {
-    ulog(_ERROR_, "[POLLRSP] 코어 송신 실패. rc(%d) msgidr(%s)", rc, bizmsgidr);
+    ulog(_ERROR_, "[POLLRSP] 코어 송신 실패. rc(%d) msgidr(%s)", rc, orgMsgIdr);
     return -6;
   }
 
-  ulog(_FLOW_, "[POLLRSP] 코어 송신 성공 : msgidr(%s)", bizmsgidr);
+  ulog(_FLOW_, "[POLLRSP] 코어 송신 성공 : msgidr(%s)", orgMsgIdr);
 	return 0;
 #endif
   }
