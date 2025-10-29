@@ -107,6 +107,8 @@ int send_to_core(char* outbuf, int outlen);
 
 // process_message.c
 int process_message(char* in, int inlen);
+char* replaceDupTag(int flag, char* str);
+char* replaceString2(char* str, char* org, char* rep);
 void replaceString(char* str, char* org, char* rep);
 void replaceChar(char* str, char org, char rep);
 void removeTrailingSpace( char* str);

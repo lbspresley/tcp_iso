@@ -35,11 +35,12 @@
 #define		SIZE_SKEY_000000001		92
 #define		SIZE_SKEY_000000002		1792
 #define		SIZE_SKEY_000000003		268
-#define		SIZE_SKEY_000000004		108
+#define		SIZE_SKEY_000000004	#d	108
 #define		SIZE_SKEY_000000005		92
 
 
 //#define		INISAFENET_CONF			"/app/mcx/initech/INISAFE_Net_for_C/conf/INISAFENet_PSB.cnf"
 
+#define DUP_DELIMETER   "%DL%"
 
 #endif

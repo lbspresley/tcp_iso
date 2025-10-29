@@ -341,6 +341,76 @@ int send_to_core(char* outbuf, int outlen)
   return 0;
 }
 
+char* replaceDupTag(int flag, char* str)
+{
+  static char _dup_tags[2][36] = { "AddtlInf", "" };
+  static int _dup_tags_count = 1;
+  
+  char tag_str[100];
+  int i;
+  char* out = str;
+  char* in;
+
+  for (i=0; i<_dup_tags_count; i++){
+    in = strdup(out);
+    sprintf (tag_str, "</%s><%s>", _dup_tags[i], _dup_tags[i]);
+    if (flag==0){
+      // XML
+      out = replaceString2(in, tag_str, DUP_DELIMETER);
+    } else {
+      // FIXED
+      out = replaceString2(in, DUP_DELIMETER, tag_str);
+    }
+    free(in);
+  }
+
+  return out;
+}
+
+char* replaceString2(char* str, char* org, char* rep)
+{
+  static char _replaceStr[MAX_MSG_LEN];
+  int org_len = strlen(org);
+  int rep_len = strlen(rep);
+  int copy_len;
+  char* pRep =_replaceStr;
+  char* pOrg = str;
+
+  char* ptr = strstr(str, org);
+  if (ptr == NULL) {
+    return str;
+  }
+
+  // initial copy
+  copy_len = (int)(ptr-str);
+  memcpy( pRep, pOrg, copy_len);
+  pOrg += copy_len;
+  pRep += copy_len;
+  memcpy( pRep, rep, rep_len);
+  pOrg += org_len;
+  pRep += rep_len;
+
+  while( pOrg != NULL ) {
+    ptr = strstr(pOrg, org);
+    if( ptr != NULL ) {
+      copy_len = (int)(ptr-pOrg);
+      memcpy( pRep, pOrg, copy_len);
+      pOrg += copy_len;
+      pRep += copy_len;
+
+      memcpy(pRep, rep, rep_len);
+      pOrg += org_len;
+      pRep += rep_len;
+    } else {
+      *pRep = 0;
+      strcat (_replaceStr, pOrg);
+      break;
+    }
+  }
+
+  return _replaceStr;
+}
+
 // CAUTION: org, rep 둘다 문자열(length=1)
 void replaceString(char* str, char* org, char* rep)
 {
