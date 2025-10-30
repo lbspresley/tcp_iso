@@ -45,6 +45,10 @@ realdata()
 xcut()
 {
 	awk '{
+		if (substr($1, 1,3) !~ /</ || /data len: /){
+			print
+			next
+		}
 		gsub(">[ \t\r]*<", ">\n<")
 		print
 	} ' $@
@@ -65,6 +69,10 @@ xformat()
 	}
 
 	{
+		if (substr($1, 1,3) !~ /</ || /data len: /){
+			print
+			next
+		}
 		tag=substr($0, 1, 2)
 		if (tag == "</"){
 			if(depth>0){depth--}
@@ -122,6 +130,7 @@ fixcut()
 			}
 		}
 	}
+
 	function print_field(i, pos) {
 		if (ftype[i] != "G") {
 			value=substr(data, pos, flen[i])
@@ -138,10 +147,33 @@ fixcut()
 			#print_GridField(i, pos, parent[i], minOccur)
 		}
 	}
+
 	END{
 		pos=1
 		for (i=1;i<=fcount;i++) {
 			print_field(i, pos)
 		}
 	}' $@
+}
+
+dfile()
+{
+	spattern=0
+	epattern=0
+
+	if [ $spattern != "0" ];then
+		awk -v start_pattern=$spattern -v end_pattern=$epattern '
+			BEGIN{
+				found=0
+			}
+			{
+				if($0 ~ start_pattern){found=1}
+				if(found==1 && end_pattern != 0 && $0 ~ end_pattern){found=0}
+				if(found==0){next}
+				print
+			}
+		}' $FILE
+	else
+		tail -f $FILE
+	fi | realdata
 }
