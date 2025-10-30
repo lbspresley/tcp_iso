@@ -213,6 +213,51 @@ int send_header_only_to_core(char* msgtpcd, char* bizmsgidr)
   return 0;
 }
 
+#ifdef _SHB_
+int send_ack_rsp_to_core (char* msgtpcd, char* bizmsgidr)
+{
+	int rc;
+	int msg_len = sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
+
+  char* snd_msg = (char*)tpalloc("CARRAY", NULL, msg_len);
+  if( snd_msg == NULL ) {
+    ulog(_ERROR_, "Failed to allocate memory for tpalloc message");
+    return -1;
+  }
+
+  BOK_HEADER *pBokHdr = (BOK_HEADER *)(snd_msg + sizeof(S_CL_HEADER));
+  memset((char*)pBokHdr, 0x20, SIZE_BOK_HEADER);
+
+  char ApCode  [35+1] = {0};  
+  char MsgTpCd  [35+1] = {0};
+  char BizMsgIdr[35+1] = {0};
+
+	replaceString(msgtpcd, ",", "_");
+	sprintf (ApCode, "A%s", msgtpcd);
+	replaceUpper (ApCode);
+
+  memcpy(pBokHdr->ApCode, ApCode, strlen(ApCode));
+  memcpy(pBokHdr->MsgTpCd, msgtpcd, strlen(msgtpcd));
+  memcpy(pBokHdr->BizMsgIdr, bizmsgidr, strlen(bizmsgidr));
+
+	utrc(msg_len, snd_msg, "ACK RSP");
+
+  // ack rsp
+  rc = call_backend (snd_msg, 0);
+  if (rc < 0 ){
+    ulog(_ERROR_, "call_backend() error rc:%d", rc); 
+		// must be free 
+		tpfree(snd_msg);
+    return -1;
+  }
+
+  // must be free
+  tpfree(snd_msg);
+
+  return 0;
+}
+#endif
+
 /*
 * 코어 송신(E2B)
 * a. FEP 헤더 생성
@@ -262,7 +307,7 @@ int send_to_core(char* outbuf, int outlen)
   	value = (char *)get_tag_value(outbuf, "h:MsgTpCd");
     if( value == NULL ) {
       ulog(_ERROR_, "MsgTpCd 추출 실패 !!");
-      return -5;
+      return -3;
     }
   }
 
@@ -277,7 +322,7 @@ int send_to_core(char* outbuf, int outlen)
     value = (char *)get_tag_value(outbuf, "h:BizMsgIdr");
     if (value == NULL) {
       ulog(_ERROR_, "BizMsgIdr 추출 실패 !!");
-      return -9;
+      return -4;
     }
   }
   strcpy(BizMsgIdr, value);
@@ -314,7 +359,7 @@ int send_to_core(char* outbuf, int outlen)
     bokwire_body = (char*)get_tag_value(outbuf, "BokwireBody");
     if( bokwire_body == NULL ) {
       ulog(_ERROR_, "BokwireBody 추출 실패 !!");
-      return -12;
+      return -5;
     }
   }
 
@@ -329,13 +374,13 @@ int send_to_core(char* outbuf, int outlen)
   if (outlen < 0)
   {
     ulog(_ERROR_, "[전문변환] 전문변환 실패 !!");
-    return -12;
+    return -6;
   }
 
   rc = call_backend (_tpalloc_msg, outlen);
   if (rc < 0 ){
     ulog(_ERROR_, "call_backend() error rc:%d", rc);
-    return -1;
+    return -7;
   }
 
   return 0;

@@ -176,6 +176,9 @@ int lf_SendMessage(char* pFrame, int len)
   memset(trs_data, 0, sizeof(trs_data));
   ulog(0, "TRS FIX Data:len(%d)\n%s", data_len, pData); 
 
+	// replace MsgTpCd for trs
+	(void) replaceString (msgtpcd, "_", ".");
+
   // req_trs
   int trs_len = req_trs_fixed(msgtpcd, bizmsgidr, pData, data_len, trs_data);
   if( trs_len < 0 ) {

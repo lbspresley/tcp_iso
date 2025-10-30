@@ -112,8 +112,9 @@ int req_trs_fixed(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp
 #if 1
     int rsp_len  = req_trs(1, msg_tp_cd, msg_idr, req, len, resp );
     if (rsp_len > 0) {
-        char* ptr = replaceDupTag(1, req);
+        char* ptr = replaceDupTag(1, resp);
         rsp_len = strlen(ptr);
+        strcpy(resp, ptr);
     }
     return rsp_len;
 #else
@@ -123,125 +124,118 @@ int req_trs_fixed(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp
 
 int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
 {
-    static char _trs_req[MAX_TRS_DATA_LEN];
-    static char _trs_rsp[MAX_TRS_DATA_LEN];
-    struct trs_req_t *trs_req = (struct trs_req_t *)_trs_req;
-    struct trs_req_t *trs_rsp = (struct trs_req_t *)_trs_rsp;
+	static char _trs_req[MAX_TRS_DATA_LEN];
+	static char _trs_rsp[MAX_TRS_DATA_LEN];
+	struct trs_req_t *trs_req = (struct trs_req_t *)_trs_req;
+	struct trs_req_t *trs_rsp = (struct trs_req_t *)_trs_rsp;
 
-    char len_str[10];
-    int req_len = 0;
+	char len_str[10];
+	int req_len = 0;
 
-    int port = 0;
-    if (type == 0) {
-        port = g_trs_xml_port;
-    } else {
-        port = g_trs_fixed_port;
-    }
+	int port = 0;
+	if (type == 0) {
+		port = g_trs_xml_port;
+	} else {
+		port = g_trs_fixed_port;
+	}
 
-    int fd = -1;
-    fd = init_trs_req(g_trs_ip, port);
-    if (fd < 0) {
-        ulog( _ERROR_, "TRS connect failed (type:%s)-(%s:%d)", (type == 0) ? "XML" : "FIXED", g_trs_ip, port);
-        return -1;
-    }
+	int fd = -1;
+	fd = init_trs_req(g_trs_ip, port);
+	if (fd < 0) {
+		ulog( _ERROR_, "TRS connect failed (type:%s)-(%s:%d)", (type == 0) ? "XML" : "FIXED", g_trs_ip, port);
+		return -1;
+	}
 
-    // MsgTpCd를 TRSID로 변환
-    char trs_id[36];
-    strcpy(trs_id, msg_tp_cd);
-    msgtpcd_to_trsid(type, trs_id);
+	// MsgTpCd를 TRSID로 변환
+	char trs_id[36];
+	strcpy(trs_id, msg_tp_cd);
+	msgtpcd_to_trsid(type, trs_id);
 
 	ulog(0, "msgtp(%s) trsid(%s)", msg_tp_cd, trs_id);
 
-    memset(_trs_req, 0, PRE_LEN);
-    memset(_trs_rsp, 0, PRE_LEN);
+	memset(_trs_req, 0x20, PRE_LEN);
+	memset(_trs_rsp, 0, PRE_LEN);
 
-#if 0
-    // send request
-    req_len = len + PRE_LEN;
-    snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)(req_len-REQ_LEN_LEN) );
-    
-    memset((char*)trs_req, 0x20, PRE_LEN);
-    memcpy(trs_req->len, len_str, REQ_LEN_LEN);
-    memcpy(trs_req->trs_id, trs_id, strlen(trs_id));
-    memcpy(trs_req->msg_id, msg_idr, strlen(msg_idr));
-    memcpy(trs_req->data, req, len);
+	// send request
+#if 0	// remove xmlns prefix(h:)
+	char* non_header = (char*)remove_header_ns(req);
+	int   non_header_len = strlen (non_header);
+	ulog(_FLOW_, "remove namespace(h:) len %d -> %d data(%.30s)", len, non_header_len, non_header);
+
+	req_len = non_header_len + PRE_LEN;
+	memcpy(trs_req->data, non_header, non_header_len);
 #else
-    char* non_header = (char*)remove_header_ns(req);
-    int   non_header_len = strlen (non_header);
-    ulog(_FLOW_, "remove namespace(h:) len %d -> %d data(%.30s)", len, non_header_len, non_header);
-    memcpy(trs_req->data, non_header, non_header_len);
-
-    memset((char*)trs_req, 0x20, PRE_LEN);
-
-    req_len = non_header_len + PRE_LEN;
-    snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)(req_len-REQ_LEN_LEN) );
-    memcpy(trs_req->len, len_str, REQ_LEN_LEN);
-
-    memcpy(trs_req->trs_id, trs_id, strlen(trs_id));
-    memcpy(trs_req->msg_id, msg_idr, strlen(msg_idr));
+	req_len = len + PRE_LEN;
+	memcpy(trs_req->data, req, len);
 #endif
 
+	snprintf(len_str, sizeof(len_str), "%05d", (unsigned short)(req_len-REQ_LEN_LEN) );
+	memcpy(trs_req->len, len_str, REQ_LEN_LEN);
+
+	memcpy(trs_req->trs_id, trs_id, strlen(trs_id));
+	memcpy(trs_req->msg_id, msg_idr, strlen(msg_idr));
+
 	utrc( req_len, _trs_req, "REQ DATA");
-    
-    // send request
-    int rc = send(fd, (char*) trs_req, req_len, 0);
-    if (rc != req_len) {
-        ulog( _ERROR_, "Failed to send request to TRS: %s:%d\n", g_trs_ip, port);
-        close_trs_req(fd);
-        return -2;
-    }
+
+	// send request
+	int rc = send(fd, (char*) trs_req, req_len, 0);
+	if (rc != req_len) {
+		ulog( _ERROR_, "Failed to send request to TRS: %s:%d\n", g_trs_ip, port);
+		close_trs_req(fd);
+		return -2;
+	}
 	ulog( 0, "TRS send ok (%d)", rc );
 
-    memset(trs_rsp, 0x20, PRE_LEN);
+	memset(trs_rsp, 0x20, PRE_LEN);
 
-    // receive response
+	// receive response
 	memset( len_str, 0, sizeof(len_str));
 
-    rc = recv(fd, (char*) len_str, REQ_LEN_LEN, 0);
-    if (rc != REQ_LEN_LEN) {
-        ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
-        close_trs_req(fd);
-        return -3;
-    }
+	rc = recv(fd, (char*) len_str, REQ_LEN_LEN, 0);
+	if (rc != REQ_LEN_LEN) {
+		ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
+		close_trs_req(fd);
+		return -3;
+	}
 
-    int rsp_len = atoi(len_str);
-    if (rsp_len <= 0) {
-        ulog( _ERROR_, "Response length is invalid: (%s) --> %d\n", len_str, rsp_len);
-        close_trs_req(fd);
-        return -4;
-    }
+	int rsp_len = atoi(len_str);
+	if (rsp_len <= 0) {
+		ulog( _ERROR_, "Response length is invalid: (%s) --> %d\n", len_str, rsp_len);
+		close_trs_req(fd);
+		return -4;
+	}
 
-    // receive response
+	// receive response
 	int total_len = 0;
 	int rcv_len = rsp_len;
 	char *pRcv = (char*)_trs_rsp;
 
 	while(total_len<rsp_len){
-      rc = recv(fd, (char*) (pRcv+total_len), rcv_len, 0);
-      if (rc < 0){
-          ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
-          close_trs_req(fd);
-          return -5;
-      }
-	  total_len += rc;
-	  rcv_len -= rc;
+		rc = recv(fd, (char*) (pRcv+total_len), rcv_len, 0);
+		if (rc < 0){
+			ulog( _ERROR_, "Failed to receive response from TRS: %s:%d\n", g_trs_ip, port);
+			close_trs_req(fd);
+			return -5;
+		}
+		total_len += rc;
+		rcv_len -= rc;
 	}
 
-    memcpy(resp, _trs_rsp, rsp_len);
+	memcpy(resp, _trs_rsp, rsp_len);
 
 #if 1
-    // TODO: error processing
-    if (memcmp(_trs_rsp, "ERROR:", 6) == 0) {
-        ulog( _ERROR_, "TRS returns error message(%s)", _trs_rsp);
-        utrc( rsp_len, _trs_rsp, "TRS ERROR MESSAGE");
-        return -6;
-    }
+	// TODO: error processing(ex. file log)
+	if (memcmp(_trs_rsp, "ERROR:", 6) == 0) {
+		ulog( _ERROR_, "TRS returns error message(%s)", _trs_rsp);
+		utrc( rsp_len, _trs_rsp, "TRS ERROR MESSAGE");
+		return -6;
+	}
 #endif
 
 	ulog( 0, "TRS recv ok (%d) data_len :%d", rc, rsp_len );
 
-    close_trs_req(fd);
-    return rsp_len;
+	close_trs_req(fd);
+	return rsp_len;
 }
 
 
