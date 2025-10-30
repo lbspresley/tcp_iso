@@ -421,37 +421,26 @@ char* replaceString2(char* str, char* org, char* rep)
   char* pRep =_replaceStr;
   char* pOrg = str;
 
-  char* ptr = strstr(str, org);
+  char* ptr = strstr(pOrg, org);
   if (ptr == NULL) {
     return str;
   }
 
-  // initial copy
-  copy_len = (int)(ptr-str);
-  memcpy( pRep, pOrg, copy_len);
-  pOrg += copy_len;
-  pRep += copy_len;
-  memcpy( pRep, rep, rep_len);
-  pOrg += org_len;
-  pRep += rep_len;
+  while (ptr != NULL) {
+    copy_len = (int)(ptr - pOrg);
+    memcpy(pRep, pOrg, copy_len);
+    pOrg += copy_len;
+    pRep += copy_len;
 
-  while( pOrg != NULL ) {
+    memcpy(pRep, rep, rep_len);
+    pOrg += org_len;
+    pRep += rep_len;
+
     ptr = strstr(pOrg, org);
-    if( ptr != NULL ) {
-      copy_len = (int)(ptr-pOrg);
-      memcpy( pRep, pOrg, copy_len);
-      pOrg += copy_len;
-      pRep += copy_len;
-
-      memcpy(pRep, rep, rep_len);
-      pOrg += org_len;
-      pRep += rep_len;
-    } else {
-      *pRep = 0;
-      strcat (_replaceStr, pOrg);
-      break;
-    }
   }
+
+  *pRep = 0;
+  strcat(_replaceStr, pOrg);
 
   return _replaceStr;
 }
