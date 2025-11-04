@@ -648,134 +648,13 @@ int save_send_msg(char* msgidr, unsigned char* msg, int msg_len)
 }
 
 // 문자셋 변환
-#if 0 // command shell을 통한 변환
-int charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
+int charset_convert(char* to_charset, char* from_charset, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
 {
-  char from_charset[32];
-  char to_charset[32];
-
-  if (encode_type == 0) {
-    // 0: IBM-1363 -> UTF-8
-    strcpy(from_charset, "IBM-1363");
-    strcpy(to_charset, "UTF-8");
-  } else if (encode_type == 1) {
-    // 1: UTF-8 -> IBM-1363
-    strcpy(from_charset, "UTF-8");
-    strcpy(to_charset, "IBM-1363");
-  } else {
-    ulog(_ERROR_, "Invalid encode type");
-    return -1;
-  }
-
-  char command[512];
-  char path[512];
-  char in_filename[512]="/tmp/iconv.in.txt";
-  char out_filename[512];
-  char *pResult = out_filename;
-
-  // 1. write file to in_file
-  FILE* fp;
-  fp = fopen(in_filename, "w");
-  if( fp == NULL ){
-	  perror("fopen");
-	  return -1;
-  }
-  fwrite(msg, 1, msg_len, fp);
-  fclose(fp);
-
-
-  // 2. make command string
-  sprintf(path, "%s/shell", getenv("CL_HOME"));
-  sprintf(command, "%s/iconv.sh %d %s", path, encode_type, in_filename );
-  fp = popen(command, "r");
-  if (fp == NULL){
-    perror("popen");
-    return -1;
-  }
-
-  // 2. read file from out_file
-  memset (out_filename, 0, sizeof(out_filename));
-  
-  pResult = fgets(pResult, sizeof(out_filename)-1, fp);
-  if( pResult == (char*)NULL){
-	  perror("fgets");
-	  return -1;
-  }
-
-  ulog (_FLOW_, "Result : %s\n", out_filename);
-  if( strncmp(out_filename, "FAIL", 4) == 0 ){
-	  printf("Failed to convert\n");
-	  pclose(fp);
-	  return -1;
-  }
-
-  int status = pclose(fp);
-  if (status == -1) {
-	  perror("Error closing pipe");
-	  return -1;
-  }
-
-  fp = fopen(out_filename, "r");
-  if( fp == NULL ){
-	  perror("fopen");
-	  return -1;
-  }
-
-  int len;
-  int total_len=0;
-  char buffer[1024+1];
-  char* pOut = (char*)out_msg;
-
-  while(1) {
-	  len=fread(buffer, 1, 1024, fp);
-	  if( len == 0 ) break;
-	  memcpy(pOut, buffer, len);
-	  total_len += len;
-	  pOut += len;
-  }
-
-  printf ("Total length : %d\n", (int)total_len);
-  printf ("Result : %s\n", out_msg);
-
-  fclose(fp);
-  unlink(in_filename);
-  unlink(out_filename);
-
-  *out_msg_len = total_len;
-
-  return 0;
-}
-#else
-int charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* out_msg, size_t *out_msg_len )
-{
-  char from_charset[32];
-  char to_charset[32];
-
-  if (encode_type == 0) {
-    // 0: ETC-KR -> UTF-8
-    strcpy(from_charset, "EUC-KR");
-    strcpy(to_charset, "UTF-8");
-  } else if (encode_type == 1) {
-    // 1: UTF-8 -> ETC-KR
-    strcpy(from_charset, "UTF-8");
-    strcpy(to_charset, "EUC-KR");
-  } else if (encode_type == 2) {
-    // 2: CP949 -> UTF-8
-    strcpy(from_charset, "CP949");
-    strcpy(to_charset, "UTF-8");
-  } else if (encode_type == 3) {
-    // 3: UTF-8 -> CP949
-    strcpy(from_charset, "UTF-8");
-    strcpy(to_charset, "CP949");
-  } else {
-    ulog(_ERROR_, "Invalid encode type");
-    return -1;
-  }
-
   // charset convert
   iconv_t cd = iconv_open(to_charset, from_charset);
   if (cd == (iconv_t)-1) {
-    perror("iconv");
+    ulog(_ERROR_, "Failed to open iconv: from_charset(%s), to_charset(%s)", from_charset, to_charset);
+    ulog(_ERROR_, "iconv_open error(%d) : %s", errno, strerror(errno));
     return -1;
   }
 
@@ -783,25 +662,20 @@ int charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* o
   char* pOut = (char*)out_msg;
   char* pOutStart = pOut;  // 변환 전 시작 위치 저장
   size_t inLen = msg_len;
-  size_t outLenBefore = *out_msg_len;  // 변환 전 버퍼 크기 저장
   size_t ret = iconv(cd, &pIn, &inLen, &pOut, out_msg_len);
   if (ret == (size_t)-1) {
-    perror("iconv");
+    ulog(_ERROR_, "Failed to convert charset: from_charset(%s), to_charset(%s), errno(%d)", from_charset, to_charset, errno);
+    ulog(_ERROR_, "iconv error(%d): %s", errno, strerror(errno));
     iconv_close(cd);
     return -2;
   }
 
-  // 변환된 바이트 수 = pOut 포인터의 이동량
-  // 또는: outLenBefore - *out_msg_len (변환 전 버퍼 크기 - 변환 후 남은 버퍼 크기)
   *out_msg_len = pOut - pOutStart;
-
   iconv_close(cd);
 
   return 0;
 }
-#endif
 
-// 0: EUC-KR -> UTF-8, 2: CP949 -> UTF-8
 unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len )
 {
   static int _utf8_converted_msg_len = MAX_MSG_LEN;
@@ -815,18 +689,8 @@ unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, siz
     }
   }
 
-  int kr_encoding_type = 0;
-  if( strcmp(kr_encoding, "EUC-KR") == 0 ) {
-    kr_encoding_type = 0;
-  } else if( strcmp(kr_encoding, "CP949") == 0 ) {
-    kr_encoding_type = 2;
-  } else {
-    ulog(_ERROR_, "Invalid kr encoding");
-    return (unsigned char*)NULL;
-  }
-
   size_t conv_out_msg_len = _utf8_converted_msg_len;
-  int rc = charset_convert(kr_encoding_type, msg, msg_len, _utf8_converted_msg, &conv_out_msg_len);
+  int rc = charset_convert("UTF-8", kr_encoding, msg, msg_len, _utf8_converted_msg, &conv_out_msg_len);
   if( rc < 0 ) {
     ulog(_ERROR_, "Failed to convert message to utf8");
     return (unsigned char*)NULL;  
@@ -836,7 +700,6 @@ unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, siz
   return _utf8_converted_msg;
 }
 
-// 1: UTF-8 -> EUC-KR, 3: UTF-8 -> CP949
 unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_t *out_msg_len )
 {
   static int _kr_converted_msg_len = MAX_MSG_LEN;
@@ -850,18 +713,8 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
     }
   }
 
-  int kr_encoding_type = 1;
-  if( strcmp(kr_encoding, "EUC-KR") == 0 ) {
-    kr_encoding_type = 1;
-  } else if( strcmp(kr_encoding, "CP949") == 0 ) {
-    kr_encoding_type = 3;
-  } else {
-    ulog(_ERROR_, "Invalid kr encoding");
-    return (unsigned char*)NULL;
-  }
-
   size_t conv_out_msg_len = _kr_converted_msg_len;
-  int rc = charset_convert(kr_encoding_type, msg, msg_len, _kr_converted_msg, &conv_out_msg_len);
+  int rc = charset_convert(kr_encoding, "UTF-8", msg, msg_len, _kr_converted_msg, &conv_out_msg_len);
   if( rc < 0 ) {
     ulog(_ERROR_, "Failed to convert message to kr");
     return (unsigned char*)NULL;
