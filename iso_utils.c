@@ -781,14 +781,19 @@ int charset_convert(int encode_type, char* msg, size_t msg_len, unsigned char* o
 
   char* pIn = msg;
   char* pOut = (char*)out_msg;
+  char* pOutStart = pOut;  // 변환 전 시작 위치 저장
   size_t inLen = msg_len;
-  size_t outLen = iconv(cd, &pIn, &inLen, &pOut, out_msg_len);
-  if (outLen == (size_t)-1) {
+  size_t outLenBefore = *out_msg_len;  // 변환 전 버퍼 크기 저장
+  size_t ret = iconv(cd, &pIn, &inLen, &pOut, out_msg_len);
+  if (ret == (size_t)-1) {
     perror("iconv");
+    iconv_close(cd);
     return -2;
   }
 
-  *out_msg_len = outLen;
+  // 변환된 바이트 수 = pOut 포인터의 이동량
+  // 또는: outLenBefore - *out_msg_len (변환 전 버퍼 크기 - 변환 후 남은 버퍼 크기)
+  *out_msg_len = pOut - pOutStart;
 
   iconv_close(cd);
 
@@ -820,13 +825,14 @@ unsigned char* convert_to_utf8(char* kr_encoding, char* msg, size_t msg_len, siz
     return (unsigned char*)NULL;
   }
 
-  int rc = charset_convert(kr_encoding_type, msg, msg_len, _utf8_converted_msg, out_msg_len);
+  size_t conv_out_msg_len = _utf8_converted_msg_len;
+  int rc = charset_convert(kr_encoding_type, msg, msg_len, _utf8_converted_msg, &conv_out_msg_len);
   if( rc < 0 ) {
     ulog(_ERROR_, "Failed to convert message to utf8");
     return (unsigned char*)NULL;  
   }
 
-  *out_msg_len = *out_msg_len;  
+  *out_msg_len = conv_out_msg_len;  
   return _utf8_converted_msg;
 }
 
@@ -854,13 +860,14 @@ unsigned char* convert_to_kr(char* kr_encoding, char* msg, size_t msg_len, size_
     return (unsigned char*)NULL;
   }
 
-  int rc = charset_convert(kr_encoding_type, msg, msg_len, _kr_converted_msg, out_msg_len);
+  size_t conv_out_msg_len = _kr_converted_msg_len;
+  int rc = charset_convert(kr_encoding_type, msg, msg_len, _kr_converted_msg, &conv_out_msg_len);
   if( rc < 0 ) {
     ulog(_ERROR_, "Failed to convert message to kr");
     return (unsigned char*)NULL;
   }
 
-  *out_msg_len = *out_msg_len;
+  *out_msg_len = conv_out_msg_len;
   return _kr_converted_msg;
 }
 
