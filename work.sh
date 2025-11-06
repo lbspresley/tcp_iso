@@ -208,12 +208,17 @@ fixcut()
 
 	END{
 		for (i=1;i<=fcount;) {
-			if (type[f] == "G" ){
+			if (parent[i] != 0 ){
+				i++
+				continue
+			}
+			if (type[i] == "G" ){
 				i=printGrid(0, i)
-				break
-			} 
-			i=printField(0, i)
+			} else {
+				i=printField(0, i)
+			}
 		}
+		printf "Data Len(%d), Parsing Len(%d)\n", length(data), POS
 	}' $@
 }
 
