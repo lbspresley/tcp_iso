@@ -175,6 +175,7 @@ int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *
 	memcpy(trs_req->trs_id, trs_id, strlen(trs_id));
 	memcpy(trs_req->msg_id, msg_idr, strlen(msg_idr));
 
+    _trs_req[req_len] = '\0'; // set last to null
 	utrc( req_len, _trs_req, "REQ DATA");
 
 	// send request

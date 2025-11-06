@@ -200,6 +200,8 @@ int send_message(char* msgidr, char* msg, int msg_len)
   memcpy((char*)_send_msg + 5, _encrypt_msg, encrypt_msg_len);
   int send_msg_len = encrypt_msg_len + 5;
 
+  _send_msg[send_msg_len] = '\0'; // set last to null
+
   /* call rmp action */
   strcpy(g_rmpSvcName, "SNDMSG_ISO");
   rc = rmp_MessageProc( g_rmpSvcName, 0, _send_msg, send_msg_len, 0, 0 );

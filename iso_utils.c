@@ -664,13 +664,19 @@ int charset_convert(char* to_charset, char* from_charset, char* msg, size_t msg_
   size_t inLen = msg_len;
   size_t ret = iconv(cd, &pIn, &inLen, &pOut, out_msg_len);
   if (ret == (size_t)-1) {
-    ulog(_ERROR_, "Failed to convert charset: from_charset(%s), to_charset(%s), errno(%d)", from_charset, to_charset, errno);
+    ulog(_ERROR_, "Failed to convert charset: to_charset(%s), from_charset(%s)", to_charset, from_charset);
     ulog(_ERROR_, "iconv error(%d): %s", errno, strerror(errno));
     iconv_close(cd);
     return -2;
   }
 
-  *out_msg_len = pOut - pOutStart;
+  if (ret != 0) {
+    ulog(_WARNING_, "Incomplete conversion: to_charset(%s), from_charset(%s), Length(%d), Remain(%d)", to_charset, from_charset, msg_len, ret);
+  }
+  ret = (size_t)(pOut - pOutStart);
+  *(pOut + ret) = '\0'; // set last to null
+
+  *out_msg_len = ret;
   iconv_close(cd);
 
   return 0;
