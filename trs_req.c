@@ -98,10 +98,11 @@ void msgtpcd_to_trsid(int type, char* msgtpcd )
 
 int req_trs_xml(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
 {
-#if 1
+#ifdef _DUP_TAG
     char* ptr = replaceDupTag(0, req);
+    int rep_len  = strlen(ptr);
 
-    return req_trs(0, msg_tp_cd, msg_idr, ptr, len, resp );
+    return req_trs(0, msg_tp_cd, msg_idr, ptr, rep_len, resp );
 #else
     return req_trs(0, msg_tp_cd, msg_idr, req, len, resp );
 #endif
@@ -109,7 +110,7 @@ int req_trs_xml(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp )
 
 int req_trs_fixed(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
 {
-#if 1
+#ifdef _DUP_TAG
     int rsp_len  = req_trs(1, msg_tp_cd, msg_idr, req, len, resp );
     if (rsp_len > 0) {
         char* ptr = replaceDupTag(1, resp);
