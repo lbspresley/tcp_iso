@@ -106,10 +106,12 @@ fcut()
 
 	tgrm=0
 	tgrm_file=0
+	view_flag=0
 
-	set -- $(getopt f:i:h $*)
+	set -- $(getopt vf:i:h $*)
 	while [ $1 != "--" ]; do
 		case $1 in
+			-v) view_flag=1 ;;
 			-i) tgrm=$2 && shift ;;
 			-f) tgrm_file=$2 && shift ;;
 			-h) fcut_usage && return ;;
@@ -140,6 +142,7 @@ fcut()
 		return
 	fi
 
+	(( $view_flag == 1 )) && printf "INI : %s\n" $INI_FILE 
 	fixcut $INI_FILE $DAT_FILE
 }
 
@@ -162,7 +165,7 @@ fixcut()
   }
 
 	function printField (depth, idx) {
-		field_data = substr (data, POS, flen[idx])
+	field_data = substr (data, POS, flen[idx])
 		POS += flen[idx]
 		dprint (depth, idx, field_data)
 		return idx+1
@@ -174,12 +177,12 @@ fixcut()
 
 		rtn_idx = idx+1
 		for (g=0;g<grid_size;g++) {
-			for (f=idx+1;f<fcount;) {
+			for (f=idx+1;f<=fcount;) {
 				if (parent[f] != idx){
 					rtn_idx = f
 					break
 				}
-				if (type[f] == "G" ){
+				if (ftype[f] == "G" ){
 					f=printGrid(depth+1, f)
 				} else {
 					f=printField(depth+1, f)
@@ -218,7 +221,7 @@ fixcut()
 				i=printField(0, i)
 			}
 		}
-		printf "Data Len(%d), Parsing Len(%d)\n", length(data), POS
+		printf "Data Len(%d), Parsing Len(%d)\n", length(data), POS-1
 	}' $@
 }
 
@@ -231,15 +234,17 @@ dfile()
 	epattern=0
 	data_count=5
 	viewopt=0
+	editopt=0
 
 	dfile_usage()
 	{
-		printf "Usage: dfile [-v] [-n CHID] [-l line] [-c data-count] [-s start] [-e end] [-h]\n"
+		printf "Usage: dfile [-v] [-V] [-n CHID] [-l line] [-c data-count] [-s start] [-e end] [-h]\n"
 	}
 
 	set -- $(getopt vhc:s:e:n:l: $*)
 	while [ $1 != "--" ]; do
 		case $1 in
+			-V) editopt=1 ;;
 			-v) viewopt=1 ;;
 			-h) dfile_usage && return ;;
 			-n) CH=$2 && shift ;;
@@ -253,6 +258,7 @@ dfile()
 
 	FILE=$(ls -alrt $DIR/${CH}*.trc | tail -1 | awk '{print $NF}')
 
+	(( $editopt == 1 )) && vi $FILE && return
 	(( $viewopt == 1 )) && printf "File: %s\n" $FILE && return
 
 	printf "%s\n" $FILE
