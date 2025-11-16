@@ -328,7 +328,7 @@ colorview()
 	}' $@
 }
 
-chktrs()
+chktrs_all()
 {
 	INI=$CRUZMMS_JTRANS/resources/ini
 	TGRM=$INI/tgrm
@@ -336,23 +336,62 @@ chktrs()
 
 	chktrs_usage()
 	{
-		printf "Usage: chktrs [-i rule-name]\n"
+		printf "Usage: chktrs_all [-R resource-directory]\n"
 	}
 
-	param=admi_002_001_I1
+	set -- $(getopt R: $*)
+	while [ $1 != "--" ]; do
+		case $1 in
+			-R) INI=$2 && shift ;;
+		esac
+		shift
+	done
+
+	if [ ! -d $INI ]; then
+		printf "Directory not found : %s\n" $INI
+		return
+	fi
+
+	find $INI/rule -type f -name "*_I[13].ini" | while read file; do
+		chktrs -i $(basename $file .ini) -R $INI
+	done
+}
+
+chktrs()
+{
+	chktrs_usage()
+	{
+		printf "Usage: chktrs [-i rule-name] [-R resource-directory]\n"
+	}
+
+	INI=$CRUZMMS_JTRANS/resources/ini
+	param="0"
+
+	set -- $(getopt hi:R: $*)
+	while [ $1 != "--" ]; do
+		case $1 in
+			-h) chktrs_usage && return ;;
+			-R) INI=$2 && shift ;;
+			-i) param=$2 && shift ;;
+		esac
+		shift
+	done
+
+	if [ $param == "0" ]; then
+		chktrs_usage
+		return
+	fi
+
+	if [ ! -d $INI ]; then
+		printf "Directory not found : %s\n" $INI
+		return
+	fi
+
 	ifname=$(basename $param .ini)
 	rule_file=$INI/rule/${ifname}.ini
 	src_file=$INI/tgrm/${ifname}.ini
 	tgt_file=$INI/tgrm/$(echo $ifname| awk '{gsub("_I1", "_I2"); gsub("_I3", "_I4"); print}').ini
 
-	set -- $(getopt hi: $*)
-	while [ $1 != "--" ]; do
-		case $1 in
-			-h) lfile_usage && return ;;
-			-i) CH=$2 && shift ;;
-		esac
-		shift
-	done
 
 	# check files
 	[ ! -r $rule_file ] && printf "File not found : %s\n" $rule_file && chktrs_usage && return
