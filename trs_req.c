@@ -98,29 +98,29 @@ void msgtpcd_to_trsid(int type, char* msgtpcd )
 
 int req_trs_xml(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
 {
-#ifdef _DUP_TAG
-    char* ptr = replaceDupTag(0, req);
-    int rep_len  = strlen(ptr);
+    if (g_DupTag == 0) {
+        return req_trs(0, msg_tp_cd, msg_idr, req, len, resp);
+    }
 
-    return req_trs(0, msg_tp_cd, msg_idr, ptr, rep_len, resp );
-#else
-    return req_trs(0, msg_tp_cd, msg_idr, req, len, resp );
-#endif
+    char *ptr = replaceDupTag(0, req);
+    int rep_len = strlen(ptr);
+    return req_trs(0, msg_tp_cd, msg_idr, ptr, rep_len, resp);
 }
 
 int req_trs_fixed(char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 
 {
-#ifdef _DUP_TAG
-    int rsp_len  = req_trs(1, msg_tp_cd, msg_idr, req, len, resp );
+    if (g_DupTag == 0) {
+        return req_trs(1, msg_tp_cd, msg_idr, req, len, resp );
+    }
+
+    int rsp_len = req_trs(1, msg_tp_cd, msg_idr, req, len, resp);
     if (rsp_len > 0) {
-        char* ptr = replaceDupTag(1, resp);
+        char *ptr = replaceDupTag(1, resp);
         rsp_len = strlen(ptr);
         strcpy(resp, ptr);
     }
+
     return rsp_len;
-#else
-    return req_trs(1, msg_tp_cd, msg_idr, req, len, resp );
-#endif
 }
 
 int req_trs(int type, char *msg_tp_cd, char* msg_idr, char *req, int len, char *resp ) 

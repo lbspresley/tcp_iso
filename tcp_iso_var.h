@@ -76,6 +76,9 @@ int g_trs_xml_port ;
 int g_trs_fixed_port ;
 int g_trs_request_timeout ;
 
+// Duplicate Tag 사용여부
+int g_DupTag ;
+
 int	func_NacfGetMaxSessC(char *strAdtName);
 int UserInit();
 

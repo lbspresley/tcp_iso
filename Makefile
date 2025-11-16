@@ -75,9 +75,6 @@ DEFINES	+= -D_CRYPT_
 # libxml2 
 DEFINES	+= -D__USE_XML_PARSER__
 
-#	Duplicated Tag preprocessing(AddtlInf)
-#DEFINES += -D_DUP_TAG
-
 #	SHB : 수협중앙회버전
 #DEFINES += -D_SHB_
 

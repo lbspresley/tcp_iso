@@ -216,6 +216,15 @@ int UserInit()
   }
   ulog(_FLOW_, "Transform Agent IP : %s, (XML->FIXED) : %d, (FIXED->XML) : %d, Req-Timeout : %d seconds", g_trs_ip, g_trs_xml_port, g_trs_fixed_port, g_trs_request_timeout);
 
+  // Duplicate Tag 사용여부
+  g_DupTag = 0;
+  rc = roReadConfigInt(NULL, "Transform", "DupTag", &g_DupTag);
+  if(rc < 0) {
+    ulog(_WARNING_, "Duplicate Tag 사용여부 취득 실패 : [Transform] DupTag -> default 0");
+    g_DupTag = 0;
+  }
+  ulog(_FLOW_, "Duplicate Tag 사용여부 : %d", g_DupTag);
+
   // 실제 연결된 세션수
   g_RCntCount = 0;
 
