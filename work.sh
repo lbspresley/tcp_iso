@@ -328,3 +328,139 @@ colorview()
 	}' $@
 }
 
+chktrs()
+{
+	INI=$CRUZMMS_JTRANS/resources/ini
+	TGRM=$INI/tgrm
+	RULE=$INI/rule
+
+	chktrs_usage()
+	{
+		printf "Usage: chktrs [-i rule-name]\n"
+	}
+
+	param=admi_002_001_I1
+	ifname=$(basename $param .ini)
+	rule_file=$INI/rule/${ifname}.ini
+	src_file=$INI/tgrm/${ifname}.ini
+	tgt_file=$INI/tgrm/$(echo $ifname| awk '{gsub("_I1", "_I2"); gsub("_I3", "_I4"); print}').ini
+
+	set -- $(getopt hi: $*)
+	while [ $1 != "--" ]; do
+		case $1 in
+			-h) lfile_usage && return ;;
+			-i) CH=$2 && shift ;;
+		esac
+		shift
+	done
+
+	# check files
+	[ ! -r $rule_file ] && printf "File not found : %s\n" $rule_file && chktrs_usage && return
+	[ ! -r $src_file ] && printf "File not found : %s\n" $src_file && chktrs_usage && return
+	[ ! -r $tgt_file ] && printf "File not found : %s\n" $tgt_file && chktrs_usage && return
+
+	FILES="$rule_file $tgt_file $src_file"
+
+	awk 'BEGIN{
+		FS="="
+		rule="rule"
+		infile=""
+		src="src"
+		tgt="tgt"
+		phase="init"
+		parse=1
+	}
+	{
+		if(infile != FILENAME){
+			if(infile == ""){
+				phase=rule
+			} else {
+				if( FILENAME ~ /_I2.ini/ || FILENAME ~ /_I4.ini/){
+					phase=tgt
+				} else {
+					phase=src
+				}
+			}
+
+			infile=FILENAME
+			next
+		}
+
+		gsub(" ", "")
+		if ($1 == "rulecount"){
+			fcount[phase]=$2
+			next
+		}
+
+		if ($0=="[desc]" || $0 == "[meta]"){
+			parse=0
+			next
+		}
+
+		if (phase==rule && $1 >= 1 && $1 <= fcount[phase]){
+		 	split($2, fconfig, ",")
+			t_field[$1]=fconfig[1]
+			s_field[$1]=fconfig[2]
+			next
+		}
+
+		if ($1 == "type") {
+			parse=1
+			types[phase]=$2
+			next
+		}
+		if ($1 == "encoding") {
+			encoding[phase]=$2
+			next
+		}
+		if ($1 == "fieldcount") {
+			fcount[phase]=$2
+			next
+		}
+
+		if( parse==0 || phase =="init" || phase==rule) {next}
+
+		if (phase==src && $1 >= 1 && $1 <= fcount[phase]){
+		 	split($2, fconfig, ",")
+			src_name[$1]=fconfig[1]
+			src_len[$1]=fconfig[3]
+			src_type[$1]=fconfig[4]
+			next
+		}
+
+		if (phase==tgt && $1 >= 1 && $1 <= fcount[phase]){
+		 	split($2, fconfig, ",")
+			tgt_name[$1]=fconfig[1]
+			tgt_len[$1]=fconfig[3]
+			tgt_type[$1]=fconfig[4]
+			next
+		}
+	}
+	function check_rule( r, t, s) {
+		#printf "[%3d] [%2s] %-15s %3d <-- %3d\n", r, tgt_type[t], tgt_name[t], t, s
+		if (tgt_type[t] != src_type[s]) {
+			if ( !( (tgt_type[t] =="A" || tgt_type[t] =="AT") &&
+				    (src_type[s] =="A" || src_type[s] =="AT") 
+				  ) 
+			) {
+				printf "Invalid Type   : Rule (%d) Target(%3d:%2s) <-- Source(%3d:%2s)\n", r, t, tgt_type[t], s, src_type[s] 
+			}
+		}
+		if (tgt_len[t] != src_len[s]) {
+			printf "Invalid Length : Rule (%d) Target(%3d:%3d) <-- Source(%3d:%3d)\n", r, t, tgt_len[t], s, src_len[s] 
+		}
+		if (tgt_name[t] != src_name[s]) {
+			if ( tgt_name[t] !~ "xmlns"  && src_name[s] !~ "xmlns" ) {
+				printf "Invalid Name   : Rule (%d) Target(%3d:%-15s) <-- Source(%3d:%-15s)\n", r, t, tgt_name[t], s, src_name[s] 
+			}
+		}
+	}
+	END{
+		printf "Encoding : %s --> %s\n", encoding[src], encoding[tgt]
+
+		for(i=1;i<=fcount[rule];i++) {
+			check_rule( i, t_field[i], s_field[i])
+		}
+	}' $FILES
+
+}
