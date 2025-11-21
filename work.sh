@@ -503,3 +503,426 @@ chktrs()
 	}' $FILES
 
 }
+
+gack ()
+{
+	VERSION="v3.7.0"
+
+	# 기본 변수 설정
+	SHOW_FILENAME=1
+	SHOW_LINENO=1
+	IGNORE_CASE=0
+	INVERT_MATCH=0
+	FILES_ONLY=0
+	COUNT_ONLY=0
+	RECURSIVE=1
+	COLOR=1
+	CONTEXT_BEFORE=0
+	CONTEXT_AFTER=0
+	MAX_COUNT=-1
+	PATTERN=""
+	FILES=()
+
+	# 색상 코드
+	COLOR_RESET="\033[0m"
+	COLOR_FILENAME="\033[1;32m"
+	COLOR_LINENO="\033[1;33m"
+	COLOR_MATCH="\033[30;43m"
+
+	# 도움말 출력
+	show_help() 
+	{
+		printf "Usage: ack [options] PATTERN [FILE...]\n\n"
+		printf "Options:\n"
+		printf "\t%-30s %s\n" "-i, --ignore-case" "Ignore case distinctions"
+		printf "\t%-30s %s\n" "-v, --invert-match" "Invert match"
+		printf "\t%-30s %s\n" "-l, --files-with-matches" "Only print filenames"
+		printf "\t%-30s %s\n" "-c, --count" "Print count of matching lines"
+		printf "\t%-30s %s\n" "-n, --no-recurse" "No descending into subdirectories"
+		printf "\t%-30s %s\n" "-H, --with-filename" "Print filename (default)"
+		printf "\t%-30s %s\n" "-h, --no-filename" "Suppress filename prefix"
+		printf "\t%-30s %s\n" "-A NUM, --after-context=NUM" "Print NUM lines of trailing context"
+		printf "\t%-30s %s\n" "-B NUM, --before-context=NUM" "Print NUM lines of leading context"
+		printf "\t%-30s %s\n" "-C NUM, --context=NUM" "Print NUM lines of context"
+		printf "\t%-30s %s\n" "--color" "Force color output"
+		printf "\t%-30s %s\n" "--nocolor" "Disable color output"
+		printf "\t%-30s %s\n" "-m NUM, --max-count=NUM" "Stop after NUM matches per file"
+		printf "\t%-30s %s\n" "--version" "Show version"
+		printf "\t%-30s %s\n" "--help" "Show this help\n"
+	}
+
+	# 옵션 파싱
+	parse_options() {
+		#set -- $(getopt ivlncHhA:B:C:m: $*)
+
+		while [[ $# -gt 0 ]]; do
+			case "$1" in
+				-i|--ignore-case)
+					IGNORE_CASE=1
+					shift
+					;;
+				-v|--invert-match)
+					INVERT_MATCH=1
+					shift
+					;;
+				-l|--files-with-matches)
+					FILES_ONLY=1
+					shift
+					;;
+				-c|--count)
+					COUNT_ONLY=1
+					shift
+					;;
+				-n|--no-recurse)
+					RECURSIVE=0
+					shift
+					;;
+				-H|--with-filename)
+					SHOW_FILENAME=1
+					shift
+					;;
+				-h|--no-filename)
+					SHOW_FILENAME=0
+					shift
+					;;
+				-A|--after-context)
+					CONTEXT_AFTER="$2"
+					shift 2
+					;;
+				--after-context=*)
+					CONTEXT_AFTER="${1#*=}"
+					shift
+					;;
+				-B|--before-context)
+					CONTEXT_BEFORE="$2"
+					shift 2
+					;;
+				--before-context=*)
+					CONTEXT_BEFORE="${1#*=}"
+					shift
+					;;
+				-C|--context)
+					CONTEXT_BEFORE="$2"
+					CONTEXT_AFTER="$2"
+					shift 2
+					;;
+				--context=*)
+					CONTEXT_VAL="${1#*=}"
+					CONTEXT_BEFORE="$CONTEXT_VAL"
+					CONTEXT_AFTER="$CONTEXT_VAL"
+					shift
+					;;
+				-m|--max-count)
+					MAX_COUNT="$2"
+					shift 2
+					;;
+				--max-count=*)
+					MAX_COUNT="${1#*=}"
+					shift
+					;;
+				--color|--colour)
+					COLOR=1
+					shift
+					;;
+				--nocolor|--nocolour)
+					COLOR=0
+					shift
+					;;
+				--version)
+					echo "ack $VERSION"
+					return 
+					;;
+				--help)
+					show_help
+					return
+					;;
+				--)
+					shift
+					break
+					;;
+				-*)
+					echo "Unknown option: $1" >&2
+					show_help
+					return
+					;;
+				*)
+					if [ -z "$PATTERN" ]; then
+						PATTERN="$1"
+					else
+						FILES+=("$1")
+					fi
+					shift
+					;;
+			esac
+		done
+	}
+
+
+	# 파일에서 패턴 검색 (awk 사용)
+	search_in_file() {
+			local file="$1"
+			local pattern="$2"
+			
+			awk -v file="$file" \
+					-v pattern="$pattern" \
+					-v ignore_case="$IGNORE_CASE" \
+					-v invert="$INVERT_MATCH" \
+					-v files_only="$FILES_ONLY" \
+					-v count_only="$COUNT_ONLY" \
+					-v show_filename="$SHOW_FILENAME" \
+					-v color="$COLOR" \
+					-v max_count="$MAX_COUNT" \
+					'
+			BEGIN {
+					if (ignore_case == 1) IGNORECASE=1
+					match_count=0
+					prt_file=0
+					c_pattern=sprintf("\033[30;43m%s\033[0m", pattern)
+			}
+			{
+					matched=0
+					if (match($0, pattern)) {
+							matched=1
+					}
+					
+					if (invert == 1) {
+							matched=!matched
+					}
+					
+					if (matched) {
+							match_count++
+							
+							if (show_filename == 1) {
+								if(prt_file != file) {
+									if(prt_file != 0) { printf "\n" }
+									printf "\n\033[1;32m%s\033[0m\n", file
+									prt_file = file;
+								}
+							}
+
+							if (files_only == 1) {
+									#print file
+									exit 0
+							} 
+
+							if (color == 1) {
+								gsub(pattern, c_pattern)
+								printf "\033[1;33m%d\033[0m: %s\n", NR, $0
+							} else {
+								#printf "%d: %s\n", NR, $0
+								printf "%s\n", $0
+							}
+							
+							if (max_count > 0 && match_count >= max_count) {
+									exit 0
+							}
+					}
+			}
+			END {
+					if (count_only == 1) {
+							if (show_filename == 1) {
+									if (color == 1) {
+											printf "\033[1;32m%s\033[0m:%d\n", file, match_count
+									} else {
+											printf "%s:%d\n", file, match_count
+									}
+							} else {
+									printf "%d\n", match_count
+							}
+					}
+					exit (match_count > 0 ? 1 : 0)
+			}
+			' "$file" 2>/dev/null
+			
+			return $?
+	}
+
+	# 컨텍스트를 포함한 검색
+	search_with_context() {
+			local file="$1"
+			local pattern="$2"
+			
+			awk -v file="$file" \
+					-v pattern="$pattern" \
+					-v ignore_case="$IGNORE_CASE" \
+					-v invert="$INVERT_MATCH" \
+					-v show_filename="$SHOW_FILENAME" \
+					-v color="$COLOR" \
+					-v before="$CONTEXT_BEFORE" \
+					-v after="$CONTEXT_AFTER" \
+					-v max_count="$MAX_COUNT" \
+					'
+			BEGIN {
+					if (ignore_case == 1) IGNORECASE=1
+					match_count=0
+					after_pending=0
+					last_printed=0
+					prt_file="0"
+					c_pattern=sprintf("\033[30;43m%s\033[0m", pattern)
+			}
+			{
+					matched=0
+					if (match($0, pattern)) {
+							matched=1
+					}
+					
+					if (invert == 1) {
+							matched=!matched
+					}
+					
+					if (matched) {
+							match_count++
+							
+							# 구분선 출력
+							if (before > 0 && last_printed > 0 && NR - last_printed > before + 1) {
+									print "--"
+							}
+
+							if (show_filename == 1 && prt_file != file) {
+								printf "\033[1;32m%s\033[0m\n", file
+								prt_file = file
+							}
+							
+							# before 컨텍스트 출력
+							if (before > 0 && NR > 1) {
+							#if (before > 0 && NR > 1 && NR-last_printed>=before) {
+								start_line=NR - before
+								if (last_printed>0 && NR-last_printed<=before) {
+									start_line=last_printed+1
+								}
+								if (start_line < 1) start_line=1
+								for (i=start_line; i<NR; i++) {
+									if (color == 1) {
+										printf "\033[1;33m%d\033[0m- %s\n", i, lines[i]
+									} else {
+										printf "%d- %s\n", i, lines[i]
+									}
+								}
+							}
+							
+							# 매칭 라인 출력
+							if (color == 1) {
+								gsub(pattern, c_pattern)
+								printf "\033[1;33m%d\033[0m: %s\n", NR, $0
+							} else {
+								#printf "%d: %s\n", NR, $0
+								printf "%s\n", $0
+							}
+							
+							last_printed=NR
+							after_pending=after
+							
+							if (max_count > 0 && match_count >= max_count) {
+									exit 0
+							}
+					} else {
+							# after 컨텍스트 출력
+							if (after_pending > 0) {
+								if (color == 1) {
+									printf "\033[1;33m%d\033[0m- %s\n", NR, $0
+								} else {
+									printf "%d- %s\n", NR, $0
+								}
+								after_pending--
+								last_printed=NR
+							}
+					}
+					
+					# 라인 버퍼에 저장 (before 컨텍스트용)
+					if (before > 0) {
+							lines[NR]=$0
+							if (NR > before) {
+									delete lines[NR - before]
+							}
+					}
+			}
+			END {
+					exit (match_count > 0 ? 1 : 0)
+			}
+			' "$file" 2>/dev/null
+			
+			return $?
+	}
+
+	# 메인 함수
+	main() {
+			# 옵션 파싱
+			parse_options "$@"
+			
+			# 패턴이 없으면 도움말 출력
+			if [ -z "$PATTERN" ]; then
+					show_help
+					return 1
+			fi
+			
+			# 파일 목록이 없으면 현재 디렉토리 사용
+			if [ ${#FILES[@]} -eq 0 ]; then
+					FILES=(".")
+			fi
+			
+			local total_matches=0
+			local files_searched=0
+			local found_match=0
+			
+			# 각 파일/디렉토리 처리
+			for target in "${FILES[@]}"; do
+					if [ ! -e "$target" ]; then
+							echo "$target: No such file or directory" >&2
+							continue
+					fi
+					
+					if [ -f "$target" ]; then
+							# 단일 파일 처리
+							files_searched=$((files_searched + 1))
+							if [ "$CONTEXT_BEFORE" -gt 0 ] || [ "$CONTEXT_AFTER" -gt 0 ]; then
+									if search_with_context "$target" "$PATTERN"; then
+											found_match=1
+									fi
+							else
+									if search_in_file "$target" "$PATTERN"; then
+											found_match=1
+									fi
+							fi
+					elif [ -d "$target" ]; then
+							# 디렉토리 처리
+							local file_list=()
+							if [ "$RECURSIVE" -eq 1 ]; then
+									while IFS= read -r -d '' file; do
+											if [ -f "$file" ] && [ -r "$file" ]; then
+													file_list+=("$file")
+											fi
+									done < <(find "$target" -type f -print0 2>/dev/null)
+							else
+									for file in "$target"/*; do
+											if [ -f "$file" ] && [ -r "$file" ]; then
+													file_list+=("$file")
+											fi
+									done
+							fi
+							
+							for file in "${file_list[@]}"; do
+									files_searched=$((files_searched + 1))
+									if [ "$CONTEXT_BEFORE" -gt 0 ] || [ "$CONTEXT_AFTER" -gt 0 ]; then
+											search_with_context "$file" "$PATTERN" 
+									else
+											search_with_context "$file" "$PATTERN" 
+									fi
+									if (( $? == 1 )); then
+										found_match=1
+										echo
+									fi
+							done
+					fi
+			done
+			
+			# 결과에 따라 종료 코드 반환
+			if [ "$found_match" -eq 1 ]; then
+					return 1
+			else
+					return 0
+			fi
+	}
+
+	# 스크립트 실행
+	main "$@"
+}
