@@ -220,10 +220,10 @@ int UserInit()
   g_DupTag = 0;
   rc = roReadConfigInt(NULL, "Transform", "DupTag", &g_DupTag);
   if(rc < 0) {
-    ulog(_WARNING_, "Duplicate Tag 사용여부 취득 실패 : [Transform] DupTag -> default 0");
+    ulog(_WARNING_, "Duplicate Tag Pre/Post processing 처리 여부 취득 실패 : [Transform] DupTag -> default 0");
     g_DupTag = 0;
   }
-  ulog(_FLOW_, "Duplicate Tag 사용여부 : %d", g_DupTag);
+  ulog(_FLOW_, "Duplicate Tag Pre/Post processing 처리 여부 : %d", g_DupTag);
 
   // 실제 연결된 세션수
   g_RCntCount = 0;
