@@ -519,6 +519,7 @@ gack ()
 	MAX_COUNT=-1
 	PATTERN=""
 	FILES=()
+	SHOW_FILENAME_EXPLICIT=0
 
 	# 색상 코드
 	COLOR_RESET="\033[0m"
@@ -571,9 +572,11 @@ gack ()
 					;;
 				-H|--with-filename)
 					SHOW_FILENAME=1
+					SHOW_FILENAME_EXPLICIT=1
 					;;
 				-h|--no-filename)
 					SHOW_FILENAME=0
+					SHOW_FILENAME_EXPLICIT=1
 					;;
 				-A|--after-context)
 					CONTEXT_AFTER="$2"
@@ -876,8 +879,18 @@ gack ()
 		fi
 			
 		# 파일 목록이 없으면 현재 디렉토리 사용
+		local reading_stdin=0
 		if [ ${#FILES[@]} -eq 0 ]; then
-			FILES=(".")
+			if [ ! -t 0 ]; then
+				FILES=("/dev/stdin")
+				reading_stdin=1
+			else
+				FILES=(".")
+			fi
+		fi
+
+		if [ $reading_stdin -eq 1 ] && [ "$SHOW_FILENAME_EXPLICIT" -eq 0 ]; then
+			SHOW_FILENAME=0
 		fi
 			
 		local total_matches=0
@@ -891,7 +904,18 @@ gack ()
 				continue
 			fi
 					
-			if [ -f "$target" ]; then
+			if [ "$target" = "/dev/stdin" ]; then
+				files_searched=$((files_searched + 1))
+				if [ "$CONTEXT_BEFORE" -gt 0 ] || [ "$CONTEXT_AFTER" -gt 0 ]; then
+					if search_with_context "$target" "$PATTERN"; then
+						found_match=1
+					fi
+				else
+					if search_in_file "$target" "$PATTERN"; then
+						found_match=1
+					fi
+				fi
+			elif [ -f "$target" ]; then
 				# 단일 파일 처리
 				files_searched=$((files_searched + 1))
 				if [ "$CONTEXT_BEFORE" -gt 0 ] || [ "$CONTEXT_AFTER" -gt 0 ]; then
