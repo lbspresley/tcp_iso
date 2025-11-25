@@ -655,16 +655,40 @@ gack ()
 					-v show_filename="$SHOW_FILENAME" \
 					-v color="$COLOR" \
 					-v max_count="$MAX_COUNT" \
-					'
+			'
+			function ci_match(line, pat, pat_ci, igcase,    target) {
+				if (igcase == 1) {
+					target = tolower(line)
+					return match(target, pat_ci)
+				}
+				return match(line, pat)
+			}
+			function ci_highlight(line, pat, pat_ci, igcase, replacement,    lower_line, result, pos, start, len) {
+				if (igcase != 1) {
+					gsub(pat, replacement, line)
+					return line
+				}
+				lower_line = tolower(line)
+				result=""
+				pos=1
+				while (match(substr(lower_line, pos), pat_ci)) {
+					start = RSTART
+					len = RLENGTH
+					result = result substr(line, pos, start-1) "\033[30;43m" substr(line, start, len) "\033[0m"
+					pos += start + len - 1
+				}
+				result = result substr(line, pos)
+				return result
+			}
 			BEGIN { 
-				if (ignore_case == 1) { IGNORECASE=1 } 
+				pattern_ci=tolower(pattern)
 				match_count=0
 				prt_file=0
 				c_pattern=sprintf("\033[30;43m%s\033[0m", pattern)
 			}
 			{
 				matched=0
-				if (match($0, pattern)) { matched=1 }
+				if (ci_match($0, pattern, pattern_ci, ignore_case)) { matched=1 }
 					
 				if (invert == 1) { matched=!matched }
 					
@@ -685,8 +709,8 @@ gack ()
 					}
 
 					if (color == 1) {
-						gsub(pattern, c_pattern)
-						printf "\033[1;33m%d\033[0m: %s\n", NR, $0
+						highlighted=ci_highlight($0, pattern, pattern_ci, ignore_case, c_pattern)
+						printf "\033[1;33m%d\033[0m: %s\n", NR, highlighted
 					} else {
 						printf "%d: %s\n", NR, $0
 					}
@@ -731,17 +755,42 @@ gack ()
 			-v before="$CONTEXT_BEFORE" \
 			-v after="$CONTEXT_AFTER" \
 			-v max_count="$MAX_COUNT" \
-		' BEGIN { 
-			if (ignore_case == 1) { IGNORECASE=1 }
+		' 
+		function ci_match(line, pat, pat_ci, igcase,    target) {
+			if (igcase == 1) {
+				target = tolower(line)
+				return match(target, pat_ci)
+			}
+			return match(line, pat)
+		}
+		function ci_highlight(line, pat, pat_ci, igcase, replacement,    lower_line, result, pos, start, len) {
+			if (igcase != 1) {
+				gsub(pat, replacement, line)
+				return line
+			}
+			lower_line = tolower(line)
+			result=""
+			pos=1
+			while (match(substr(lower_line, pos), pat_ci)) {
+				start = RSTART
+				len = RLENGTH
+				result = result substr(line, pos, start-1) "\033[30;43m" substr(line, start, len) "\033[0m"
+				pos += start + len - 1
+			}
+			result = result substr(line, pos)
+			return result
+		}
+		BEGIN { 
 			match_count=0
 			after_pending=0
 			last_printed=0
 			prt_file="0"
 			c_pattern=sprintf("\033[30;43m%s\033[0m", pattern)
+			pattern_ci=tolower(pattern)
 		}
 		{
 			matched=0
-			if (match($0, pattern)) { matched=1 }
+			if (ci_match($0, pattern, pattern_ci, ignore_case)) { matched=1 }
 			if (invert == 1) { matched=!matched }
 			if (matched) {
 				match_count++
@@ -772,8 +821,8 @@ gack ()
 							
 				# 매칭 라인 출력
 				if (color == 1) {
-					gsub(pattern, c_pattern)
-					printf "\033[1;33m%d\033[0m: %s\n", NR, $0
+					highlighted=ci_highlight($0, pattern, pattern_ci, ignore_case, c_pattern)
+					printf "\033[1;33m%d\033[0m: %s\n", NR, highlighted
 				} else {
 					#printf "%d: %s\n", NR, $0
 					printf "%s\n", $0
