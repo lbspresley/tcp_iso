@@ -358,21 +358,34 @@ chktrs_all()
 chktrs()
 {
 	chktrs_usage() {
-		printf "Usage: chktrs [-i rule-name] [-R resource-directory]\n"
+		printf "Usage: chktrs [-v] [-i rule-name] [-R resource-directory]\n"
 	}
 
+	VIEW=0
 	INI=$CRUZMMS_JTRANS/resources/ini
 	param="0"
 
-	set -- $(getopt hi:R: $*)
+	set -- $(getopt vhi:R: $*)
 	while [ $1 != "--" ]; do
 		case $1 in
 			-h) chktrs_usage && return ;;
+			-v) VIEW=1 ;;
 			-R) INI=$2 && shift ;;
 			-i) param=$2 && shift ;;
 		esac
 		shift
 	done
+
+	if [ $VIEW == 1 ]; then
+		DIR=$INI/rule
+		printf "Rule Directory : %s\n\n" "$DIR"
+		CNT=0
+		for f in $DIR/*.ini; do
+			CNT=$(( $CNT + 1 ))
+			printf "%3d : %s\n" $CNT $(basename $f .ini)
+		done
+		return
+	fi
 
 	if [ $param == "0" ]; then
 		chktrs_usage
@@ -408,18 +421,14 @@ chktrs()
 	}
 	{
 		if(infile != FILENAME){
-			if(infile == ""){
+			if(infile ~ /rule/){
 				phase=rule
-			} else {
-				if( FILENAME ~ /_I2.ini/ || FILENAME ~ /_I4.ini/){
+			} else if( FILENAME ~ /_I2.ini/ || FILENAME ~ /_I4.ini/){
 					phase=tgt
-				} else {
-					phase=src
-				}
+			} else {
+				phase=src
 			}
-
 			infile=FILENAME
-			next
 		}
 
 		gsub(" ", "")
@@ -456,20 +465,22 @@ chktrs()
 
 		if( parse==0 || phase =="init" || phase==rule) {next}
 
-		if (phase==src && $1 >= 1 && $1 <= fcount[phase]){
-		 	split($2, fconfig, ",")
-			src_name[$1]=fconfig[1]
-			src_len[$1]=fconfig[3]
-			src_type[$1]=fconfig[4]
-			next
-		}
+		if ($1 >= 1 && $1 <= fcount[phase]){
+			if (phase==src) {
+				split($2, fconfig, ",")
+				src_name[$1]=fconfig[1]
+				src_len[$1]=fconfig[3]
+				src_type[$1]=fconfig[4]
+				next
+			}
 
-		if (phase==tgt && $1 >= 1 && $1 <= fcount[phase]){
-		 	split($2, fconfig, ",")
-			tgt_name[$1]=fconfig[1]
-			tgt_len[$1]=fconfig[3]
-			tgt_type[$1]=fconfig[4]
-			next
+			if (phase==tgt ) {
+				split($2, fconfig, ",")
+				tgt_name[$1]=fconfig[1]
+				tgt_len[$1]=fconfig[3]
+				tgt_type[$1]=fconfig[4]
+				next
+			}
 		}
 	}
 	function check_rule( r, t, s) {
@@ -479,15 +490,15 @@ chktrs()
 				    (src_type[s] =="A" || src_type[s] =="AT") 
 				  ) 
 			) {
-				printf "Invalid Type   : Rule (%d) Target(%3d:%2s) <-- Source(%3d:%2s)\n", r, t, tgt_type[t], s, src_type[s] 
+				printf "Invalid Type   : Rule(%3d) Target(%3d:%2s) <-- Source(%3d:%2s)\n", r, t, tgt_type[t], s, src_type[s] 
 			}
 		}
 		if (tgt_len[t] != src_len[s]) {
-			printf "Invalid Length : Rule (%d) Target(%3d:%3d) <-- Source(%3d:%3d)\n", r, t, tgt_len[t], s, src_len[s] 
+			printf "Invalid Length : Rule(%3d) Target(%3d:%3d) <-- Source(%3d:%3d)\n", r, t, tgt_len[t], s, src_len[s] 
 		}
 		if (tgt_name[t] != src_name[s]) {
 			if ( tgt_name[t] !~ "xmlns"  && src_name[s] !~ "xmlns" ) {
-				printf "Invalid Name   : Rule (%d) Target(%3d:%-15s) <-- Source(%3d:%-15s)\n", r, t, tgt_name[t], s, src_name[s] 
+				printf "Invalid Name   : Rule(%3d) Target(%3d:%-15s) <-- Source(%3d:%-15s)\n", r, t, tgt_name[t], s, src_name[s] 
 			}
 		}
 	}
@@ -659,14 +670,15 @@ gack ()
 					-v color="$COLOR" \
 					-v max_count="$MAX_COUNT" \
 			'
-			function ci_match(line, pat, pat_ci, igcase,    target) {
-				if (igcase == 1) {
-					target = tolower(line)
-					return match(target, pat_ci)
+			function ci_match(line, pat, pat_ci, igcase) {
+				if (igcase != 1) {
+					return match(line, pat)
 				}
-				return match(line, pat)
+
+				return match(tolower(line), pat_ci)
 			}
-			function ci_highlight(line, pat, pat_ci, igcase, replacement,    lower_line, result, pos, start, len) {
+
+			function ci_highlight(line, pat, pat_ci, igcase, replacement) {
 				if (igcase != 1) {
 					gsub(pat, replacement, line)
 					return line
@@ -675,14 +687,13 @@ gack ()
 				result=""
 				pos=1
 				while (match(substr(lower_line, pos), pat_ci)) {
-					start = RSTART
-					len = RLENGTH
-					result = result substr(line, pos, start-1) "\033[30;43m" substr(line, start, len) "\033[0m"
-					pos += start + len - 1
+					start = RSTART-1
+					result = result substr(line, pos, start) "\033[30;43m" substr(line, pos+start, RLENGTH) "\033[0m"
+					pos += start + RLENGTH
 				}
-				result = result substr(line, pos)
-				return result
+				return result substr(line, pos)
 			}
+
 			BEGIN { 
 				pattern_ci=tolower(pattern)
 				match_count=0
@@ -703,12 +714,9 @@ gack ()
 						exit 0
 					} 
 
-					if (show_filename == 1) {
-						if(prt_file != file) {
-							#if(prt_file != 0) { printf "\n" }
-							printf "\n\033[1;32m%s\033[0m\n", file
-							prt_file = file;
-						}
+					if (show_filename == 1  && prt_file != file) {
+						printf "\n\033[1;32m%s\033[0m\n", file
+						prt_file = file;
 					}
 
 					if (color == 1) {
@@ -759,14 +767,15 @@ gack ()
 			-v after="$CONTEXT_AFTER" \
 			-v max_count="$MAX_COUNT" \
 		' 
-		function ci_match(line, pat, pat_ci, igcase,    target) {
-			if (igcase == 1) {
-				target = tolower(line)
-				return match(target, pat_ci)
+		function ci_match(line, pat, pat_ci, igcase) {
+			if (igcase != 1) {
+				return match(line, pat)
 			}
-			return match(line, pat)
+
+			return match(tolower(line), pat_ci)
 		}
-		function ci_highlight(line, pat, pat_ci, igcase, replacement,    lower_line, result, pos, start, len) {
+
+		function ci_highlight(line, pat, pat_ci, igcase, replacement) {
 			if (igcase != 1) {
 				gsub(pat, replacement, line)
 				return line
@@ -775,14 +784,13 @@ gack ()
 			result=""
 			pos=1
 			while (match(substr(lower_line, pos), pat_ci)) {
-				start = RSTART
-				len = RLENGTH
-				result = result substr(line, pos, start-1) "\033[30;43m" substr(line, start, len) "\033[0m"
-				pos += start + len - 1
+				start = RSTART-1
+				result = result substr(line, pos, start) "\033[30;43m" substr(line, pos+start, RLENGTH) "\033[0m"
+				pos += start + RLENGTH
 			}
-			result = result substr(line, pos)
-			return result
+			return result substr(line, pos)
 		}
+
 		BEGIN { 
 			match_count=0
 			after_pending=0
@@ -904,30 +912,7 @@ gack ()
 				continue
 			fi
 					
-			if [ "$target" = "/dev/stdin" ]; then
-				files_searched=$((files_searched + 1))
-				if [ "$CONTEXT_BEFORE" -gt 0 ] || [ "$CONTEXT_AFTER" -gt 0 ]; then
-					if search_with_context "$target" "$PATTERN"; then
-						found_match=1
-					fi
-				else
-					if search_in_file "$target" "$PATTERN"; then
-						found_match=1
-					fi
-				fi
-			elif [ -f "$target" ]; then
-				# 단일 파일 처리
-				files_searched=$((files_searched + 1))
-				if [ "$CONTEXT_BEFORE" -gt 0 ] || [ "$CONTEXT_AFTER" -gt 0 ]; then
-					if search_with_context "$target" "$PATTERN"; then
-						found_match=1
-					fi
-				else
-					if search_in_file "$target" "$PATTERN"; then
-						found_match=1
-					fi
-				fi
-			elif [ -d "$target" ]; then
+			if [ -d "$target" ]; then
 				# 디렉토리 처리
 				local file_list=()
 				if [ "$RECURSIVE" -eq 1 ]; then
@@ -956,6 +941,17 @@ gack ()
 						#echo
 					fi
 				done
+			else
+				files_searched=$((files_searched + 1))
+				if [ "$CONTEXT_BEFORE" -gt 0 ] || [ "$CONTEXT_AFTER" -gt 0 ]; then
+					search_with_context "$target" "$PATTERN"
+				else
+					search_in_file "$target" "$PATTERN"
+				fi
+				if (( $? == 1 )); then
+					found_match=1
+					#echo
+				fi
 			fi
 		done
 			
@@ -970,3 +966,4 @@ gack ()
 	# 스크립트 실행
 	main "$@"
 }
+
