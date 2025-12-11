@@ -2,7 +2,7 @@
 realdata()
 {
 	awk 'BEGIN{
-		enc=0
+		enc=1
 		linecnt=0 
 	}
 
@@ -21,26 +21,29 @@ realdata()
 		gsub("<AppHdr", "\n<\033[33mMAppHdr\033[0m", str)
 		gsub("<Document", "\n<\033[33mMDocument\033[0m", str)
 	}
-	{
-		if (NF == 0 && linecnt>0 ){
-			printf "\n"
-			if (enc== 0 ){
-				for (i=0;i<linecnt;i++){ print lines[i] }
-				full=""
-				for (i=3;i<linecnt-1;i++){ 
-					str = substr(lines[i], 58)
-					full = sprintf( "%s%s", full, str)
-				}
-				prt_xml(full)
-			}
-			linecnt=0
-		} else {
-			if( /000 :/ ) {
-				if ($NF ~ /bwh:Bokwire/ || $NF ~ /h:AppHdr/ || $NF ~ /xmlns/) { enc=0 } else {enc=1}
-			}
-			lines[linecnt++]=$0
+	function print_data() {
+		for (i=0;i<linecnt;i++){ print lines[i] }
+		full=""
+		for (i=3;i<linecnt-1;i++){ 
+			full = full substr(lines[i], 58)
 		}
-  	}' $@
+		prt_xml(full)
+	}
+
+	{
+		if (NF == 0 ){
+			printf "\n"
+			next
+		} 
+		if( /data len:/ ) {
+			if (enc == 0 && linecnt>0) {
+				print_data()
+			}
+			if (NF>5){ enc=0 } else { enc=1 }
+			linecnt=0
+		}
+		lines[linecnt++]=$0
+  }' $@
 }
 
 xcut()
