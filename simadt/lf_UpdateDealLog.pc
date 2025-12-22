@@ -1,0 +1,181 @@
+#include	"simadt.h"
+
+EXEC SQL INCLUDE	sqlca;
+
+//////////////////////////////////////////////////
+//	TB_CFR_DATA_LOG update
+//	in : IssueDate, TrxNo
+//////////////////////////////////////////////////
+
+int lf_UpdateDealLog(char* msg)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+
+	int				TrxNo=0;
+	int				icnt=0;
+
+	char			cDate[8+1];
+	char			cChanID[4+1];
+
+	CFR_TDRV_FRAME  *p_tdrv_frame;
+
+EXEC SQL END   DECLARE SECTION;
+
+	roLog(_FLOW_, "[%s][%d] start !!!!!!!!!!!!!", __FUNCTION__, __LINE__);
+
+	p_tdrv_frame = (CFR_TDRV_FRAME*)msg;
+
+	memset(cDate, 0x00, sizeof(cDate));
+	memset(cChanID, 0x00, sizeof(cChanID));
+	memcpy(cDate, p_tdrv_frame->DealInfo.IssueDate, sizeof(p_tdrv_frame->DealInfo.IssueDate));
+	memcpy(cChanID, p_tdrv_frame->DealInfo.VanCode, 4 );
+	TrxNo = p_tdrv_frame->DealInfo.DealSeq;
+
+	roLog(_FLOW_, "SELECT TB_CFR_DATA_LOG   KEY = [CHAN:%s, DATE:%s, DEAL_SEQ:%d]", cChanID, cDate, TrxNo);
+
+// 이과정이 왜 필요한지 모르겠다. 20190827 YYK
+
+	EXEC SQL SELECT COUNT(*)
+				INTO :icnt
+				FROM TB_CFR_DATA_LOG
+				WHERE ISSUE_DT 	= substr(:cDate, 7, 2 )
+				AND	ISSUE_DATE 	= :cDate
+				AND DEAL_SEQ	= :TrxNo
+				AND DATA_VAN_CODE = :cChanID
+				AND ISSUE_SVC	= 'RSE1_1'
+				;
+	if( icnt == 1 )
+	{
+		//	 중복 거래로  RSE1_1 에서 data_van_code 가 없는 걸로 insert 하므로, 예전에 등록된 로그를 지워준다.
+		EXEC SQL DELETE TB_CFR_DATA_LOG
+				WHERE ISSUE_DT 		= substr(:cDate, 7, 2 )
+				AND	ISSUE_DATE 		= :cDate
+				AND DEAL_SEQ		= :TrxNo
+				--AND DATA_VAN_CODE = :cChanID
+				AND DATA_VAN_CODE 	= ' '
+				AND ISSUE_SVC		= 'RSE1_1'
+				;
+		if( sqlca.sqlcode != 0 )
+		{
+			roLog(_ERROR_, "DELETE FAIL TB_CFR_DATA_LOG (SQLCODE: %d)", sqlca.sqlcode);
+			//exec sql rollback;
+		}
+
+		//exec sql commit;
+	}
+
+
+	EXEC SQL UPDATE TB_CFR_DATA_LOG
+				SET	DATA_VAN_CODE = :cChanID
+			  WHERE	ISSUE_DT	= substr(:cDate, 7, 2)
+			    AND	ISSUE_DATE	= :cDate
+				AND DEAL_SEQ	= :TrxNo
+				AND ISSUE_SVC	= 'RSE1_1'
+				;
+
+	if( sqlca.sqlcode != 0 )
+	{
+		roLog(_ERROR_, "UPDATE FAIL TB_CFR_DATA_LOG (SQLCODE:%d, DATE:%s, CHAN:%s, SEQ:%d)"
+					, sqlca.sqlcode, cDate, cChanID, TrxNo);
+		exec sql rollback;
+		return -1;
+	}
+
+	exec sql commit;
+
+	/*	End			*---------------------------------------------------------*/
+
+	roLog(_FLOW_, "[%s][%d] end function update", __FUNCTION__, __LINE__);
+
+	return 0;
+}
+
+int lf_SelectDealMaster( CFR_TDRV_FRAME* pFrame, char* ppeerip, int* ppeerport)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+	int				TrxNo=0;
+
+	char			cDate[8+1];
+	char			cChanID[4+1];
+	char			cpeerip[15+1];
+	int				ipeerport=0;
+	int nRc;
+EXEC SQL END   DECLARE SECTION;
+
+	memset(cDate, 0x00, sizeof(cDate));
+	memset(cChanID, 0x00, sizeof(cChanID));
+	memset(cpeerip, 0x00, sizeof(cpeerip));
+
+
+	memcpy(cDate, pFrame->DealInfo.IssueDate, sizeof(pFrame->DealInfo.IssueDate));
+	memcpy(cChanID, pFrame->DealInfo.VanCode, 4 );
+	TrxNo = pFrame->DealInfo.DealSeq;
+
+
+	EXEC SQL SELECT PEER_IP, PEER_PORT 
+			   INTO :cpeerip, :ipeerport
+			   FROM TB_CFR_DEAL_MASTER
+			  WHERE	ISSUE_DT	= substr(:cDate, 7, 2)
+			    AND	ISSUE_DATE	= :cDate
+				AND	VAN_CODE 	= :cChanID
+				AND DEAL_SEQ	= :TrxNo
+				;
+
+	if ( sqlca.sqlcode == SQL_NODATA )
+	{
+		roLog(_ERROR_, "[%s][%d] TB_CFR_DEAL_MASTER 조회 결과 없음[SQLCODE:%d]\n"
+				"ISSUE_DATE : [%s] VAN_CODE : [%s] DEAL_SEQ : [%s]"
+				, __FUNCTION__, __LINE__, sqlca.sqlcode, cDate, cChanID, TrxNo);
+
+	}
+	else if ( sqlca.sqlcode != SQL_OK )
+	{
+		nRc = cfrf_CheckDBCLS(sqlca.sqlcode);
+		if ( nRc == 1 )
+		{
+			//DISCONNECT ERROR 발생 후 DB 재 접속에 성공
+			roLog(_WARNING_, "[%s][%s][%d] DB 재접속 성공", __FILE__, __FUNCTION__, __LINE__);
+			EXEC SQL SELECT PEER_IP, PEER_PORT 
+					   INTO :cpeerip, :ipeerport
+					   FROM TB_CFR_DEAL_MASTER
+					  WHERE	ISSUE_DT	= substr(:cDate, 7, 2)
+					    AND	ISSUE_DATE	= :cDate
+						AND	VAN_CODE 	= :cChanID
+						AND DEAL_SEQ	= :TrxNo
+						;
+			if ( sqlca.sqlcode == SQL_NODATA )
+			{
+				roLog(_ERROR_, "[%s][%d] TB_CFR_DEAL_MASTER 조회 결과 없음[SQLCODE:%d]\n"
+						"ISSUE_DATE : [%s] VAN_CODE : [%s] DEAL_SEQ : [%s]"
+						, __FUNCTION__, __LINE__, sqlca.sqlcode, cDate, cChanID, TrxNo);
+			}
+			else if ( sqlca.sqlcode != SQL_OK )
+			{
+				roLog(_ERROR_, "[%s][%d] TB_CFR_DEAL_MASTER 재조회 결과 에러[SQLCODE:%d]\n"
+						"ISSUE_DATE : [%s] VAN_CODE : [%s] DEAL_SEQ : [%s]"
+						, __FUNCTION__, __LINE__, sqlca.sqlcode, cDate, cChanID, TrxNo);
+			}
+			else
+			{
+				memcpy( ppeerip, cpeerip, strlen(cpeerip));
+				*ppeerport = ipeerport;
+				return 0;
+			}
+		}	
+		else if ( nRc == 0 )
+		{
+			roLog(_ERROR_, "[%s][%s][%d] DB 기연결->Do Nothing", __FILE__, __FUNCTION__, __LINE__);
+		}
+		else
+		{
+			roLog(_ERROR_, "[%s][%s][%d] DB 재접속 실패", __FILE__, __FUNCTION__, __LINE__);
+		}
+	}
+	else 
+	{
+		memcpy( ppeerip, cpeerip, strlen(cpeerip));
+		*ppeerport = ipeerport;
+		return 0;
+	}
+	return 0;
+}
