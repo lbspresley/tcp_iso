@@ -28,20 +28,25 @@ ACK_INFO* add_ack_info(char* msgidr, char* msg, int msg_len)
 
   int i;
   for(i = 0; i < MAX_ACK_MSG_CNT; i++) {
-    if( g_ack_info[i].use_flag == 0 ) {
-      g_ack_info[i].use_flag = 1;
-      strcpy(g_ack_info[i].msgidr, msgidr);
-      g_ack_info[i].msg = (char*)malloc(msg_len+1);
-      if( g_ack_info[i].msg == NULL ) {
-        ulog( _ERROR_, "Failed to allocate memory for ack message" );
-        return NULL;
-      }
-      g_ack_info[i].msg[msg_len] = '\0';
-      memcpy(g_ack_info[i].msg, msg, msg_len);
-      g_ack_info[i].msg_len = msg_len;
-      g_ack_info[i].retry_count = ACK_RETRY_CNT;
-      return &g_ack_info[i];
+    if( g_ack_info[i].use_flag != 0 ) {
+      continue;
     }
+
+    // add ack_info
+    g_ack_info[i].msg = (char*)malloc(msg_len+1);
+    if( g_ack_info[i].msg == NULL ) {
+      ulog( _ERROR_, "Failed to allocate memory for ack message" );
+      return NULL;
+    }
+
+    strcpy(g_ack_info[i].msgidr, msgidr);
+    memcpy(g_ack_info[i].msg, msg, msg_len);
+    g_ack_info[i].msg[msg_len] = '\0';
+    g_ack_info[i].msg_len = msg_len;
+    g_ack_info[i].retry_count = ACK_RETRY_CNT;
+    g_ack_info[i].use_flag = 1;
+
+    return &g_ack_info[i];
   }
   return NULL;
 }
