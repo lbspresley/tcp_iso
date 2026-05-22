@@ -165,6 +165,9 @@ int CF_APortConnect(int Type, long* pInfo)
       "Session Stat          : %d"
       , g_maxterm_cnt, SessCnt, RCntCount, g_SessStat);
 
+  // Init ACK info for new session
+  ack_info_init();
+
   /* CHANGE SESSION KEY : START  */
   cli_send_1(strIP, PeerPort, LocalPort);
 
