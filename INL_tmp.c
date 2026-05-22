@@ -33,3 +33,4 @@ INISAFENET_INT_API INL_Decrypt(net_ctx *ctx, unsigned char *ct, int ct_len, unsi
 INISAFENET_INT_API INL_Handshake_Init(net_ctx *ctx, unsigned char *in, int in_len, unsigned char **out, int *out_len) { return 0; }
 INISAFENET_INT_API INL_Handshake_Update(net_ctx *ctx, unsigned char *in, int in_len, unsigned char **out, int *out_len) { return 0; }
 INISAFENET_INT_API INL_Handshake_Final(net_ctx *ctx, unsigned char *in, int in_len, unsigned char **out, int *out_len) { return 0; }
+

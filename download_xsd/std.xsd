@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:bwh="urn:bok:std:iso:20022:xsd:001"
+           xmlns:h="urn:iso:std:iso:20022:tech:xsd:head.001.001.03"
+           elementFormDefault="qualified"
+           targetNamespace="urn:bok:std:iso:20022:xsd:001">
+
+    <!-- XML 구조 분석 결과 -->
+    <xs:element name="" type="Type"/>
+
+    <xs:complexType name="Type">
+        <xs:sequence>
+            <xs:element name="BokwireEnvelope xmlns" type="xs:string" minOccurs="0"/>
+            <xs:element name="BokwireHeader" type="xs:string" minOccurs="0"/>
+            <xs:element name="Request" type="xs:string" minOccurs="0"/>
+            <xs:element name="MsgTpCd" type="xs:string" minOccurs="0"/>
+            <xs:element name="Id" type="xs:string" minOccurs="0"/>
+            <xs:element name="Password" type="xs:string" minOccurs="0"/>
+            <xs:element name="BokwireBody" type="xs:string" minOccurs="0"/>
+            <xs:element name="AppHdr xmlns" type="xs:string" minOccurs="0"/>
+            <xs:element name="CharSet" type="xs:string" minOccurs="0"/>
+            <xs:element name="BizMsgIdr" type="xs:string" minOccurs="0"/>
+            <xs:element name="BizSvc" type="xs:string" minOccurs="0"/>
+            <xs:element name="Fr" type="xs:string" minOccurs="0"/>
+            <xs:element name="FIId" type="xs:string" minOccurs="0"/>
+            <xs:element name="FinInstnId" type="xs:string" minOccurs="0"/>
+            <xs:element name="ClrSysMmbId" type="xs:string" minOccurs="0"/>
+            <xs:element name="ClrSysId" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

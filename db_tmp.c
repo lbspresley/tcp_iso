@@ -1,12 +1,11 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
 int cf_dbcnx() { return 0; }
 void cf_Disconnect() { return ; }
 int cf_GoImgLog(char *svc, char *dir, char *title, char* msg, int len) { return 0; }
 
 
-// 0 : BOK (국고)
-// 1 : FTP (신한은망)
+#ifndef _SHB_
 int dbGetIDPW( )
 {
   char tmp_id[32]="tmp-id";
@@ -27,6 +26,7 @@ int dbUpdateIDPW(char* pID, char* pPass)
 
   return 0;
 }
+#endif
 
 int getEncIdPw( )
 {
@@ -143,56 +143,56 @@ int UC_SgetSysDateTime (int aiMode, char *apDateStr, int *aiStatCode, char *apSt
 
   switch (aiMode)
   {
-  case YYYYMMDD:
-    strftime(apDateStr, 9, "%Y%m%d", calptr);
-    break;
-  case HHMISS:
-    strftime(apDateStr, 7, "%H%M%S", calptr);
-    break;
-  case YYYYMMDDHHMISS:
-    strftime(apDateStr, 15, "%Y%m%d%H%M%S", calptr);
-    break;
-  case YYYYMMDDHHMISSMI:
-  {
-    struct timeval currtime;
-    char sDateTime[15];
+    case YYYYMMDD:
+      strftime(apDateStr, 9, "%Y%m%d", calptr);
+      break;
+    case HHMISS:
+      strftime(apDateStr, 7, "%H%M%S", calptr);
+      break;
+    case YYYYMMDDHHMISS:
+      strftime(apDateStr, 15, "%Y%m%d%H%M%S", calptr);
+      break;
+    case YYYYMMDDHHMISSMI:
+      {
+        struct timeval currtime;
+        char sDateTime[15];
 
-    gettimeofday(&currtime, NULL);
-    strftime(sDateTime, 15, "%Y%m%d%H%M%S", calptr);
+        gettimeofday(&currtime, NULL);
+        strftime(sDateTime, 15, "%Y%m%d%H%M%S", calptr);
 
-    sprintf(apDateStr, "%s%02d", sDateTime, currtime.tv_usec / 10000);
-    break;
-  }
-  case YYYYMMDDHHMISSMIS:
-  {
-    struct timeval currtime;
-    char sDateTime[16];
+        sprintf(apDateStr, "%s%02d", sDateTime, (int)(currtime.tv_usec / 10000));
+        break;
+      }
+    case YYYYMMDDHHMISSMIS:
+      {
+        struct timeval currtime;
+        char sDateTime[16];
 
-    gettimeofday(&currtime, NULL);
-    strftime(sDateTime, 16, "%Y%m%d%H%M%S", calptr);
+        gettimeofday(&currtime, NULL);
+        strftime(sDateTime, 16, "%Y%m%d%H%M%S", calptr);
 
-    sprintf(apDateStr, "%s%03d", sDateTime, currtime.tv_usec / 1000);
-    break;
-  }
-  case MMDDHHMISS:
-    strftime(apDateStr, 11, "%m%d%H%M%S", calptr);
-    break;
-  case YMDFORM1:
-    strftime(apDateStr, 18, "%Y%m%d:%H:%M:%S", calptr);
-    break;
-  case YMDFORM2:
-    strftime(apDateStr, 20, "%m/%d/%Y %H:%M:%S", calptr);
-    break;
-  case YMDFORM3:
-    strftime(apDateStr, 18, "%Y%m%d-%H:%M:%S", calptr);
-    break;
-  case TIMEFORM1:
-    strftime(apDateStr, 9, "%H:%M:%S", calptr);
-    break;
-  default:
-    *aiStatCode = UC_ERR_INDATA_UNKNOWN_TYPE;
-    sprintf(apStatMsg, "구분코드[%d] 오류입니다", aiMode);
-    return -1;
+        sprintf(apDateStr, "%s%03d", sDateTime, (int)(currtime.tv_usec / 1000));
+        break;
+      }
+    case MMDDHHMISS:
+      strftime(apDateStr, 11, "%m%d%H%M%S", calptr);
+      break;
+    case YMDFORM1:
+      strftime(apDateStr, 18, "%Y%m%d:%H:%M:%S", calptr);
+      break;
+    case YMDFORM2:
+      strftime(apDateStr, 20, "%m/%d/%Y %H:%M:%S", calptr);
+      break;
+    case YMDFORM3:
+      strftime(apDateStr, 18, "%Y%m%d-%H:%M:%S", calptr);
+      break;
+    case TIMEFORM1:
+      strftime(apDateStr, 9, "%H:%M:%S", calptr);
+      break;
+    default:
+      *aiStatCode = UC_ERR_INDATA_UNKNOWN_TYPE;
+      sprintf(apStatMsg, "구분코드[%d] 오류입니다", aiMode);
+      return -1;
 
   } /* end of switch */
 

@@ -1,0 +1,26 @@
+[
+    {
+        "description": "Ensure header type is 'request'",
+        "xpath": "/root/header/type",
+        "type": "exact_value",
+        "value": "request"
+    },
+    {
+        "description": "Check if body ID is purely numeric and length is 10",
+        "xpath": "/root/body/id",
+        "type": "regex",
+        "value": "^[0-9]{10}$"
+    },
+    {
+        "description": "Validate status is 'OK' or 'ERROR'",
+        "xpath": "/root/status",
+        "type": "regex",
+        "value": "^(OK|ERROR)$"
+    },
+    {
+        "description": "Check if a non-existent path is handled correctly",
+        "xpath": "/root/nonexistent_path",
+        "type": "exact_value",
+        "value": "any_value"
+    }
+]

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FullMessage>
+    <BusinessApplicationHeaderV03>
+        <BusinessMessageIdentifier>1234</BusinessMessageIdentifier>
+        <From>
+            <FinancialInstitutionIdentification>
+                <FinancialInstitutionIdentification>
+                    <ClearingSystemMemberIdentification>
+                        <MemberIdentification>1016</MemberIdentification>
+                    </ClearingSystemMemberIdentification>
+                </FinancialInstitutionIdentification>
+            </FinancialInstitutionIdentification>
+        </From>
+    </BusinessApplicationHeaderV03>
+    <Document>
+        <SystemEventNotificationV01>
+            <EventInformation>
+                <EventParameter>1234</EventParameter>
+            </EventInformation>
+        </SystemEventNotificationV01>
+        <SystemEventAcknowledgementV01>
+            <MessageIdentification>5678</MessageIdentification>
+        </SystemEventAcknowledgementV01>
+        <FIToFICustomerCreditTransferV08>
+            <GroupHeader>
+                <MessageIdentification>1234</MessageIdentification>
+                <NumberOfTransactions>1</NumberOfTransactions>
+                <ControlSum>1</ControlSum>
+            </GroupHeader>
+            <CreditTransferTransactionInformation>
+                <SettlementPriority>NORM</SettlementPriority>
+                <SettlementTimeRequest>
+                    <FromTime>12:00:00</FromTime>
+                    <ToTime>18:00:00</ToTime>
+                </SettlementTimeRequest>
+                <InstructingAgent>
+                    <FinancialInstitutionIdentification>
+                        <ClearingSystemMemberIdentification>
+                            <ClearingSystemIdentification>
+                                <Code>KRBOK</Code>
+                            </ClearingSystemIdentification>
+                            <MemberIdentification>1234</MemberIdentification>
+                        </ClearingSystemMemberIdentification>
+                    </FinancialInstitutionIdentification>
+                </InstructingAgent>
+                <PreviousInstructingAgent1>
+                    <FinancialInstitutionIdentification>
+                        <Name>Test Bank</Name>
+                        <PostalAddress>Test Address</PostalAddress>
+                    </FinancialInstitutionIdentification>
+                </PreviousInstructingAgent1>
+                <RemittanceInformation>
+                    <Unstructured>12345/67890/11111/22222/33333/Test remittance info</Unstructured>
+                    <AdditionalRemittanceInformation>44444/55555/66666/77777/88888/Additional info</AdditionalRemittanceInformation>
+                </RemittanceInformation>
+            </CreditTransferTransactionInformation>
+        </FIToFICustomerCreditTransferV08>
+    </Document>
+</FullMessage> 

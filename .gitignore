@@ -1,4 +1,13 @@
 tags
 *.o
+db_Get_BOK_Inf.c
+link.out
 svctab_tcp_iso.c
 tcp_iso
+test_iso
+test_regex
+validate_xml
+validate_xml_complex
+msg_seq_*.dat
+*.class
+pacs*/** 

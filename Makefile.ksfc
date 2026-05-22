@@ -1,0 +1,64 @@
+# ROME+ Application Make Property include
+include $(ROME_HOME)/work/rome.mkconf
+
+SRCS1	= tcp_iso.c \
+		tpsvrinit.c \
+		UserInit.c \
+		usermain.c \
+		CF_APortConnect.c \
+		CF_ACloseSession.c \
+		CF_DisCntSession.c \
+		CF_ReceiveMessage.c \
+		CF_UpdateSendCnt.c \
+		CF_UpdateRecvCnt.c \
+		lf_SendMessage.c \
+		trs_req.c \
+		session_key_cli.c \
+		session_key_svr.c \
+		process_message.c \
+		process_skey_message.c \
+		iso_ack.c \
+		iso_utils.c \
+		iso_xml.c \
+		iso_header.c \
+		inl_utils.c \
+		$(SVCTAB1)
+
+PRCS1	= db_Get_BOK_Inf.pc
+
+# Module Name 
+DEST1	= tcp_iso
+SVC1	= TCP_ISO
+
+include $(ROME_HOME)/work/rome.mkrule
+
+# Include Path
+INISAFENET_HOME=$(HOME)/initech/inisafenet
+INCS += -I$(CL_HOME)/src/inc
+INCS += -I$(INISAFENET_HOME)/include 
+
+PROC_INC += $(INCS:-I%=include=%)
+
+# Library Link
+COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
+COMMON_LIB += -ltgl_s_nh -lsmt
+COMMON_LIB += -ltpucs -ltxnon
+COMMON_LIB += -liconv
+COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI
+COMMON_LIB += $(ORA_CLILIB) -L$(CL_HOME)/lib -ldbcmn 
+
+
+# Compile Option
+#DEFINES	+= -D_DEBUG_
+# Cryption
+DEFINES	+= -D_CRYPT_
+# KSFC
+DEFINES	+= -D_KSFC_
+# libxml2 
+#COMMON_LIB += -lxml2
+#DEFINES	+= -D__USE_XML_PARSER__
+
+PROC_INC += $(DEFINES:-D%=define=%)
+
+install: all bininstall
+clobber: clean binclobber

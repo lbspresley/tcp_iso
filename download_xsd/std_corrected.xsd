@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:bwh="urn:bok:std:iso:20022:xsd:001"
+           xmlns:h="urn:iso:std:iso:20022:tech:xsd:head.001.001.03"
+           elementFormDefault="qualified"
+           targetNamespace="urn:bok:std:iso:20022:xsd:001">
+
+    <!-- 다른 namespace import -->
+    <xs:import namespace="urn:iso:std:iso:20022:tech:xsd:head.001.001.03" 
+               schemaLocation="head.001.001.03.xsd"/>
+
+    <!-- BokwireEnvelope 루트 엘리먼트 -->
+    <xs:element name="BokwireEnvelope" type="bwh:BokwireEnvelopeType"/>
+
+    <!-- BokwireEnvelope 복잡한 타입 -->
+    <xs:complexType name="BokwireEnvelopeType">
+        <xs:sequence>
+            <xs:element name="BokwireHeader" type="bwh:BokwireHeaderType"/>
+            <xs:element name="BokwireBody" type="bwh:BokwireBodyType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- BokwireHeader 복잡한 타입 -->
+    <xs:complexType name="BokwireHeaderType">
+        <xs:sequence>
+            <xs:element name="Request" type="bwh:RequestType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Request 복잡한 타입 -->
+    <xs:complexType name="RequestType">
+        <xs:sequence>
+            <xs:element name="MsgTpCd" type="xs:string"/>
+            <xs:element name="Id" type="xs:string"/>
+            <xs:element name="Password" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- BokwireBody 복잡한 타입 -->
+    <xs:complexType name="BokwireBodyType">
+        <xs:sequence>
+            <xs:element ref="h:AppHdr"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

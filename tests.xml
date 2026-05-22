@@ -1,0 +1,11 @@
+<root>
+    <header>
+        <type>request</type>
+        <timestamp>2023-10-27T10:00:00Z</timestamp>
+    </header>
+    <body>
+        <id>1234567890</id>
+        <message>Hello C-lang validation!</message>
+    </body>
+    <status>OK</status>
+</root>

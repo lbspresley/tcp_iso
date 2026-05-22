@@ -1,0 +1,58 @@
+# ROME+ Application Make Property include
+include $(ROME_HOME)/work/cruztp.mkconf
+
+SRCS1	= tcp_iso.c \
+		tpsvrinit.c \
+		UserInit.c \
+		usermain.c \
+		CF_APortConnect.c \
+		CF_ACloseSession.c \
+		CF_DisCntSession.c \
+		CF_ReceiveMessage.c \
+		CF_UpdateSendCnt.c \
+		CF_UpdateRecvCnt.c \
+		lf_SendMessage.c \
+		lf_ProcLoginInf.c \
+		trs_req.c \
+		session_key_cli.c \
+		session_key_svr.c \
+		process_message.c \
+		process_skey_message.c \
+		iso_ack.c \
+		iso_utils.c \
+		iso_xml.c \
+		iso_header.c \
+		inl_utils.c \
+		$(SVCTAB1)
+
+
+# Module Name 
+DEST1	= tcp_iso
+SVC1	= TCP_ISO
+
+# Include Path
+INISAFENET_HOME=$(HOME)/ExtSw/INISAFENET
+INCS    += -I$(ROME_HOME)/work/inc
+INCS	+= -I$(CL_HOME)/src/inc
+INCS    += -I$(CL_HOME)/work/inc
+INCS    += -I$(INISAFENET_HOME)/include
+
+# Library Link
+COMMON_LIB += -lrmpst -lrmvc -lrdf -lrsof
+COMMON_LIB += -ltgl_s_nh
+COMMON_LIB += -lsmt
+COMMON_LIB += -ltpucs -ltxnon
+COMMON_LIB += -lxmlall
+#COMMON_LIB += $(XMLLIB) 
+#COMMON_LIB += -L$(CL_HOME)/lib -lucmn -ladtlog
+COMMON_LIB += -L$(INISAFENET_HOME)/lib -linisafeNet -liniCore -liniPKI -liniCrypto
+
+include $(ROME_HOME)/work/rome.mkrule
+
+# Compile Option
+#DEFINES	+= -D_DEBUG_		#	DEBUG
+DEFINES	+= -D_CRYPT_
+DEFINES	+= -D_SHB_
+
+install: all bininstall
+clobber: clean binclobber

@@ -1,0 +1,21 @@
+<bwh:BokwireEnvelope xmlns:bwh="urn:bok:std:iso:20022:xsd:001">
+	<bwh:BokwireHeader> 
+		<Request>
+			<MsgTpCd>pacs.009.CORE</MsgTpCd>
+			<Id>1020</Id>
+			<Password>****************</Password>
+		</Request>
+	</bwh:BokwireHeader>
+	<bwh:BokwireBody>
+		<h:AppHdr xmlns:h="urn:iso:std:iso:20022:tech:xsd:head.001.001.03">
+			<h:CharSet>AC00..D7AF</h:CharSet>
+			<h:BizMsgIdr>202401051016S00000000009024</h:BizMsgIdr>
+			<h:BizSvc>bok.rtgs.01</h:BizSvc>
+			<h:Fr>FF</h:Fr>
+			<h:FIId>FF</h:FIId> 
+			<h:FinInstnId>FF</h:FinInstnId> 
+			<h:ClrSysMmbId>FF</h:ClrSysMmbId> 
+			<h:ClrSysId>FF</h:ClrSysId>
+		</h:AppHdr>
+	</bwh:BokwireBody>
+</bwh:BokwireEnvelope>

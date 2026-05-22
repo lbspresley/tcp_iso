@@ -1,0 +1,498 @@
+#include "tcp_iso.h"
+
+int process_message(char* in, int inlen)
+{
+  int rc;
+  char *outbuf = (char *)NULL;
+  int outlen = 0;
+  // int length_offset = 5;  // 길이 5바이트 오프셋
+
+  // 1. 암호화 여부 및 복호화 처리
+  if( g_Encrypt_Flag == 0 ) {
+    ulog( _WARNING_, "[NO-ENCRYPT] ONLY call data (%.10s...) len=%d", in, inlen );
+    outbuf = in;
+    outlen = inlen;
+  } else {
+    rc = inl_decrypt(in, inlen, &outbuf, &outlen);
+    if (rc < 0)
+    {
+      ulog(_ERROR_, "[로그정보] 데이터 전문 복호화 실패 !! rc(%d)", rc);
+      return -1;
+    }
+  }
+
+  utrc(outlen, outbuf, "수신전문 복호화 len(%d)", outlen);
+
+  // 2. ACK 응답 전문 여부 및 처리
+  if( is_ack_response_msg(outbuf) ) {
+    ulog(_FLOW_, "[ACK] 응답메시지 수신 !!");
+    int rc = process_ack_response(outbuf);
+    if( rc < 0 ) {
+      ulog(_ERROR_, "[ACK] 응답메시지 처리 실패 !!");
+      return -2;
+    }
+
+    ulog(_FLOW_, "[ACK] 응답메시지 처리 성공!!");
+
+    // ACK 응답 전문 처리 성공
+    return 0;
+  }
+
+  // 3. 수신 전문에 대한 ACK 전문 송신
+  rc = send_ack_response(outbuf);
+  if( rc < 0 ) {
+    ulog(_ERROR_, "[ACK] 응답메시지 송신 실패 !!");
+    return -3;
+  }
+  
+
+  // 4. POLL 전문 여부 확인 및 처리
+  rc = is_poll_msg(outbuf);
+  if (rc < 0 ) {
+	// not valid 
+    ulog(_ERROR_, "표준전문 아님.(%.40s)", outbuf);
+	return -4;
+  }
+
+  // 4.1 POLL 요청전문 
+  if( rc == 1 ) {
+    ulog(_FLOW_, "[POLL] 요청 수신 !!");
+    int rc = process_poll_request(outbuf);
+    if( rc < 0 ) {
+      ulog(_ERROR_, "[POLL] 요청메시지 처리 실패 rc(%d)", rc);
+      return -5;
+    }
+    return 0;
+  }
+
+  // 4.2 POLL 응답전문 
+  if( rc == 2 ) {
+    char reqMsgIdr[35+1] = {0};
+    char orgMsgIdr[35+1] = {0};
+
+    ulog(_FLOW_, "[POLL] 응답 수신 !!");
+
+    char* value = (char*)get_tag_value(outbuf, "BizMsgIdr");
+    if( value == NULL ) {
+      value = (char*)get_tag_value(outbuf, "h:BizMsgIdr");
+    }
+    if( value == NULL ) {
+      ulog(_ERROR_, "BizMsgIdr 추출 실패 !!");
+      return 0;
+    }
+    strcpy(reqMsgIdr, value);
+
+	// 업무에서 송신한 POLL 응답은 CORE로 송신
+
+	// a. get original BizMsgIdr from request
+	value = (char*)get_tag_value(outbuf, "OrgtrRef");
+	if( value == NULL ) {
+	  ulog(_ERROR_, "OrgtrRef 추출 실패 !!");
+	  return 0;
+	}
+	strcpy(orgMsgIdr, value);
+
+	ulog(0, "[POLLRSP] BizMsgIdr(%s), OrgtrRef(%s)", reqMsgIdr, orgMsgIdr);
+
+	// b. FEP에서 보낸 POLL응답인지 확인(msgidr) : sequence(last 6-digit)
+	char *pCh = orgMsgIdr + strlen(orgMsgIdr) - 6;
+	if (*pCh == '9' ){
+	  // send from FEP 
+	  ulog(_FLOW_, "[POLLRSP] FEP에서 보낸 POLL응답. msgidr(%s)", orgMsgIdr);
+	  return 0;
+	}
+
+  ulog(_FLOW_, "[POLLRSP] 코어 송신 : msgidr(%s)", orgMsgIdr);
+
+#ifndef _SHB_
+	rc = send_header_only_to_core("POLLRSP", orgMsgIdr);
+  if( rc < 0 ) {
+    ulog(_ERROR_, "[POLLRSP] 코어 송신 실패. rc(%d) msgidr(%s)", rc, orgMsgIdr);
+    return -6;
+  }
+
+  ulog(_FLOW_, "[POLLRSP] 코어 송신 성공 : msgidr(%s)", orgMsgIdr);
+	return 0;
+#endif
+  }
+
+  ulog(_FLOW_, "업무 표준 전문 수신 !!");
+
+  // 5. 코어 송신(E2B)
+  rc = send_to_core(outbuf, outlen);
+  if( rc < 0 ) {
+    ulog(_ERROR_, "[코어 송신] 코어 송신 실패 !!");
+    return -5;
+  }
+
+  return 0;
+}
+
+
+// char* snd_msg : MUST be a pointer from tpalloc() 
+int call_backend (char* snd_msg, int snd_len)
+{
+  // a. FEP 헤더 생성
+  S_CL_HEADER *pFepHdr = (S_CL_HEADER *)snd_msg;
+  memset((char*)pFepHdr, 0x20, sizeof(S_CL_HEADER));
+
+  // set FEP Header : c_Len
+  int msg_len = snd_len + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
+  char msg_len_str[6+1];
+
+  sprintf(msg_len_str, "%06d", msg_len);
+  memcpy(pFepHdr->c_Len, msg_len_str, 6);
+
+  memcpy(pFepHdr->c_ExChanID, g_ServiceName, sizeof(pFepHdr->c_ExChanID));
+  memcpy(pFepHdr->c_MsgDsc, "APMG", sizeof(pFepHdr->c_MsgDsc));
+
+  //(void) replaceString(MsgTpCd, ".", "_");
+
+  // memcpy(pFepHdr->c_ApCode, APCODE_INBOUND, strlen(APCODE_INBOUND));
+
+  #ifdef _SHB_
+  BOK_HEADER *pBokHdr = (BOK_HEADER *)(snd_msg + sizeof(S_CL_HEADER));
+  int MsgTpCd_len = sizeof(pBokHdr->MsgTpCd);
+  char MsgTpCd[MsgTpCd_len+1] = {0};
+  char ApCode[32+1] = {0};
+
+  memset(MsgTpCd, 0, MsgTpCd_len+1);
+  memcpy(MsgTpCd, pBokHdr->MsgTpCd, MsgTpCd_len);
+  replaceUpper(MsgTpCd);
+  memcpy(pBokHdr->MsgTpCd, MsgTpCd, MsgTpCd_len);
+  ulog(_FLOW_, "UPPER MsgTpCd: %s", MsgTpCd);
+  #endif
+
+  utrc(msg_len, snd_msg, "tpacall to CFR_E2B_MSG len(%d)", msg_len);
+
+  // 6. 코어 송신(E2B)
+  int rc = tpacall("CFR_E2B_MST", snd_msg, msg_len, TPNOREPLY | TPBLOCK);
+  if( rc < 0 ) {
+    ulog(_ERROR_, "[코어 송신] 코어 송신 실패. rc(%d)", rc);
+    return -1;
+  }
+
+  ulog(_FLOW_, "[코어 송신] 코어 송신 성공 !!");
+
+  return 0;
+}
+
+int send_header_only_to_core(char* msgtpcd, char* bizmsgidr)
+{
+  int rc;
+  int msg_len = sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
+
+  char* snd_msg = (char*)tpalloc("CARRAY", NULL, msg_len);
+  if( snd_msg == NULL ) {
+    ulog(_ERROR_, "Failed to allocate memory for tpalloc message");
+    return -1;
+  }
+
+  BOK_HEADER *pBokHdr = (BOK_HEADER *)(snd_msg + sizeof(S_CL_HEADER));
+  memset((char*)pBokHdr, 0x20, SIZE_BOK_HEADER);
+
+  //char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
+  //char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
+
+  memcpy(pBokHdr->ApCode, APCODE_INBOUND, strlen(APCODE_INBOUND));
+  memcpy(pBokHdr->MsgTpCd, msgtpcd, strlen(msgtpcd));
+  memcpy(pBokHdr->BizMsgIdr, bizmsgidr, strlen(bizmsgidr));
+
+  // poll rsp : no DATA
+  rc = call_backend (snd_msg, 0);
+  if (rc < 0 ){
+    ulog(_ERROR_, "call_backend() error rc:%d", rc);
+	// must be free
+	tpfree(snd_msg);
+    return -1;
+  }
+
+  // must be free
+  tpfree(snd_msg);
+
+  return 0;
+}
+
+#ifdef _SHB_
+int send_ack_rsp_to_core (char* msgtpcd, char* bizmsgidr)
+{
+	int rc;
+	int msg_len = sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
+
+  char* snd_msg = (char*)tpalloc("CARRAY", NULL, msg_len);
+  if( snd_msg == NULL ) {
+    ulog(_ERROR_, "Failed to allocate memory for tpalloc message");
+    return -1;
+  }
+
+  BOK_HEADER *pBokHdr = (BOK_HEADER *)(snd_msg + sizeof(S_CL_HEADER));
+  memset((char*)pBokHdr, 0x20, SIZE_BOK_HEADER);
+
+  char ApCode  [35+1] = {0};  
+  char MsgTpCd  [35+1] = {0};
+  char BizMsgIdr[35+1] = {0};
+
+	replaceString(msgtpcd, ",", "_");
+	sprintf (ApCode, "A%s", msgtpcd);
+	replaceUpper (ApCode);
+
+  memcpy(pBokHdr->ApCode, ApCode, strlen(ApCode));
+  memcpy(pBokHdr->MsgTpCd, msgtpcd, strlen(msgtpcd));
+  memcpy(pBokHdr->BizMsgIdr, bizmsgidr, strlen(bizmsgidr));
+
+	utrc(msg_len, snd_msg, "ACK RSP");
+
+  // ack rsp
+  rc = call_backend (snd_msg, 0);
+  if (rc < 0 ){
+    ulog(_ERROR_, "call_backend() error rc:%d", rc); 
+		// must be free 
+		tpfree(snd_msg);
+    return -1;
+  }
+
+  // must be free
+  tpfree(snd_msg);
+
+  return 0;
+}
+#endif
+
+/*
+* 코어 송신(E2B)
+* a. FEP 헤더 생성
+* b. BOK 헤더 생성
+* c. Set Data
+* d. (전문변환여부)전문변환 처리
+* e. (인코딩 변환 여부)인코딩 변환 처리
+*/
+int send_to_core(char* outbuf, int outlen)
+{
+  int rc;
+  static char* _tpalloc_msg = (char*)NULL;
+  static int _tpalloc_msg_len = MAX_MSG_LEN + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
+
+  // alloc initial buffer
+  if( _tpalloc_msg == NULL ) {
+    _tpalloc_msg = (char*)tpalloc("CARRAY", NULL, _tpalloc_msg_len);
+    if( _tpalloc_msg == NULL ) {
+      ulog(_ERROR_, "Failed to allocate memory for tpalloc message");
+      return -1;
+    }
+  }
+
+  // check tpalloc buffer size
+  if( outlen + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER > _tpalloc_msg_len ) {
+    _tpalloc_msg_len = outlen + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER;
+    tpfree(_tpalloc_msg);
+    _tpalloc_msg = (char*)tpalloc("CARRAY", NULL, _tpalloc_msg_len);
+    if( _tpalloc_msg == NULL ) {
+      ulog(_ERROR_, "Failed to allocate memory for tpalloc message");
+      return -2;
+    }
+  }
+
+  BOK_HEADER *pBokHdr = (BOK_HEADER *)(_tpalloc_msg + sizeof(S_CL_HEADER));
+  memset((char*)pBokHdr, 0x20, SIZE_BOK_HEADER);
+
+  // Request/Response 구분
+  // int is_request = 0;
+  char* value = NULL;
+
+  char MsgTpCd  [35+1] = {0};  // REQ(O),RSP(O) (Max 27)
+  char BizMsgIdr[35+1] = {0};  // REQ(X),RSP(O)
+
+  value = (char *)get_tag_value(outbuf, "MsgTpCd");
+  if( value == NULL ) {
+  	value = (char *)get_tag_value(outbuf, "h:MsgTpCd");
+    if( value == NULL ) {
+      ulog(_ERROR_, "MsgTpCd 추출 실패 !!");
+      return -3;
+    }
+  }
+
+  if( check_msg_tp_cd(value) == 0 ) {
+    ulog(_ERROR_, "[MsgTpCd] 메시지 유형 코드 체크 실패 !!(%s)", value);
+    //return -6;
+  }
+  strcpy(MsgTpCd, value);
+
+  value = (char *)get_tag_value(outbuf, "BizMsgIdr");
+  if (value == NULL) {
+    value = (char *)get_tag_value(outbuf, "h:BizMsgIdr");
+    if (value == NULL) {
+      ulog(_ERROR_, "BizMsgIdr 추출 실패 !!");
+      return -4;
+    }
+  }
+  strcpy(BizMsgIdr, value);
+
+  ulog(_FLOW_, "MsgTpCd: %s, BizMsgIdr: %s, MSG(%.30s)", MsgTpCd, BizMsgIdr, outbuf );
+
+#ifdef _SHB_
+  char ApCode[100] = {0};
+
+  replaceString(MsgTpCd, ".", "_");
+  sprintf(ApCode, "I%s", MsgTpCd);
+  replaceUpper(ApCode);
+
+  memcpy(pBokHdr->ApCode, ApCode, strlen(ApCode));
+#else
+  memcpy(pBokHdr->ApCode, APCODE_OUTBOUND, strlen(APCODE_OUTBOUND));
+#endif
+
+  if (strlen(MsgTpCd) > 0) {
+    memcpy(pBokHdr->MsgTpCd, MsgTpCd, strlen(MsgTpCd));
+  }
+
+  if (strlen(BizMsgIdr) > 0) {
+    memcpy(pBokHdr->BizMsgIdr, BizMsgIdr, strlen(BizMsgIdr));
+  }
+
+
+  // 전문변환 및 인코딩 처리
+
+  // d. 전문변환 처리
+  // 1) BokwireBody 추출
+  char* bokwire_body = (char*)get_tag_value(outbuf, "bwh:BokwireBody");
+  if( bokwire_body == NULL ) {
+    bokwire_body = (char*)get_tag_value(outbuf, "BokwireBody");
+    if( bokwire_body == NULL ) {
+      ulog(_ERROR_, "BokwireBody 추출 실패 !!");
+      return -5;
+    }
+  }
+
+  utrc(strlen(bokwire_body), bokwire_body, "BODY len(%d)", strlen(bokwire_body));
+
+  // c. Set Data 
+  char* data = (char*)(_tpalloc_msg + sizeof(S_CL_HEADER) + SIZE_BOK_HEADER);
+
+  // 전문변환 요청/응답
+  // req_trs
+  outlen = req_trs_xml(MsgTpCd, BizMsgIdr, bokwire_body, strlen(bokwire_body), data);
+  if (outlen < 0)
+  {
+    ulog(_ERROR_, "[전문변환] 전문변환 실패 !!");
+    return -6;
+  }
+
+  rc = call_backend (_tpalloc_msg, outlen);
+  if (rc < 0 ){
+    ulog(_ERROR_, "call_backend() error rc:%d", rc);
+    return -7;
+  }
+
+  return 0;
+}
+
+char* replaceDupTag(int flag, char* str)
+{
+  static char _dup_tags[2][36] = { "AddtlInf", "" };
+  static int _dup_tags_count = 1;
+  
+  char tag_str[100];
+  int i;
+  char* out = str;
+  char* in;
+
+  for (i=0; i<_dup_tags_count; i++){
+    in = strdup(out);
+    sprintf (tag_str, "</%s><%s>", _dup_tags[i], _dup_tags[i]);
+    if (flag==0){
+      // XML
+      out = replaceString2(in, tag_str, DUP_DELIMETER);
+    } else {
+      // FIXED
+      out = replaceString2(in, DUP_DELIMETER, tag_str);
+    }
+    free(in);
+  }
+
+  return out;
+}
+
+char* replaceString2(char* str, char* org, char* rep)
+{
+  static char _replaceStr[MAX_MSG_LEN];
+  int org_len = strlen(org);
+  int rep_len = strlen(rep);
+  int copy_len;
+  char* pRep =_replaceStr;
+  char* pOrg = str;
+
+  char* ptr = strstr(pOrg, org);
+  if (ptr == NULL) {
+    return str;
+  }
+
+  while (ptr != NULL) {
+    copy_len = (int)(ptr - pOrg);
+    memcpy(pRep, pOrg, copy_len);
+    pOrg += copy_len;
+    pRep += copy_len;
+
+    memcpy(pRep, rep, rep_len);
+    pOrg += org_len;
+    pRep += rep_len;
+
+    ptr = strstr(pOrg, org);
+  }
+
+  *pRep = 0;
+  strcat(_replaceStr, pOrg);
+
+  return _replaceStr;
+}
+
+// CAUTION: org, rep 둘다 문자열(length=1)
+void replaceString(char* str, char* org, char* rep)
+{
+  char* ptr = str;
+  while( ptr != NULL ) {
+    ptr = strstr(ptr, org);
+    if( ptr != NULL ) {
+      *ptr = *rep;
+    }
+  }
+}
+
+void replaceChar(char* str, char org, char rep)
+{
+  char* ptr = str;
+  while( ptr != NULL ) {
+    ptr = strchr(ptr, org);
+    if( ptr != NULL ) {
+      *ptr = rep;
+    }
+  }
+}
+
+void replaceUpper( char* str)
+{
+  // replace lowercase to upper case 
+  char* p = str;
+  for(;*p !=0; p++){
+    if(islower((int)*p)) {
+		  *p = toupper((int)*p);
+	  }
+  }
+
+  return;
+}
+
+
+void removeTrailingSpace( char* str)
+{
+  // clean trailing space
+  char* p = str;
+  for(;*p !=0; p++){
+    if(*p == 0x20){ 
+		*p = 0;
+		return;
+	}
+  }
+
+  return;
+}
+

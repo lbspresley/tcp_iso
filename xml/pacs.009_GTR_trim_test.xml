@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bwh:BokwireEnvelope xmlns:bwh="urn:bok:std:iso:20022:xsd:001">
+	<bwh:BokwireHeader>
+		<bwh:Request> 
+			<bwh:MsgTpCd>pacs.009.GTR</bwh:MsgTpCd> 
+			<bwh:Id>TEST1033</bwh:Id> 
+			<bwh:Password></bwh:Password> 
+		</bwh:Request>
+	</bwh:BokwireHeader>
+	<bwh:BokwireBody>
+	<h:AppHdr xmlns:h="urn:iso:std:iso:20022:tech:xsd:head.001.001.03">
+		<h:CharSet>AC00..D7AF</h:CharSet>
+		<h:Fr>
+			<h:FIId>
+				<h:FinInstnId>
+					<h:ClrSysMmbId>
+						<h:ClrSysId>
+							<h:Cd></h:Cd>
+						</h:ClrSysId>
+						<h:MmbId></h:MmbId>
+					</h:ClrSysMmbId>
+				</h:FinInstnId>
+			</h:FIId>
+		</h:Fr>
+		<h:To>
+			<h:FIId>
+				<h:FinInstnId>
+					<h:ClrSysMmbId>
+						<h:ClrSysId>
+							<h:Cd>KRBOK</h:Cd>
+						</h:ClrSysId>
+						<h:MmbId>1016</h:MmbId>
+					</h:ClrSysMmbId>
+				</h:FinInstnId>
+			</h:FIId>
+		</h:To>
+		<h:BizMsgIdr>202401051030S00000000000004</h:BizMsgIdr>
+		<h:MsgDefIdr>pacs.009.001.08</h:MsgDefIdr>
+		<h:BizSvc>bok.rtgs.gtr.01</h:BizSvc>
+		<h:CreDt>2024-01-05T09:22:03+09:00</h:CreDt>
+		<h:BizPrcgDt>2024-01-05T09:00:00+09:00</h:BizPrcgDt>
+	</h:AppHdr>
+	</bwh:BokwireBody>
+</bwh:BokwireEnvelope>

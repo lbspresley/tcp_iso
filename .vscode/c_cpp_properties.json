@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/bhlee/work/src/cruz/CruzTP/tome/work/inc/usrinc",
+                "/home/bhlee/work/src/cruz/CruzTP/tome/work/inc",
+                "/home/bhlee/work/src/cruz/initech/inisafenet/include",
+                "/home/bhlee/work/src/cruz/CruzLink/inc",
+                "/home/bhlee/work/src/cruz/CruzLink/work/inc/adaptor/tcp_type/tcp_com",
+                "/usr/include/libxml2"
+            ],
+            "defines": [
+                "_LINUX"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+} 

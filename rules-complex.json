@@ -1,0 +1,134 @@
+[
+    {
+        "description": "Event Parameter must be 4 digits numeric (from previous rules).",
+        "xpath": ["/FullMessage/Document/SystemEventNotificationV01/EventInformation/EventParameter"],
+        "type": "regex",
+        "value": "^[0-9]{4}$"
+    },
+    {
+        "description": "Multiple XPath regex validation example - both EventParameter and MessageIdentifier must be 4 digits.",
+        "xpath": [
+            "/FullMessage/Document/SystemEventNotificationV01/EventInformation/EventParameter",
+            "/FullMessage/Document/SystemEventAcknowledgementV01/MessageIdentification"
+        ],
+        "type": "regex",
+        "value": "^[0-9]{4}$"
+    },
+    {
+        "description": "BAH From MemberIdentification must match Event Parameter (from previous rules).",
+        "type": "cross_element_match",
+        "xpath1": "/FullMessage/BusinessApplicationHeaderV03/From/FinancialInstitutionIdentification/FinancialInstitutionIdentification/ClearingSystemMemberIdentification/MemberIdentification",
+        "xpath2": "/FullMessage/Document/SystemEventNotificationV01/EventInformation/EventParameter"
+    },
+    {
+        "description": "BusinessMessageIdentifier must match SystemEventAcknowledgement MessageIdentification (from previous rules).",
+        "type": "cross_element_match",
+        "xpath1": "/FullMessage/BusinessApplicationHeaderV03/BusinessMessageIdentifier",
+        "xpath2": "/FullMessage/Document/SystemEventAcknowledgementV01/MessageIdentification"
+    },
+    {
+        "description": "Rule 1: Conditional cross-element validation based on value not in list.",
+        "type": "conditional",
+        "context_xpath": "/FullMessage",
+        "condition": {
+            "description": "BAH From MemberIdentification is NOT '1016'",
+            "type": "value_not_in_list",
+            "xpath": ["BusinessApplicationHeaderV03/From/FinancialInstitutionIdentification/FinancialInstitutionIdentification/ClearingSystemMemberIdentification/MemberIdentification"],
+            "values": ["1016"]
+        },
+        "action": {
+            "description": "BusinessMessageIdentifier must match FIToFICustomerCreditTransferV08 MessageIdentification",
+            "type": "cross_element_match",
+            "xpath1": "BusinessApplicationHeaderV03/BusinessMessageIdentifier",
+            "xpath2": "Document/FIToFICustomerCreditTransferV08/GroupHeader/MessageIdentification"
+        }
+    },
+    {
+        "description": "Rule 2: Mutually exclusive remittance information elements.",
+        "type": "mutually_exclusive_presence",
+        "xpaths": [
+            "/FullMessage/Document/FIToFICustomerCreditTransferV08/CreditTransferTransactionInformation/RemittanceInformation/Unstructured",
+            "/FullMessage/Document/FIToFICustomerCreditTransferV08/CreditTransferTransactionInformation/RemittanceInformation/Structured"
+        ],
+        "allow_absent": true
+    },
+    {
+        "description": "Rule 3: Conditional regex for multiple Unstructured RemittanceInformation elements if present.",
+        "type": "conditional",
+        "context_xpath": "/FullMessage/Document/FIToFICustomerCreditTransferV08",
+        "condition": {
+            "description": "Unstructured RemittanceInformation is present",
+            "type": "presence",
+            "xpath": ["CreditTransferTransactionInformation/RemittanceInformation/Unstructured"]
+        },
+        "action": {
+            "description": "Multiple Unstructured RemittanceInformation elements must comply with XML pattern",
+            "type": "regex",
+            "xpath": [
+                "CreditTransferTransactionInformation/RemittanceInformation/Unstructured",
+                "CreditTransferTransactionInformation/RemittanceInformation/AdditionalRemittanceInformation"
+            ],
+            "value": "^[0-9]{0,20}/[0-9]{0,20}/[0-9]{0,20}/[0-9]{0,20}/[0-9]{0,20}/[0-9a-zA-Z/\\-\\?:\\(\\)\\.,'+ !#$%&amp;\\*=^_`\\{\\|\\}~&quot;;&lt;&gt;@\\[\\\\\\]\\p{IsHangulSyllables}]{0,135}$"
+        }
+    },
+    {
+        "description": "Rule 4: Conditional presence for SettlementTimeRequest/FromTime based on SettlementPriority.",
+        "type": "conditional",
+        "context_xpath": "/FullMessage/Document/FIToFICustomerCreditTransferV08",
+        "condition": {
+            "description": "SettlementPriority is 'NORM'",
+            "type": "value_in_list",
+            "xpath": ["CreditTransferTransactionInformation/SettlementPriority"],
+            "values": ["NORM"]
+        },
+        "action": {
+            "description": "Multiple SettlementTimeRequest elements must be present",
+            "type": "presence",
+            "xpath": [
+                "CreditTransferTransactionInformation/SettlementTimeRequest/FromTime",
+                "CreditTransferTransactionInformation/SettlementTimeRequest/ToTime"
+            ]
+        }
+    },
+    {
+        "description": "Rule 5: Conditional presence for Name AND PostalAddress if BICFI is absent.",
+        "type": "conditional",
+        "context_xpath": "/FullMessage/Document/FIToFICustomerCreditTransferV08/CreditTransferTransactionInformation/PreviousInstructingAgent1/FinancialInstitutionIdentification",
+        "condition": {
+            "description": "BICFI is absent",
+            "type": "absence",
+            "xpath": ["BICFI"]
+        },
+        "action": {
+            "description": "Name AND PostalAddress must be present",
+            "type": "all_present",
+            "xpath": ["Name", "PostalAddress"]
+        }
+    },
+    {
+        "description": "Rule 6: Conditional regex for MemberIdentification based on ClearingSystemIdentification/Code.",
+        "type": "conditional",
+        "context_xpath": "/FullMessage/Document/FIToFICustomerCreditTransferV08/CreditTransferTransactionInformation/InstructingAgent/FinancialInstitutionIdentification/ClearingSystemMemberIdentification",
+        "condition": {
+            "description": "ClearingSystemIdentification/Code is 'KRBOK'",
+            "type": "value_in_list",
+            "xpath": ["ClearingSystemIdentification/Code"],
+            "values": ["KRBOK"]
+        },
+        "action": {
+            "description": "MemberIdentification must be 4 digits numeric",
+            "type": "regex",
+            "xpath": ["MemberIdentification"],
+            "value": "^[0-9]{4}$"
+        }
+    },
+    {
+        "description": "Rule 7: Multiple XPath exact value validation example.",
+        "type": "exact_value",
+        "xpath": [
+            "/FullMessage/Document/FIToFICustomerCreditTransferV08/GroupHeader/NumberOfTransactions",
+            "/FullMessage/Document/FIToFICustomerCreditTransferV08/GroupHeader/ControlSum"
+        ],
+        "value": "1"
+    }
+]

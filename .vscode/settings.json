@@ -1,0 +1,28 @@
+{
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**"
+    ],
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "terminal.integrated.env.linux": {
+        "ROME_HOME": "/home/bhlee/work/src/cruz/CruzTP/tome",
+        "CL_HOME": "/home/bhlee/work/src/cruz/CruzLink",
+        "INISAFENET_HOME": "/home/bhlee/work/src/cruz/initech/inisafenet"
+    },
+    "editor.formatOnSave": false,
+    "C_Cpp.formatting": "disabled",
+    "[json]": {
+        "editor.formatOnSave": false,
+        "editor.defaultFormatter": null
+    },
+    "[jsonc]": {
+        "editor.formatOnSave": false,
+        "editor.defaultFormatter": null
+    },
+    "[c]": {
+        "editor.formatOnSave": false,
+        "editor.defaultFormatter": null
+    },
+    "cSpell.words": [
+        "msgidr"
+    ]
+}

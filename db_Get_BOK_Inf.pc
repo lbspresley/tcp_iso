@@ -1,191 +1,359 @@
-#include "tcp_bok.h"
+#include "tcp_iso.h"
 
-EXEC SQL INCLUDE    "table/tb_clc_code_dtl_pt.h";
 EXEC SQL INCLUDE sqlca;
+
+#ifdef _KSFC_
+int lf_Get_BOK_OPN_DTM()
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  char    field_name[64+1]="BIZ_OPN_DTTM";
+  char    str_value[64+1];
+  EXEC SQL END DECLARE SECTION;
+
+  memset( str_value, 0x00, sizeof( str_value ) );
+
+  EXEC SQL SELECT NVL(trim(STR_VALUE), ' ')
+    INTO :str_value
+    FROM TB_CL_VAR
+    WHERE FIELD_NAME = :field_name
+      AND VAR_IDX = 1
+    ;
+
+  if( SQLCODE != SQL_OK )
+  {
+    ulog(_ERROR_, "[장애로그] 한국은행 OPEN-TIME 취득 실패. "
+         "(SqlCode=%d, field_name=%s, str_value=%s)", SQLCODE, field_name, str_value);
+    return -1;
+  }
+
+  memset( gc_biz_prcg_dt, 0x00, sizeof( gc_biz_prcg_dt ) );
+  memcpy( gc_biz_prcg_dt, str_value, strlen(str_value) );
+
+  return 0;
+}
+
+int lf_Get_BOK_ID()
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  char    field_name[64+1]="BOK_ID";
+  char    str_value[64+1];
+  EXEC SQL END DECLARE SECTION;
+
+  memset( str_value, 0x00, sizeof( str_value ) );
+
+  EXEC SQL SELECT NVL(trim(STR_VALUE), ' ')
+    INTO :str_value
+    FROM TB_CL_VAR
+    WHERE FIELD_NAME = :field_name
+      AND VAR_IDX = 1
+    ;
+
+  if( SQLCODE != SQL_OK )
+  {
+    ulog(_ERROR_, "[장애로그] 한국은행 ID 취득 실패. "
+         "(SqlCode=%d, field_name=%s, str_value=%s)", SQLCODE, field_name, str_value);
+    return -1;
+  }
+
+  memset( gc_plain_id, 0x00, sizeof( gc_plain_id ) );
+  memcpy( gc_plain_id, str_value, strlen(str_value) );
+
+  return 0;
+}
+
+int lf_Get_BOK_PW()
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  char    field_name[64+1]="BOK_PW";
+  char    str_value[64+1];
+  EXEC SQL END DECLARE SECTION;
+
+  memset( str_value, 0x00, sizeof( str_value ) );
+
+  EXEC SQL SELECT NVL(trim(STR_VALUE), ' ')
+    INTO :str_value
+    FROM TB_CL_VAR
+    WHERE FIELD_NAME = :field_name
+      AND VAR_IDX = 1
+    ;
+
+  if( SQLCODE != SQL_OK )
+  {
+    ulog(_ERROR_, "[장애로그] 한국은행 PW 취득 실패. "
+         "(SqlCode=%d, field_name=%s, str_value=%s)", SQLCODE, field_name, str_value);
+    return -1;
+  }
+
+  // password escape처리
+  char *pw = make_escaped_value(str_value);
+  ulog( 1, "Process escaping pw : %s -> %s", str_value, pw);
+  memset( gc_plain_pw, 0x00, sizeof( gc_plain_pw ) );
+  strcpy( gc_plain_pw, pw );
+
+  return 0;
+}
+
+int dbGetIDPW( )
+{
+  int rc = lf_Get_BOK_ID();
+  if( rc < 0 ) {
+    return -1;
+  }
+
+  rc = lf_Get_BOK_PW();
+  if( rc < 0 ) {
+    return -2;
+  }
+
+  rc = lf_Get_BOK_OPN_DTM();
+  if( rc < 0 ) {
+    return -3;
+  }
+
+  ulog(_FLOW_, "id: %s, pw: %s, opentm: %s", gc_plain_id, gc_plain_pw, gc_biz_prcg_dt); 
+
+  return 0;
+}
+
+#else
 
 // 0 : BOK (국고)
 // 1 : FTP (신한은망)
 int dbGetIDPW( )
 {
-EXEC SQL BEGIN DECLARE SECTION;
-	int rc =0;
-	TB_CLC_CODE_DTL_PT		S_Tbl;
-EXEC SQL END DECLARE SECTION;
+  EXEC SQL BEGIN DECLARE SECTION;
+  char dtl_cd  [128+1];
+  char dtl_cd_cntn1  [128+1];
+  char dtl_cd_cntn2  [128+1];
+  EXEC SQL END DECLARE SECTION;
 
-	db_Init_tb_clc_code_dtl( (char*)&S_Tbl );
+  memset( dtl_cd, 0x00, sizeof( dtl_cd ) );
+  memset( dtl_cd_cntn1, 0x00, sizeof( dtl_cd_cntn1 ) );
+  memset( dtl_cd_cntn2, 0x00, sizeof( dtl_cd_cntn2 ) );
 
-	S_Tbl.mst_cd.len = 8;
-	memcpy(S_Tbl.mst_cd.arr, "BOK_IDPW", S_Tbl.mst_cd.len );  
+  memcpy(dtl_cd, "BOK_IDPW", 8 );  
 
-	S_Tbl.dtl_cd.len = 3;
-	if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
-		// 0 : BOK (국고)
-		memcpy(S_Tbl.dtl_cd.arr, "BOK", S_Tbl.dtl_cd.len );  
-	} else {
-		// 1 : FTP (신한은망)
-		memcpy(S_Tbl.dtl_cd.arr, "FTP", S_Tbl.dtl_cd.len );  
-	}	
+  if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
+    // 0 : BOK (국고)
+    memcpy(dtl_cd, "BOK", 3 );  
+  } else {
+    // 1 : FTP (신한은망)
+    memcpy(dtl_cd, "FTP", 3 );  
+  }	
 
-	rc = db_Select_tb_clc_code_dtl( (char*)&S_Tbl );
-	if(rc != SQL_OK)
-	{
-		ulog(_ERROR_, "[장애로그] 한국은행 PASSWD 취득 오류 BIZ[%s] [SQL_NO:%d]", gc_BizCode, rc);
+  EXEC SQL SELECT DTL_CD_CNTN1, DTL_CD_CNTN2
+    INTO :dtl_cd_cntn1, :dtl_cd_cntn2
+    FROM TB_CLC_CODE_DTL
+    WHERE MST_CD = 'BOK_IDPW'
+    AND DTL_CD = :dtl_cd
+    ;
 
-		return -1;
-	}
+  if( SQLCODE != SQL_OK )
+  {
+    ulog(_ERROR_, "[장애로그] 한국은행 ID / PW 취득 오류 [SQL_NO:%d] for BIZ[%s] DTL_CD[%s] ID[%s] PW[%s]", 
+        SQLCODE, gc_BizCode, dtl_cd, dtl_cd_cntn1, dtl_cd_cntn2);
+    return -1;
+  }
 
-    memset( gc_plain_id, 0x00, sizeof( gc_plain_id ) );
-    memcpy( gc_plain_id, S_Tbl.dtl_cd_cntn1.arr, S_Tbl.dtl_cd_cntn1.len);
+  memset( gc_plain_id, 0x00, sizeof( gc_plain_id ) );
+  memcpy( gc_plain_id, dtl_cd_cntn1, strlen(dtl_cd_cntn1) );
 
-	memset( gc_plain_pw, 0x00, sizeof( gc_plain_pw ) );
-	memcpy( gc_plain_pw, S_Tbl.dtl_cd_cntn2.arr, S_Tbl.dtl_cd_cntn2.len);
+  memset( gc_plain_pw, 0x00, sizeof( gc_plain_pw ) );
+  memcpy( gc_plain_pw, dtl_cd_cntn2, strlen(dtl_cd_cntn2) );
 
-	return 0;
+  // TODO: gc_biz_prcg_dt
+  memset( gc_biz_prcg_dt, 0x00, sizeof( gc_biz_prcg_dt ) );
+
+  ulog(_FLOW_, "id: %s, pw: %s, opentm: %s", gc_plain_id, gc_plain_pw, gc_biz_prcg_dt); 
+
+  return 0;
 }
+#endif
 
 int dbUpdateIDPW(char* pID, char* pPass)
 {
-EXEC SQL BEGIN DECLARE SECTION;
-	char	cid[32+1];
-	char	cpass[32+1];
-	char	cBiz[32+1];
-EXEC SQL END DECLARE SECTION;
+  EXEC SQL BEGIN DECLARE SECTION;
+  char	cid[32+1];
+  char	cpass[32+1];
+  char	cBiz[32+1];
+  EXEC SQL END DECLARE SECTION;
 
-	ulog(_FLOW_, "BIZ/ID/PW :%s/%s/%s", gc_BizCode, pID, pPass );
+  ulog(_FLOW_, "BIZ/ID/PW :%s/%s/%s", gc_BizCode, pID, pPass );
 
-	memset(cid, 0x00, sizeof(cid));
-	memcpy(cid, pID, strlen(pID));
+  memset(cid, 0x00, sizeof(cid));
+  memcpy(cid, pID, strlen(pID));
 
-	memset(cpass, 0x00, sizeof(cpass));
-	memcpy(cpass, pPass, strlen(pPass));
+  memset(cpass, 0x00, sizeof(cpass));
+  memcpy(cpass, pPass, strlen(pPass));
 
-	memset(cBiz, 0x00, sizeof(cBiz));
-	if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
-		// 0 : BOK     (국고)
-		memcpy( cBiz, "BOK", 3 );  
-	} else {
-		// 1 : NEW BOK (신한은망)
-		memcpy( cBiz, "FTP", 3 );  
-	}
+  memset(cBiz, 0x00, sizeof(cBiz));
+  if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
+    // 0 : BOK     (국고)
+    memcpy( cBiz, "BOK", 3 );  
+  } else {
+    // 1 : NEW BOK (신한은망)
+    memcpy( cBiz, "FTP", 3 );  
+  }
 
-	EXEC SQL UPDATE TB_CLC_CODE_DTL
-				SET	DTL_CD_CNTN1 = :cid
-				,	DTL_CD_CNTN2 = :cpass
-			  WHERE MST_CD	=	'BOK_IDPW'
-				AND	DTL_CD	=	:cBiz
-			;
+  EXEC SQL UPDATE TB_CLC_CODE_DTL
+    SET	DTL_CD_CNTN1 = :cid,
+        DTL_CD_CNTN2 = :cpass
+    WHERE MST_CD	=	'BOK_IDPW'
+    AND	DTL_CD	=	:cBiz
+    ;
 
-	if( SQLCODE != SQL_OK )
-	{
-        ulog(_ERROR_, "[장애로그] 한국은행 ID / PW Update 오류 [SQL_NO:%d] for BIZ[%s] ID[%s] PW[%s]", 
-					SQLCODE, cBiz, cid, cpass);
-		EXEC SQL ROLLBACK;
-	}
+  if( SQLCODE != SQL_OK )
+  {
+    ulog(_ERROR_, "[장애로그] 한국은행 ID / PW Update 오류 [SQL_NO:%d] for BIZ[%s] ID[%s] PW[%s]", 
+        SQLCODE, cBiz, cid, cpass);
+    EXEC SQL ROLLBACK;
+  }
 
-	EXEC SQL COMMIT;
+  EXEC SQL COMMIT;
 
-	return 0;
+  return 0;
 }
 
 int getEncIdPw( )
 {
-	int inlen=0;
-	int outlen=0;
-	int rc;
-	int offset;
-	unsigned char* pOut = NULL;
-	
-	memset(gc_EncIdPswd, 0x0, sizeof( gc_EncIdPswd ) );
-	memset(gc_PlainIdPswd, 0x20, sizeof( gc_PlainIdPswd ) );
-	gc_PlainIdPswd[32] = 0;
+  int inlen=0;
+  int outlen=0;
+  int rc;
+  int offset;
+  unsigned char* pOut = NULL;
 
-	if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
-		// 0 : BOK     (국고)
-		offset = 20;
-		inlen = 28;
-	} else {
-		// 1 : NEW BOK (신한은망)
-		offset = 16;
-		inlen = 32;
-	}
+  memset(gc_EncIdPswd, 0x0, sizeof( gc_EncIdPswd ) );
+  memset(gc_PlainIdPswd, 0x20, sizeof( gc_PlainIdPswd ) );
+  gc_PlainIdPswd[32] = 0;
 
-	// copy id, pswd
-	memcpy( gc_PlainIdPswd, 	   gc_plain_id, strlen( gc_plain_id ) );
-	memcpy( gc_PlainIdPswd+offset, gc_plain_pw, strlen( gc_plain_pw ) );
+  if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
+    // 0 : BOK     (국고)
+    offset = 20;
+    inlen = 28;
+  } else {
+    // 1 : NEW BOK (신한은망)
+    offset = 16;
+    inlen = 32;
+  }
 
-	// 20200408 : Encrypt 안 할 경우
-	if( g_Encrypt_Flag == 0 ) {
-		memcpy( gc_EncIdPswd, gc_PlainIdPswd, strlen( gc_PlainIdPswd ) );
-		return 0;
-	}
+  // copy id, pswd
+  memcpy( gc_PlainIdPswd, 	   gc_plain_id, strlen( gc_plain_id ) );
+  memcpy( gc_PlainIdPswd+offset, gc_plain_pw, strlen( gc_plain_pw ) );
 
-	rc = INL_Encrypt(g_client_ctx, (unsigned char*)gc_PlainIdPswd, inlen, &pOut, &outlen);
-	if( (rc < 0) || (inlen != outlen ) )
-	{
-		ulog(_ERROR_, "[장애로그] : ID/PSWD Encrypt 오류 BIZ[%s] [%d]", gc_BizCode, rc);
-		return -2;
-	}
+  // 20200408 : Encrypt 안 할 경우
+  if( g_Encrypt_Flag == 0 ) {
+    memcpy( gc_EncIdPswd, gc_PlainIdPswd, strlen( gc_PlainIdPswd ) );
+    return 0;
+  }
 
-	// copy encrypted id, pswd
-	memcpy( gc_EncIdPswd, pOut, outlen );
+  rc = inl_encrypt(gc_PlainIdPswd, inlen, (char**)&pOut, &outlen);
+  if( rc < 0 )
+  {
+    ulog(_ERROR_, "[장애로그] : ID/PSWD Encrypt 오류 BIZ[%s] [%d]", gc_BizCode, rc);
+    return -2;
+  }
 
-	if( pOut != NULL ) INL_Free_Buf( pOut );
+  // copy encrypted id, pswd
+  memcpy( gc_EncIdPswd, pOut, outlen );
 
-	return 0;
+  return 0;
 }
 
 int getPlainIdPw( )
 {
-	int outlen=0;
-	int inlen=0;
-	int rc;
-	int offset;
-	unsigned char* pOut;
+  int outlen=0;
+  int inlen=0;
+  int rc;
+  int offset;
+  unsigned char* pOut;
 
-	if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
-		// 0 : BOK     (국고)
-		offset = 20;
-		inlen = 28;
-	} else {
-		// 1 : NEW BOK (신한은망)
-		offset = 16;
-		inlen = 32;
-	}
+  if( strcmp( gc_BizCode, "BOK" ) == 0 ) {    
+    // 0 : BOK     (국고)
+    offset = 20;
+    inlen = 28;
+  } else {
+    // 1 : NEW BOK (신한은망)
+    offset = 16;
+    inlen = 32;
+  }
 
-	memset(gc_PlainIdPswd, 0x0, sizeof( gc_PlainIdPswd ) );
+  memset(gc_PlainIdPswd, 0x0, sizeof( gc_PlainIdPswd ) );
 
-	// 20200408 : Encrypt 안 할 경우
-	if( g_Encrypt_Flag == 0 ) {
-		memcpy( gc_PlainIdPswd, gc_EncIdPswd, strlen( gc_EncIdPswd ) );
+  // 20200408 : Encrypt 안 할 경우
+  if( g_Encrypt_Flag == 0 ) {
+    memcpy( gc_PlainIdPswd, gc_EncIdPswd, strlen( gc_EncIdPswd ) );
 
-		// copy id, pswd
-		memset( gc_plain_id, 0, 	    sizeof( gc_plain_id ) );
-		memset( gc_plain_pw, 0, 	    sizeof( gc_plain_pw ) );
+    // copy id, pswd
+    memset( gc_plain_id, 0, 	    sizeof( gc_plain_id ) );
+    memset( gc_plain_pw, 0, 	    sizeof( gc_plain_pw ) );
 
-		memcpy( gc_plain_id, gc_PlainIdPswd, 	    offset );
-		memcpy( gc_plain_pw, gc_PlainIdPswd+offset, inlen-offset );
+    memcpy( gc_plain_id, gc_PlainIdPswd, 	    offset );
+    memcpy( gc_plain_pw, gc_PlainIdPswd+offset, inlen-offset );
 
-		return 0;
-	}
+    return 0;
+  }
 
-	rc = INL_Decrypt(g_server_ctx, (unsigned char*)gc_EncIdPswd, inlen, &pOut, &outlen);
-	if( (rc < 0) || (inlen != outlen ) )
-	{
-		ulog(_ERROR_, "[장애로그] : ID/PSWD Decrypt 오류 BIZ[%s] [%d]", gc_BizCode, rc);
-		return -2;
-	}
+  rc = inl_decrypt(gc_EncIdPswd, inlen, (char**)&pOut, &outlen);
+  if( rc < 0 )
+  {
+    ulog(_ERROR_, "[장애로그] : ID/PSWD Decrypt 오류 BIZ[%s] [%d]", gc_BizCode, rc);
+    return -2;
+  }
 
-	// copy encrypted id, pswd
-	memcpy( gc_PlainIdPswd, pOut, outlen );
+  // copy encrypted id, pswd
+  memcpy( gc_PlainIdPswd, pOut, outlen );
 
-	if( pOut != NULL ) INL_Free_Buf( pOut );
+  // copy id, pswd
+  memset( gc_plain_id, 0, 	    sizeof( gc_plain_id ) );
+  memset( gc_plain_pw, 0, 	    sizeof( gc_plain_pw ) );
 
-	// copy id, pswd
-	memset( gc_plain_id, 0, 	    sizeof( gc_plain_id ) );
-	memset( gc_plain_pw, 0, 	    sizeof( gc_plain_pw ) );
+  memcpy( gc_plain_id, gc_PlainIdPswd, 	    offset );
+  memcpy( gc_plain_pw, gc_PlainIdPswd+offset, inlen-offset );
 
-	memcpy( gc_plain_id, gc_PlainIdPswd, 	    offset );
-	memcpy( gc_plain_pw, gc_PlainIdPswd+offset, inlen-offset );
-
-	return 0;
+  return 0;
 }
+
+int	lf_GetSlsDt( char *Slsdate )
+{
+	int        nRtryCnt = 0 ;
+
+  EXEC SQL BEGIN DECLARE SECTION;
+  char    vcSlsDate[32+1];
+  EXEC SQL END DECLARE SECTION;
+
+  memset( vcSlsDate, 0x00, sizeof( vcSlsDate ) );
+  memset( Slsdate, 0x00, sizeof( Slsdate ) );
+
+
+ // TODO : TABLE NAME 확인 필요
+	while (1){
+		EXEC SQL SELECT  SLS_DT
+			INTO    :vcSlsDate
+			FROM    TB_AA_M_SLS_DT@DL_DBUAP_SMS
+			;
+
+		if (SQLCODE != SQL_OK) { 
+			if (nRtryCnt < 1) { 
+				roLog(_WARNING_, "[%s] 영업일자 취득 실패. "
+								 "(SqlCode=%d, nRtryCnt=%d) -> 1초 후 재시도."
+								, __FUNCTION__, SQLCODE, nRtryCnt);
+				sleep(1);
+				nRtryCnt++;
+        continue;
+			} 
+
+			roLog(_ERROR_, "[%s] 영업일자 취득 실패. "                 
+								 "(SqlCode=%d, nRtryCnt=%d) -> Error 리턴."          
+								, __FUNCTION__, SQLCODE, nRtryCnt);                  
+      return -1;
+		} 
+
+		roLog(_WARNING_, "[%s] 영업일자 취득 OK. (SlsDate=%.*s)"
+							, __FUNCTION__, strlen(vcSlsDate), vcSlsDate);
+		memcpy(Slsdate, vcSlsDate, strlen(vcSlsDate));
+		break; 
+	}
+
+  return 0;
+}
+
